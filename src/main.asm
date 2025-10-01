@@ -14,9 +14,23 @@
 ;; COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,   ;;
 ;; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                         ;;
 ;;-------------------------------------------------------------------------------------------------------------------------------;;
-
+include "consts.inc"
 SECTION "Entry point", ROM0[$150]
 
 main::
+   ;; Cambiar paleta
+   ld hl,rBGP
+   ld [hl],%11100001
+   call wait_vblank
+   ld hl,map1Tiles
+   ld de,$8010
+   ld b, 4 * $10 ;; Nº Tiles * Tamaño
+   call memcpy_256
+   call wait_vblank
+   call turn_screen_off
+   ld hl,map1
+   call draw_map
+   call turn_screen_on
+
    di     ;; Disable Interrupts
    halt   ;; Halt the CPU (stop procesing here)
