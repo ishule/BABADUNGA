@@ -80,7 +80,7 @@ init_all_sprites::
 ;; rOBP0: registro de paleta de sprites
 set_palette_sprites_0::
    ld hl, rOBP0
-   ld [hl], %11100100
+   ld [hl], %11100001
    ret
 
 ;; Inicializa la memoria de sprites (OAM)

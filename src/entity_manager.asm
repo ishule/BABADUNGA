@@ -15,7 +15,6 @@ man_entity_init::
 	ld b, CMP_SPRITES_TOTALBYTES
 	xor a 
 	call memset_256
-	ret
 
 	; Inicializa contadores de entidades
 	ld [next_free_entity], a 
@@ -36,5 +35,6 @@ man_entity_alloc:
 	ld l, a 							;; Parte baja = índice
 	add SPRITE_SIZE				;; Avanza la dirección por el tamaño de un sprite
 	ld [next_free_entity], a 	;; Guarda el índice actualizado
+	ret
  
 
