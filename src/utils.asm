@@ -53,15 +53,58 @@ draw_map::
 
 		ret; Exit the subroutine
 
-
+;; Apaga la pantalla del Game Boy
+;; LCD_CONTROL ($FF40) bit 7 = LCD Display Enable
 turn_screen_off::
    ld a,[LCD_CONTROL]
    and %01111111
    ld [LCD_CONTROL],a
    ret
+
+;; Enciende la pantalla del Game Boy
+;; LCD_CONTROL ($FF40) bit 7 = LCD Display Enable
 turn_screen_on::
    ld a,[LCD_CONTROL]
    or %10000000
    ld [LCD_CONTROL],a
    ret
 
+init_all_sprites::
+	call set_palette_sprites_0
+	call wait_vblank
+	call init_OAM
+	call init_LCDC_sprites
+	ret
+
+;; Configura la paleta de sprites 0
+;; rOBP0: registro de paleta de sprites
+set_palette_sprites_0::
+   ld hl, rOBP0
+   ld [hl], %11100100
+   ret
+
+;; Inicializa la memoria de sprites (OAM)
+init_OAM:
+	ld hl, OAM_START
+	ld b, OAM_TOTAL_SPRITES
+	xor a 
+	call memset_256
+	ret
+
+;; Configura LCDC para sprites
+init_LCDC_sprites::
+	ld hl, LCD_CONTROL
+	set 1, [hl]	;; Enable Objects
+	set 2, [hl]	;; Enable 8 x 16 sprites
+	ret
+
+;; INPUT
+;;		HL: Destination
+;;		B: bytes
+;;		A: value to set
+;;	Escribe en hl el valor a hasta que b sea cero
+memset_256::
+	ld [hl+], a
+	dec b 
+	jr nz, memset_256
+	ret

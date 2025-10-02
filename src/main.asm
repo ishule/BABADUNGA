@@ -32,5 +32,10 @@ main::
    call draw_map
    call turn_screen_on
 
+   call init_all_sprites
+
+   call init_player
+
+
    di     ;; Disable Interrupts
    halt   ;; Halt the CPU (stop procesing here)
