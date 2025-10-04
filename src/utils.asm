@@ -108,3 +108,11 @@ memset_256::
 	dec b 
 	jr nz, memset_256
 	ret
+
+;;Abre la puerta para avanzar al siguiente nivel
+open_door::
+	call wait_vblank
+	ld a,0
+	ld [$9A13],a
+	ld [$99F3],a
+

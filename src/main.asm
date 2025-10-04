@@ -35,6 +35,7 @@ main::
    call init_all_sprites
 
    call init_player
+   call open_door
 
 
    di     ;; Disable Interrupts
