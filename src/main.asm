@@ -36,6 +36,15 @@ main::
 
    call init_player
    call open_door
+   call joypad_init
+
+   game_loop:
+      call wait_vblank
+      call joypad_read
+      call player_update_movement
+      call man_entity_draw
+
+      jr game_loop 
 
 
    di     ;; Disable Interrupts

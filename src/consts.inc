@@ -2,6 +2,23 @@ DEF VBLANK_START equ $90
 
 DEF LCD_CONTROL equ $FF40
 
+DEF rP1 equ $FF00
+
+;; Modos de lectura del Joypad
+DEF P1_GET_BTN equ $10
+DEF P1_GET_DPAD equ $20
+DEF P1_GET_NONE equ $30
+
+;; Bits del joypad combinado en joypad_current
+DEF JOYPAD_RIGHT 	equ 0
+DEF JOYPAD_LEFT 	equ 1
+DEF JOYPAD_UP 		equ 2
+DEF JOYPAD_DOWN 	equ 3
+DEF JOYPAD_A 		equ 4
+DEF JOYPAD_B 		equ 5
+DEF JOYPAD_SELECT 	equ 6
+DEF JOYPAD_START 	equ 7
+
 DEF rLY equ $FF44
 
 DEF rBGP equ $FF47
@@ -12,9 +29,35 @@ DEF OAM_START equ $FE00
 DEF OAM_TOTAL_SPRITES equ 160
 
 DEF SPRITE_SIZE = 4
+DEF SPRITE_OFFSET_Y equ 0
+DEF SPRITE_OFFSET_X equ 1
+DEF SPRITE_OFFSET_TILE equ 2 
+DEF SPRITE_OFFSET_ATTR equ 3 
+
+DEF SPRITE_ATTR_FLIP_X  equ %10100000  ; Flip horizontal activado
+DEF SPRITE_ATTR_NO_FLIP	equ %10000000  ; Sin flip
+
+
 DEF NUM_ENTITIES = 20
 DEF CMP_SPRITES_TOTALBYTES = NUM_ENTITIES * SPRITE_SIZE
 DEF CMP_SPRITES_H = $C0
 
 DEF VRAM_TILE_DATA_START equ $8000
 DEF VRAM_TILE_SIZE equ $10
+
+;; Componente de física
+DEF CMP_PHYSICS_SIZE equ 4
+DEF CMP_PHYSICS_OFFSET_X equ 0 	; 1 byte
+DEF CMP_PHYSICS_OFFSET_Y equ 1 	
+DEF CMP_PHYSICS_OFFSET_VX equ 2	
+DEF CMP_PHYSICS_OFFSET_VY equ 3
+DEF CMP_PHYSICS_TOTALBYTES equ CMP_PHYSICS_SIZE * NUM_ENTITIES	
+
+; Física del jugador
+DEF PLAYER_SPEED 			equ 1 	; Velocidad horizontal
+DEF PLAYER_JUMP_FORCE		equ -3	; Fuerza de salto, como es negativo es hacia arriba
+DEF PLAYER_GRAVITY			equ 1 	; Gravedad 
+DEF PLAYER_MAX_FALL_SPEED	equ 4 	; Velocidad máxima de caída
+DEF PLAYER_INITIAL_POS_X  	equ $10 ; Posición inicial del jugador en X
+
+DEF GROUND_Y equ 120	; Altura del suelo

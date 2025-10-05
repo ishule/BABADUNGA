@@ -3,6 +3,7 @@ INCLUDE "consts.inc"
 SECTION "Entity Manager Data", WRAM0[$C000]
 
 component_sprite:: DS CMP_SPRITES_TOTALBYTES	;; Array de memoria para almacenar los sprites de entidades
+component_physics:: DS CMP_PHYSICS_TOTALBYTES
 num_entities_alive:: DS 1	;; Contador de entidades activas
 next_free_entity:: DS 1		;; Índice de la siguiente entidad
 
@@ -13,6 +14,12 @@ man_entity_init::
 	; Set Component Sprite Array to 0
 	ld hl, component_sprite
 	ld b, CMP_SPRITES_TOTALBYTES
+	xor a 
+	call memset_256
+
+	; Limpiar física
+	ld hl, component_physics
+	ld b, CMP_PHYSICS_TOTALBYTES
 	xor a 
 	call memset_256
 
