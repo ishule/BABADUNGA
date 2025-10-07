@@ -32,7 +32,8 @@ init_player::
 ;;		$06-$07: Player_stand
 ;;		$08-$09: Player_blowgun
 ;;		$0A-$0B: Player_walk 
-;;
+;;      $0C: Player_bullet
+;;	    $0D: Player_life 
 ;; MODIFICA: A, BC, DE, HL
 init_player_tiles::
 	call wait_vblank
@@ -53,6 +54,16 @@ init_player_tiles::
 	ld hl, Player_walk
 	ld de, VRAM_TILE_DATA_START + ($0A * VRAM_TILE_SIZE)
 	ld b, 2 * VRAM_TILE_SIZE
+	call memcpy_256
+	;; Cargar Player_bullet en tile $0C
+	ld hl,Player_bullet
+	ld de,VRAM_TILE_DATA_START + ($0C*VRAM_TILE_SIZE)
+	ld b,VRAM_TILE_SIZE
+	call memcpy_256
+	;; Cargar Player_life en tile $0D
+	ld hl,Player_life
+	ld de,VRAM_TILE_DATA_START + ($0D*VRAM_TILE_SIZE)
+	ld b,VRAM_TILE_SIZE
 	call memcpy_256
 
 	ret
