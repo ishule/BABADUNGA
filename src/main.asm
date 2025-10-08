@@ -38,10 +38,33 @@ main::
    call open_door
    call joypad_init
 
+   call init_bullets
+
+
+   ;debug
+   ld a, $00
+   call man_entity_locate
+   
+   ld bc, $8A0A
+   ld d, $02
+   call change_entity_group_pos
+   
+   ld a, $00
+   call man_entity_locate
+
+   ld bc, $0081
+   ld d, $02
+   call change_entity_group_vel
+
+
    game_loop:
       call wait_vblank
       call joypad_read
-      call player_update_movement
+      ;call player_update_movement
+
+      
+      call compute_physics
+      call bullet_update
       call man_entity_draw
 
       jr game_loop 

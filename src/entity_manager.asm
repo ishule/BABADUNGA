@@ -3,9 +3,13 @@ INCLUDE "consts.inc"
 SECTION "Entity Manager Data", WRAM0[$C000]
 
 component_sprite:: DS CMP_SPRITES_TOTALBYTES	;; Array de memoria para almacenar los sprites de entidades
-component_physics:: DS CMP_PHYSICS_TOTALBYTES
+
 num_entities_alive:: DS 1	;; Contador de entidades activas
 next_free_entity:: DS 1		;; Índice de la siguiente entidad
+
+SECTION "Entity Physiics", WRAM0[$C100]
+component_physics:: DS CMP_PHYSICS_TOTALBYTES
+
 
 SECTION "Entity Manager Code", ROM0
 
@@ -44,4 +48,21 @@ man_entity_alloc:
 	ld [next_free_entity], a 	;; Guarda el índice actualizado
 	ret
  
+
+; INPUT
+;  a -> entity ID
+; 
+; RETURN
+;  hl -> entity_start_address
+man_entity_locate:
+	ld hl, CMP_SPRITES_ADDRESS
+	ld c, $03
+	iter:
+		add a
+		dec c
+		jr nz, iter
+	
+	ld l, a
+
+	ret
 

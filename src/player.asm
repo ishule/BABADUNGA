@@ -107,7 +107,7 @@ player_init_physics::
 	ld de, component_physics 
 	ld b, PLAYER_INITIAL_POS_X	; X inicial
 	ld c, GROUND_Y				; Y inicial
-	call entity_physics_init
+	;call entity_physics_init
 
 	; Player stand al principio 
 	ld a, 00 
