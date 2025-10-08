@@ -27,7 +27,6 @@ draw_map::
 	ld b,18  ; B: Altura (18 rows)
 		
 	.loopRow:
-		; NO necesitas PUSH BC aquí, ya que solo usas B como contador.
 		ld c,20  ; C: Anchura (20 columns)
 
 	.loopCol:
@@ -46,8 +45,6 @@ draw_map::
 	    jr nc, .no_carry ; Si no hay acarreo, salta
 	    inc d       ; Si hay acarreo, incrementa el byte alto (D)
 	.no_carry:
-
-		; pop bc ya no es necesario.
 		dec b
 		jr nz,.loopRow ; Loop back for the next row
 
@@ -115,4 +112,21 @@ open_door::
 	ld a,0
 	ld [$9A13],a
 	ld [$99F3],a
+;; Función que hace que se inicialize el sonido para que se pueda escuchar básicamente
+init_sound::
+	ld hl,$FF10
+	ld b,20 ;; 20 Direcciones que hay que poner a 0
+	xor a
+	;; Se inicializa de $FF10 a $FF23
+	.loop:
+		ld [hl+],a
+		dec b
+		jr nz,.loop
+	;; Ahora los registros NR50 y NR51 si ponen a $FF. NR52 ponesmo el bit 7 a uno para producir audio
+	ld a,$FF
+	ld[hl+],a
+	ld[hl+],a
+	ld a,[hl]
+	or %10000000
+	ld [hl],a
 
