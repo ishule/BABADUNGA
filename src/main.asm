@@ -54,7 +54,7 @@ main::
 
    ld bc, $0081
    ld d, $02
-   call change_entity_group_vel
+   call change_entity_group_acc
 
 
    game_loop:
