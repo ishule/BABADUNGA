@@ -112,6 +112,7 @@ open_door::
 	ld a,0
 	ld [$9A13],a
 	ld [$99F3],a
+	ret
 ;; Función que hace que se inicialize el sonido para que se pueda escuchar básicamente
 init_sound::
 	ld hl,$FF10
@@ -129,4 +130,5 @@ init_sound::
 	ld a,[hl]
 	or %10000000
 	ld [hl],a
+	ret
 

@@ -255,3 +255,19 @@ add_acceleration_to_axis:
 	ld [hl], a
 
 	ret
+
+
+stop_physics_player::
+    ld a, $00
+    call man_entity_locate 
+
+    ld b, $00 ; Put VY to 0
+    ld c, $00 ; Put VX to 0
+    ld d, $02
+    call change_entity_group_vel
+
+    ld b, $00 ; Put AY to 0
+    ld c, $00 ; Put AX to 0
+    ld d, $02
+    call change_entity_group_acc
+	ret
