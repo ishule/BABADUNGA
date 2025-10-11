@@ -22,88 +22,174 @@ DEF NR50=$FF24
 DEF NR51=$FF25
 DEF NR52=$FF26
 
-DEF LA4=%11011111
-DEF LA2=%01011000
-
-DEF TEMPO=8
+DEF TEMPO=12
 DEF SH=$FF
-
 DEF TAM_CHIP_SONIDO=20
 
 SECTION "SYS_SOUND",ROM0
 
-;;;;;;;;;
-; Inicializa sistema de sonido
-; ENTRADA: -
-; MODIFICA: AF, BC, DE, HL
-; SALIDA: -
-;
-sys_sound_init::
-	ld hl,NR10
-	ld b,TAM_CHIP_SONIDO
-	xor a
-	.loop:
-		ld [hl+],a ;; Ponemos valor 0 a todos los registros
-		dec b
-	jr nz,.loop
-	ld hl,NR50
-	ld [hl],$FF
-	ld hl, NR51
-	ld [hl],$FF
-
-	ld hl,NR52
-	set 7,[hl]
-	ret
 ;;
-; Tira sonido de salto
-; 
+; Inicializa sistema de sonido
+;;
+sys_sound_init::
+    ld hl,NR10
+    ld b,TAM_CHIP_SONIDO
+    xor a
+    .loop:
+        ld [hl+],a
+        dec b
+    jr nz,.loop
+    ld hl,NR50
+    ld [hl],$FF
+    ld hl, NR51
+    ld [hl],$FF
+    ld hl,NR52
+    set 7,[hl]
+    ret
+
+;;
+; Sonido de salto
+;;
 sys_sound_jump::
-	ld a,$1E
-	ld [NR10],a
-	ld a,$82
-	ld [NR11],a
-	ld a,$77
-	ld [NR12],a
-	ld a,$C3
-	ld [NR13],a
-	ld a,$C6
-	ld [NR14],a
-	ret
+    ld a,$1E
+    ld [NR10],a
+    ld a,$82
+    ld [NR11],a
+    ld a,$77
+    ld [NR12],a
+    ld a,$C3
+    ld [NR13],a
+    ld a,$C6
+    ld [NR14],a
+    ret
 
-;sys_sound_init_music::
-;	xor a
-;	ld [current_score],a
-;	ld hl,contadorNotas
-;	ld [hl+],a
-;	ld [hl],a
-;
-;	ld hl,nota
-;	ld [hl],LOW(OST)
-;	inc hl
-;	ld [hl],HIGH(OST)
-;	;activar sistema de sonido
-;	ld a,%10000000
-;	ld [rNR52],a
-;	;;Iniciar volumen
-	;S01 y S02 casi tope de volumen
-;	ld a,%01110111
-;	ld [rNR50],a
-;	; Canal 2,sale por S01 y S02
-;	ld a,%10111011
-;	ld [rNR51],a
-	;Canal 2, longitud 63, ciclo 75%
-;	ld a,%11111111
-;	ld [rNR21],a
-	;Canal 2, envolvente, volumen inicial alto, creciente
-;	ld a,%01010100
-;	ld [rNR22],a
-	;Canal 2, longitud activada y valor de la frecuencia baja
-;	ld a,%01000011
-;	ld [rNR24],a
-;ret
+;;
+; Inicializa música
+;;
+sys_sound_init_music::
+    xor a
+    ld [current_score],a
+    ld [relojMusica],a
+    ld hl,contadorNotas
+    ld [hl+],a
+    ld [hl],a
 
+    ld hl,nota
+    ld [hl],LOW(OST)
+    inc hl
+    ld [hl],HIGH(OST)
+    
+    ; Activar sistema de sonido
+    ld a,%10000000
+    ld [rNR52],a
+    
+    ; Volumen maestro moderado
+    ld a,%01110111
+    ld [rNR50],a
+    
+    ; Canal 2 en ambos altavoces
+    ld a,%00100010
+    ld [rNR51],a
+    
+    ; Duty cycle 50%
+    ld a,%10000000
+    ld [rNR21],a
+    
+    ; **CAMBIO CRÍTICO**: Volumen 9, CONSTANTE (sin decay)
+    ; Tu valor: %01010100 = Vol 5, decreciente, período 4 → se apaga
+    ; Nuevo:    %10010000 = Vol 9, constante, período 0 → se mantiene
+    ld a,%10010000
+    ld [rNR22],a
+    
+    ; Frecuencia inicial
+    xor a
+    ld [rNR23],a
+    ld [rNR24],a
+ret
 
-;SECTION "Sound",WRAM0 ;; Reservar espacio disponible en WRAM
-;relojMusica: ds 1
-;nota: ds 2
-;contadorNotas: ds 2
+;;
+; Toca la siguiente nota
+;;
+sys_sound_siguienteNota::
+    ld a,[relojMusica]
+    cp TEMPO
+    jr z,.tocanota
+    inc a
+    ld [relojMusica],a
+ret
+
+.tocanota:
+    ; Reiniciar contador
+    xor a
+    ld [relojMusica],a
+
+    ; Cargar puntero
+    ld hl,nota
+    ld c,[hl]
+    inc hl
+    ld b,[hl]
+    dec hl
+
+    ; Leer nota
+    ld a,[bc]
+    
+    ; ¿Es silencio?
+    cp SH
+    jr z,.silencio
+    
+    ; Escribir frecuencia
+    ld [rNR23],a
+    
+    ; Reconfigurar volumen antes de trigger (seguridad)
+    ld a,%10010000
+    ld [rNR22],a
+    
+    ; Trigger nota
+    ld a,[rNR24]
+    set 7,a
+    ld [rNR24],a
+
+.silencio:
+    ; Avanzar puntero
+    inc bc
+    ld a,c
+    ld [hl+],a
+    ld a,b
+    ld [hl],a
+
+    ; Incrementar contador
+    ld hl,contadorNotas+1
+    ld a,[hl]
+    add 1
+    ld [hl-],a
+    ld a,[hl]
+    adc 0
+    ld [hl],a
+    
+    ; Verificar fin
+    ld bc,EndOST-OST
+    ld a,[hl+]
+    cp b
+    jr nz,.noReset
+    ld a,[hl]
+    cp c
+    jr z,.resetearNotas
+
+.noReset:
+    ret
+
+.resetearNotas:
+    xor a
+    ld hl,contadorNotas
+    ld [hl+],a
+    ld [hl],a
+    ld hl,nota
+    ld [hl],LOW(OST)
+    inc hl
+    ld [hl],HIGH(OST)
+    ret
+
+SECTION "Sound",WRAM0
+relojMusica: ds 1
+nota: ds 2
+contadorNotas: ds 2
