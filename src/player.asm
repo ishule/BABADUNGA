@@ -61,9 +61,10 @@ init_player_tiles::
 	ld b,VRAM_TILE_SIZE
 	call memcpy_256
 	;; Cargar Player_life en tile $0D
+	call wait_vblank
 	ld hl,Player_life
 	ld de,VRAM_TILE_DATA_START + ($0D*VRAM_TILE_SIZE)
-	ld b,VRAM_TILE_SIZE
+	ld b,2*VRAM_TILE_SIZE
 	call memcpy_256
 
 	ret
