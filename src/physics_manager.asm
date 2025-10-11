@@ -180,6 +180,7 @@ apply_velocity_to_entity:
 ;
 ; MODIFIES: a, b
 add_velocity_to_axis:
+	push hl
 	ld a, [hl]  ;; read pos
 	inc h
 
@@ -201,7 +202,7 @@ add_velocity_to_axis:
 	save_new_pos:
 	dec h
 	ld [hl], a  ;; save new pos
-
+	pop hl
 	ret
 
 ; INPUT
@@ -237,6 +238,7 @@ apply_acceleration_to_entity:
 ; INPUT
 ;  hl -> entity velocity address
 add_acceleration_to_axis_x:
+	push hl
     ld a, [hl+] ; read vel
     inc l
     ld b, [hl]  ; read acc
@@ -252,6 +254,7 @@ add_acceleration_to_axis_x:
     dec hl
     dec hl
     ld [hl], a
+    pop hl
     ret
 
 
@@ -263,6 +266,7 @@ add_acceleration_to_axis_x:
 ;
 ; MODIFICA: a, b, c
 add_acceleration_to_axis_y::
+	push hl
     ld a, [hl+]     ; Leer velocidad actual, HL++
     inc l           ; Saltar byte de padding
     ld b, [hl]      ; Leer aceleración
@@ -333,6 +337,7 @@ add_acceleration_to_axis_y::
     dec hl          ; Volver de AccY/AccX a padding
     dec hl          ; Volver de padding a VelY/VelX
     ld [hl], a      ; Guardar nueva velocidad
+    pop hl
     ret
 
     
@@ -401,3 +406,141 @@ stop_physics_player::
     ld d, $02
     call change_entity_group_acc
 	ret
+
+
+
+;;===========================================================
+;; flip_right
+;; Orienta el jugador hacia la derecha
+;; Acciones: 
+;;		- Quita el flip si lo hubiese
+;;		- Actualiza player_orientation = 0
+;;
+;; MODIFICA: A, DE
+flip_right::
+	; Flipear sprite 1 (jugador) a la derecha == Sin flip
+    ld de, component_sprite
+    inc de ; Saltar Y
+    inc de ; Saltar X
+    inc de ; Saltar tiles y apuntar a atributos
+    ld a, SPRITE_ATTR_NO_FLIP
+    ld [de], a
+
+    ; Flipear sprite 2 (cerbatana) a la derecha == Sin flip
+    inc de 
+    inc de
+    inc de 
+    inc de 
+    ld a, SPRITE_ATTR_NO_FLIP
+    ld [de], a
+
+    ; Cargo la dirección del sprite de la cerbatana
+    ld hl, $C004
+
+    ld a, [$C001]
+    add $08
+    ld c, a     ; Guardo en c la dirección x modificada de la cerbatana (cuerpo + 8)
+
+    ld a, [CMP_SPRITES_ADDRESS] ; $C000
+    ld b, a     ; En b se queda la misma dirección x 
+    call change_entity_pos
+
+    ; Actualizar orientación
+    ld a, 00
+    ld [player_orientation], a 	; Orientación a la derecha
+    
+    ret
+
+
+;;===========================================================
+;; flip_left
+;; Orienta el jugador hacia la izquierda
+;; Acciones: 
+;;		- Activa el flip horizontal de ambos sprites
+;;		- Actualiza player_orientation = 1
+;;
+;; MODIFICA: A, DE
+flip_left::
+	; Flipear sprite 1 (jugador)
+    ld de, component_sprite
+    inc de 
+    inc de 
+    inc de 
+    ld a, SPRITE_ATTR_FLIP_X
+    ld [de], a
+
+    ; Flipear sprite 2 (cerbatana)
+    inc de 
+    inc de
+    inc de 
+    inc de 
+    ld a, SPRITE_ATTR_FLIP_X
+    ld [de], a
+
+    ; Cargo la dirección del sprite de la cerbatana
+    ld hl, $C004
+
+    ld a, [$C001]
+    sub $08
+    ld c, a     ; Guardo en c la dirección x modificada de la cerbatana (cuerpo - 8)
+
+    ld a, [CMP_SPRITES_ADDRESS] ; $C000
+    ld b, a     ; En b se queda la misma dirección x 
+    call change_entity_pos
+
+    ; Actualizar orientación
+    ld a, 01
+    ld [player_orientation], a 	; Orientación a la izquierda
+    
+    ret
+
+
+
+;;=============================================
+;; Alterna entre sprite parado y caminando cada X frames
+;;
+;; MODIFICA: A
+choose_stand_or_walk::
+    ld a, [player_anim_counter]
+    inc a
+    ld [player_anim_counter], a
+    cp 8                ; Cambiar animación cada 8 frames aprox
+    jr c, .no_change    ; Si no ha llegado a 8, salir sin cambiar
+
+    ; Reiniciar contador
+    xor a
+    ld [player_anim_counter], a
+
+    ; Alternar animación
+    ld a, [player_stand_or_walk]
+    cp 00 
+    jr z, player_set_stand_sprite  ; Si está parado, cambiar a caminar
+    jr nz, player_set_walk_sprite  ; Si está caminando, cambiar a parado
+
+.no_change:
+    ret
+
+
+;;=============================================
+;; player_set_walk_sprite
+;; Cambia el tile del sprite del jugador a caminar
+;; 
+;; MODIFICA: A, HL
+player_set_walk_sprite::
+    ld hl, component_sprite + SPRITE_OFFSET_TILE
+    ld [hl], $0A  ; Tile de Player_walk
+    ld a, 00 
+    ld [player_stand_or_walk], a
+    ret
+
+;;=============================================
+;; player_set_stand_sprite
+;; Cambia el tile del sprite del jugador a parado
+;;
+;; MODIFICA: A, HL
+player_set_stand_sprite::
+    ld hl, component_sprite + SPRITE_OFFSET_TILE
+    ld [hl], $06  ; Tile de Player_stand 
+    ld a, 01
+    ld [player_stand_or_walk], a
+    ret
