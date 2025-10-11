@@ -109,9 +109,9 @@ memset_256::
 ;;Abre la puerta para avanzar al siguiente nivel
 open_door::
 	call wait_vblank
-	ld a,0
-	ld [$9A13],a
-	ld [$99F3],a
+	xor a
+	ld [$99B3],a
+	ld [$99D3],a
 ;; Función que hace que se inicialize el sonido para que se pueda escuchar básicamente
 init_sound::
 	ld hl,$FF10
