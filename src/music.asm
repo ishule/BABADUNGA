@@ -54,79 +54,43 @@ DEF SH=$FF  ; Silencio
 ;; Estructura: Intro → Verso A → Verso B → Puente → Verso A' → Final
 ;;=============================================================================
 
+;;=============================================================================
+;; OST: "JUNGLE RHYTHM" - Tema rítmico y misterioso
+;; Inspirado en: Donkey Kong Country, Adventure Island
+;; Estructura: Intro → Verso A → Puente → Verso B → Final
+;;=============================================================================
+
 OST::
-    ;; ========== INTRO ÉPICA (8 compases) ==========
-    ; Fanfarria heroica ascendente
-    DB DO5, DO5, DO5, SH, MI5, MI5, MI5, SH
-    DB SOL5, SOL5, SOL5, SH, DO6, DO6, SH, SH
-    
-    ; Melodía de presentación
-    DB SOL5, LA5, SI5, DO6, SI5, LA5, SOL5, FA5
-    DB MI5, FA5, SOL5, LA5, SOL5, FA5, MI5, RE5
-    
-    ;; ========== VERSO A - Melodía principal (16 compases) ==========
-    ; Frase 1: Melódica y pegadiza
-    DB DO5, SH, MI5, SH, SOL5, LA5, SOL5, FA5
-    DB MI5, RE5, DO5, SH, RE5, MI5, FA5, SH
-    
-    DB SOL5, SH, LA5, SH, SI5, DO6, SI5, LA5
-    DB SOL5, FA5, MI5, SH, FA5, SOL5, LA5, SH
-    
-    ; Frase 2: Con más energía
-    DB DO6, SI5, LA5, SOL5, LA5, SI5, DO6, RE6
-    DB MI6, SH, RE6, SH, DO6, SI5, LA5, SOL5
-    
-    DB FA5, SOL5, LA5, SI5, LA5, SOL5, FA5, MI5
-    DB RE5, MI5, FA5, SOL5, FA5, MI5, RE5, DO5
-    
-    ;; ========== VERSO B - Sección rítmica (16 compases) ==========
-    ; Patrón de saltos (estilo Mario/Kirby)
-    DB MI5, MI5, SH, MI5, SOL5, SOL5, SH, SOL5
-    DB DO6, DO6, SH, DO6, SI5, LA5, SOL5, SH
-    
-    DB RE5, RE5, SH, RE5, FA5, FA5, SH, FA5
-    DB LA5, LA5, SH, LA5, SOL5, FA5, MI5, SH
-    
-    ; Variación con staccato
-    DB DO5, SH, DO5, SH, MI5, SH, MI5, SH
-    DB SOL5, SH, SOL5, SH, DO6, SH, SH, SH
-    
-    DB SI5, SH, SI5, SH, LA5, SH, LA5, SH
-    DB SOL5, SH, FA5, SH, MI5, SH, SH, SH
-    
-    ;; ========== PUENTE DRAMÁTICO (8 compases) ==========
-    ; Ascenso cromático épico
-    DB DO5, DO5s, RE5, RE5s, MI5, FA5, FA5s, SOL5
-    DB SOL5s, LA5, LA5s, SI5, DO6, RE6, MI6, FA6
-    
-    ; Caída melódica
-    DB FA6, MI6, RE6, DO6, SI5, LA5, SOL5, FA5
-    DB MI5, RE5, DO5, SH, SH, SH, SH, SH
-    
-    ;; ========== VERSO A' - Reprise con variación (16 compases) ==========
-    ; Frase 1 octavada (más aguda)
-    DB DO6, SH, MI6, SH, SOL6, LA6, SOL6, FA6
-    DB MI6, RE6, DO6, SH, RE6, MI6, FA6, SH
-    
-    DB SOL6, SH, LA6, SH, SI6, DO6, SI6, LA6
-    DB SOL6, FA6, MI6, SH, FA6, SOL6, LA6, SH
-    
-    ; Descenso armónico
-    DB DO6, SI5, LA5, SOL5, FA5, MI5, RE5, DO5
-    DB SI4, LA4, SOL4, FA4, MI4, RE4, DO4, SH
-    
-    ; Reafirmación del tema
-    DB DO5, MI5, SOL5, DO6, SOL5, MI5, DO5, SH
-    DB SOL5, SI5, RE6, SOL6, RE6, SI5, SOL5, SH
-    
-    ;; ========== FINAL ÉPICO (8 compases) ==========
-    ; Resolución triunfal
-    DB DO6, DO6, DO6, SH, MI6, MI6, MI6, SH
-    DB SOL6, SOL6, SOL6, SH, DO6, SH, SH, SH
-    
-    ; Acorde final (arpegio)
-    DB DO5, MI5, SOL5, DO6, MI6, SOL6, DO6, SOL5
-    DB MI5, DO5, SH, SH, DO5, SH, SH, SH
+    ;; DINO BONKER - Formato simple de 1 byte (DB)
+
+    ; Intro ---------------------------------------
+    ; Un pequeño llamado para empezar la aventura
+    DB DO4, SH, RE4, SH, MI4, FA4, SOL4, SH
+    DB SOL4, FA4, MI4, RE4, DO4, SH, SH, SH
+
+    ; Verso A (Ritmo principal) ---------------------
+    DB SOL4, SH, SOL4, DO5, SH, SOL4, FA4s, FA4
+    DB MI4, SH, MI4, FA4, SH, MI4, RE4s, RE4
+    DB SOL4, SH, SOL4, DO5, SH, SOL4, FA4s, FA4
+    DB MI4, FA4, MI4, RE4, DO4, SH, SH, SH
+
+    ; Puente ---------------------------------------
+    ; Una sección más melódica para variar
+    DB LA4s, SH, SH, LA4, SH, SH, SOL4, SH
+    DB FA4, SH, SOL4, SH, LA4, SH, SH, SH
+    DB LA4s, SH, SH, LA4, SH, SH, SOL4, SH
+    DB DO5, SH, LA4s, SH, LA4, SOL4, FA4, MI4
+
+    ; Verso B (Variación rítmica) --------------------
+    DB DO4, DO4, SH, MI4, SH, SOL4, SH, MI4
+    DB FA4, FA4, SH, LA4, SH, SOL4, SH, FA4
+    DB DO4, DO4, SH, MI4, SH, SOL4, SH, MI4
+    DB RE4, SH, RE4, SH, MI4, FA4, MI4, RE4
+
+    ; Final ---------------------------------------
+    ; Conclusión que resuelve la melodía
+    DB DO5, LA4s, SOL4, FA4s, FA4, MI4, RE4, DO4
+    DB DO4, SH, SH, SH, SH, SH, SH, SH
 
 EndOST::
 
