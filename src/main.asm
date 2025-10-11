@@ -60,8 +60,6 @@ main::
    game_loop:
       call wait_vblank
 
-      call stop_physics_player
-
       call joypad_read
       call process_input
       

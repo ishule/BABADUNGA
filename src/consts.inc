@@ -61,8 +61,8 @@ DEF CMP_PHYSICS_ADDRESS = $C100
 ; Física del jugador
 DEF PLAYER_SPEED			equ %10000001	; Velocidad horizontal
 DEF PLAYER_SPEED_NEGATIVE 	equ %00000001 
-DEF PLAYER_JUMP_FORCE		equ -3	; Fuerza de salto, como es negativo es hacia arriba
-DEF PLAYER_GRAVITY			equ 1 	; Gravedad 
+DEF PLAYER_JUMP_SPEED		equ %00011001	; Fuerza de salto, como es negativo es hacia arriba
+DEF PLAYER_GRAVITY			equ %10000001 	; Gravedad 
 DEF PLAYER_MAX_FALL_SPEED	equ 4 	; Velocidad máxima de caída
 DEF PLAYER_INITIAL_POS_X  	equ $13 ; Posición inicial del jugador en X
 
