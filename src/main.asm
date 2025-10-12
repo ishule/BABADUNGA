@@ -35,6 +35,7 @@ main::
    call init_all_sprites
 
    call init_player
+   ;call init_gorilla
    call open_door
    call joypad_init
 

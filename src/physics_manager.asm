@@ -122,6 +122,38 @@ change_entity_group_pos:
 
 	ret
 
+
+; INPUT
+;  b  -> base pos Y
+;  c  -> base pos X
+;  hl -> entity start address (primer sprite del grupo)
+;
+; Usa change_entity_group_pos para colocar dos filas de 4 sprites (32x32 total)
+;
+; MODIFICA: A, B, C, D, HL
+change_entity_group_pos_32x32::
+    push bc                ; guardar X e Y originales
+
+    ; === Fila superior ===
+    ld d, 4
+    call change_entity_group_pos
+
+    pop bc                 ; restaurar X e Y originales
+    push bc                ; volver a guardar para la siguiente fila
+
+    ; === Fila inferior ===
+    ld a, b
+    add a, 16              ; siguiente fila (altura 16)
+    ld b, a
+    ld d, 4
+    call change_entity_group_pos
+
+    pop bc
+    ret
+
+
+
+
 ; INPUT
 ;  b  -> vel Y
 ;  c  -> vel X

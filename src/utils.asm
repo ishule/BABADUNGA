@@ -68,6 +68,7 @@ turn_screen_on::
 
 init_all_sprites::
 	call set_palette_sprites_0
+	call set_palette_sprites_1
 	call wait_vblank
 	call init_OAM
 	call init_LCDC_sprites
@@ -79,6 +80,11 @@ set_palette_sprites_0::
    ld hl, rOBP0
    ld [hl], %11100001
    ret
+
+set_palette_sprites_1::
+	ld hl, rOBP0
+	ld[hl], %11100100
+	ret
 
 ;; Inicializa la memoria de sprites (OAM)
 init_OAM:
