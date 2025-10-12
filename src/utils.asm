@@ -68,6 +68,7 @@ turn_screen_on::
 
 init_all_sprites::
 	call set_palette_sprites_0
+	call set_palette_sprites_1
 	call wait_vblank
 	call init_OAM
 	call init_LCDC_sprites
@@ -79,6 +80,11 @@ set_palette_sprites_0::
    ld hl, rOBP0
    ld [hl], %11100001
    ret
+
+set_palette_sprites_1::
+	ld hl, rOBP0
+	ld[hl], %11100100
+	ret
 
 ;; Inicializa la memoria de sprites (OAM)
 init_OAM:
@@ -112,6 +118,10 @@ open_door::
 	xor a
 	ld [$99B3],a
 	ld [$99D3],a
+	ld a,0
+	ld [$9A13],a
+	ld [$99F3],a
+	ret
 ;; Función que hace que se inicialize el sonido para que se pueda escuchar básicamente
 init_sound::
 	ld hl,$FF10
@@ -129,4 +139,5 @@ init_sound::
 	ld a,[hl]
 	or %10000000
 	ld [hl],a
+	ret
 
