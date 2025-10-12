@@ -255,6 +255,22 @@ change_entity_group_vel_y::
     ret
 
 
+change_entity_group_vel_x::
+    inc h           ; Cambiar de $C0xx a $C1xx (página de física)
+    
+.loop:
+    inc hl
+    ld [hl], c     ; Escribir VelX
+    inc hl          
+    inc hl
+    inc hl          ; Siguiente sprite
+    
+    dec d
+    jr nz, .loop
+    
+    dec h           ; Volver a página de posiciones
+    ret
+
 ; INPUT
 ;  b  -> acc Y
 ;  c  -> acc X
@@ -341,6 +357,7 @@ add_velocity_to_axis:
 		jr save_new_pos
 	
 	sub_pos:
+        res 7, b
 		sub b
 		call normalize_velocity
 
@@ -369,67 +386,34 @@ normalize_velocity:
 ; INPUT 
 ; hl -> entity start address (Y POS)
 apply_acceleration_to_entity:
-	inc h
-	call add_acceleration_to_axis_y
-	inc hl
-	call add_acceleration_to_axis_x
-	inc hl 
-	inc hl 
-	dec h
-
-	ret
-
-
-; INPUT
-;  hl -> entity velocity address
-add_acceleration_to_axis_x:
-	push hl
-    ld a, [hl+] ; read vel
-    inc l
-    ld b, [hl]  ; read acc
-    bit 7, b
-    jr z, sub_vel
-    add_vel:
-        res 7, b
-        add b
-        jr save_new_vel
-    sub_vel:
-        sub b
-    save_new_vel:
-    dec hl
-    dec hl
-    ld [hl], a
-    pop hl
+    inc h
+    call add_acceleration_to_axis  ; ← Misma función para ambos
+    inc hl
+    call add_acceleration_to_axis  ; ← Misma función para ambos
+    inc hl 
+    inc hl 
+    dec h
     ret
 
 
-; INPUT
-;  hl -> dirección de velocidad de la entidad (puede ser VelX o VelY)
-;
-; DESCRIPCIÓN:
-;  Aplica la aceleración a la velocidad del eje especificado.
-;
-; MODIFICA: a, b, c
-add_acceleration_to_axis_y::
-	push hl
-    ld a, [hl+]     ; Leer velocidad actual, HL++
-    inc l           ; Saltar byte de padding
+add_acceleration_to_axis:
+    push hl
+    ld a, [hl+]     ; Leer velocidad
+    inc l           ; Saltar padding
     ld b, [hl]      ; Leer aceleración
     
-    ; Comprobar signo de aceleración (bit 7)
     bit 7, b
     jr z, .sub_vel
     
 .add_vel:
-    ; Aceleración POSITIVA (bit 7 = 1)
-    res 7, b        ; Extraer magnitud
-    ld c, a         ; Guardar velocidad original
+    ; Aceleración POSITIVA
+    res 7, b
+    ld c, a
     
-    ; Comprobar signo de velocidad
     bit 7, c
     jr nz, .vel_positive
     
-    ; Velocidad NEGATIVA + Aceleración POSITIVA
+    ; Vel- + Acc+: Frenar (restar de negativo)
     sub a, b
     jr nc, .still_negative
     
@@ -443,48 +427,42 @@ add_acceleration_to_axis_y::
     jr .save_new_vel
     
 .vel_positive:
-    ; Velocidad POSITIVA + Aceleración POSITIVA
+    ; Vel+ + Acc+: Acelerar más
     res 7, a
     add a, b
     set 7, a
     jr .save_new_vel
     
 .sub_vel:
-    ; Aceleración NEGATIVA (bit 7 = 0)
-    ld c, a         ; Guardar velocidad
+    ; Aceleración NEGATIVA
+    ld c, a
     
-    ; Comprobar signo de velocidad
     bit 7, c
     jr z, .vel_negative
     
-    ; Velocidad POSITIVA - Aceleración NEGATIVA
+    ; Vel+ + Acc-: Frenar (restar de positivo)
     res 7, a
     sub a, b
     jr c, .now_negative
     
-    ; Sigue positivo
     set 7, a
     jr .save_new_vel
     
 .now_negative:
-    ; Cruzó a negativo
     cpl
     inc a
     jr .save_new_vel
     
 .vel_negative:
-    ; Velocidad NEGATIVA - Aceleración NEGATIVA
+    ; Vel- + Acc-: Acelerar más negativo
     add a, b
     
 .save_new_vel:
-    ; HL actualmente apunta a AccY/AccX
-    ; Necesitamos volver a VelY/VelX
-    dec hl          ; Volver de AccY/AccX a padding
-    dec hl          ; Volver de padding a VelY/VelX
-    ld [hl], a      ; Guardar nueva velocidad
+    dec hl
+    dec hl
+    ld [hl], a
     pop hl
     ret
-
 
 ;; INPUT:
 ;;  D: Número de sprites de la entidad
@@ -511,9 +489,10 @@ check_ground_collision::
     
     ; Comparar con suelo
     cp GROUND_Y
-    ret c  ; Si PosY < GROUND_Y, aún está en el aire, salir
+    jr c, .not_on_ground
+
     call change_entity_group_pos_y_32x32
-    ld a, 0 
+    ld a, 1 
     ld [gorilla_jumping_flag], a
     jr .reset_physics 
 
@@ -525,7 +504,8 @@ check_ground_collision::
     
     ; Comparar con suelo
     cp GROUND_Y
-    ret c  ; Si PosY < GROUND_Y, aún está en el aire, salir
+    jr c, .not_on_ground
+
     call change_entity_group_pos_y
 
 .reset_physics:
@@ -538,7 +518,15 @@ check_ground_collision::
 
     ld b, $00
     call change_entity_group_acc_y
+
+    ld a, 1 
+    ld [player_on_ground_flag], a
     
+    ret
+
+.not_on_ground:
+    xor a 
+    ld [player_on_ground_flag], a 
     ret
 
 

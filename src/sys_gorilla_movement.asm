@@ -1,7 +1,7 @@
 INCLUDE "consts.inc"
 
 SECTION "Gorilla Movement Vars", WRAM0
-gorilla_jumping_flag: DS 1 ; 0 = está en el suelo  1 = en el aire
+gorilla_jumping_flag: DS 1 ; 1 = está en el suelo  0 = en el aire
 
 SECTION "Gorilla Movement Code", ROM0
 
@@ -21,7 +21,7 @@ sys_gorilla_movement::
     ld d, $08
     call change_entity_group_vel
 
-    ld a, 1
+    ld a, 0
     ld [gorilla_jumping_flag], a  ; marcar que ya está en el aire
 
 .apply_gravity:
