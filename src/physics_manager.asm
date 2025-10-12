@@ -49,7 +49,10 @@ compute_physics::
 		cp l
 		jr nz, .velocity_loop
 
-	call check_player_ground_collision
+    ld d, $02
+    ld e, $00 
+
+	call check_ground_collision
 
 	; # UPDATE PHYSICS INDEX #
 	ld a, [physics_frame_index]
@@ -123,6 +126,24 @@ change_entity_group_pos:
 	ret
 
 
+; INPUT:
+;  b  -> nueva pos Y
+;  hl -> entity start address
+;  d  -> group size
+change_entity_group_pos_y::
+.loop:
+    ld [hl], b      ; Cambiar solo Y
+    inc hl          ; Saltar a X
+    inc hl          ; Saltar X (NO modificar)
+    inc hl          ; Saltar padding
+    inc hl          ; Saltar padding
+    
+    dec d
+    jr nz, .loop
+    ret
+
+
+
 ; INPUT
 ;  b  -> base pos Y
 ;  c  -> base pos X
@@ -152,6 +173,45 @@ change_entity_group_pos_32x32::
     ret
 
 
+; INPUT:
+;  b  -> nueva pos Y base (suelo)
+;  hl -> entity start address (primer sprite del grupo)
+;
+; Cambia solo las Y de un grupo 32x32 (4 columnas x 2 filas),
+; procesando 2 sprites por llamada a change_entity_group_pos_y
+;
+; MODIFICA: A, B, D, HL
+change_entity_group_pos_y_32x32::
+    ; === Fila superior (Y - 16) ===
+    push bc
+    ld a, b
+    sub 32          ; Y de la fila superior
+    ld b, a
+
+    ; Primera mitad (sprites 0–1)
+    ld d, 2
+    call change_entity_group_pos_y
+
+    ; Segunda mitad (sprites 2–3)
+    ld d, 2
+    call change_entity_group_pos_y
+
+    pop bc
+    ; === Fila inferior (Y base) ===
+    ld a, b
+    sub 16
+    ld b, a
+
+    ; Primera mitad inferior (sprites 4–5)
+    ld d, 2
+    call change_entity_group_pos_y
+
+    ; Segunda mitad inferior (sprites 6–7)
+    ld d, 2
+    call change_entity_group_pos_y
+
+    ret
+
 
 
 ; INPUT
@@ -171,6 +231,30 @@ change_entity_group_vel:
 
 	ret
 
+
+; INPUT:
+;  b  -> nueva velocidad Y
+;  hl -> entity start address
+;  d  -> group size
+;
+; Cambia solo VelY, NO toca VelX
+change_entity_group_vel_y::
+    inc h           ; Cambiar de $C0xx a $C1xx (página de física)
+    
+.loop:
+    ld [hl], b      ; Escribir VelY
+    inc hl          ; Saltar a VelX
+    inc hl          ; NO modificar VelX, saltar padding
+    inc hl
+    inc hl          ; Siguiente sprite
+    
+    dec d
+    jr nz, .loop
+    
+    dec h           ; Volver a página de posiciones
+    ret
+
+
 ; INPUT
 ;  b  -> acc Y
 ;  c  -> acc X
@@ -185,6 +269,35 @@ change_entity_group_acc:
 	jr nz, change_entity_group_acc
 
 	ret
+
+
+; INPUT:
+;  b  -> nueva aceleración Y
+;  hl -> entity start address
+;  d  -> group size
+;
+; Cambia solo AccY, NO toca AccX
+change_entity_group_acc_y::
+    inc h           ; Cambiar a página de física
+    inc hl          ; Saltar VelY
+    inc hl          ; Saltar VelX, ahora en AccY
+    
+.loop:
+    ld [hl], b      ; Escribir AccY
+    inc hl          ; Saltar AccX
+    inc hl          ; Siguiente sprite - VelY
+    inc hl          ; VelX
+    inc hl          ; AccY del siguiente
+    
+    dec d
+    jr nz, .loop
+    
+    dec hl          ; Retroceder a posición inicial
+    dec hl
+    dec h           ; Volver a página de posiciones
+    ret
+
+
 
 
 ;; ## UTILS ##
@@ -372,73 +485,61 @@ add_acceleration_to_axis_y::
     pop hl
     ret
 
+
+;; INPUT:
+;;  D: Número de sprites de la entidad
+;;  E: Posición de inicio de la entidad
+;;
+check_ground_collision::
+
+    ; Ajustar posición Y al suelo exactamente
+    ld a, e
+    call man_entity_locate 
+
+    ld b, GROUND_Y
+    ld a, d 
+    cp $08 
+    jr z, .is32
+    jr nz, .isnot32
+
+.is32:
+    ; Leer posición Y
+    ld a, e
+    call man_entity_locate 
+    ld a, [hl]  ; PosY sprite 0
+    add 16  ; Al ser un sprite de 32x32, tengo que compararlo con el sprite de abajo (+16)
     
-; DESCRIPCIÓN:
-;  Verifica si el jugador (entidad 0) ha tocado o pasado el suelo.
-;  Si es así, ajusta su posición al suelo y resetea su física vertical.
-;
-; FUNCIONAMIENTO:
-;  1. Lee la posición Y del jugador (ambos sprites)
-;  2. Compara con GROUND_Y
-;  3. Si Y >= GROUND_Y:
-;     - Ajusta posición Y a GROUND_Y exactamente
-;     - Pone velocidad Y a 0
-;     - Pone aceleración Y a 0
-;  4. Mantiene intactos velocidad X y aceleración X
-;
-; MODIFICA: a, b, c, d, hl
-check_player_ground_collision::
-    ; Leer posición Y del sprite 0 del jugador
-    ld hl, CMP_SPRITES_ADDRESS
+    ; Comparar con suelo
+    cp GROUND_Y
+    ret c  ; Si PosY < GROUND_Y, aún está en el aire, salir
+    call change_entity_group_pos_y_32x32
+    ld a, 0 
+    ld [gorilla_jumping_flag], a
+    jr .reset_physics 
+
+.isnot32:
+    ; Leer posición Y
+    ld a, e
+    call man_entity_locate 
     ld a, [hl]  ; PosY sprite 0
     
     ; Comparar con suelo
     cp GROUND_Y
     ret c  ; Si PosY < GROUND_Y, aún está en el aire, salir
-    
-    ; === SPRITE 0: Tocó el suelo ===
-    
-    ; Ajustar posición Y al suelo exactamente
-    ld a, GROUND_Y
-    ld [hl], a  ; PosY = GROUND_Y
-    
-    ; Resetear física Y del sprite 0
-    ld hl, CMP_PHYSICS_ADDRESS  ; $C100 (página de física)
-    ld [hl], $00    ; VelY sprite 0 = 0
-    inc hl
-    inc hl          ; Saltar VelX
-    ld [hl], $00    ; AccY sprite 0 = 0
-    
-    ; === SPRITE 1 ===
-    ld hl, CMP_SPRITES_ADDRESS + 4  ; PosY sprite 1
-    ld a, GROUND_Y
-    ld [hl], a
-    
-    ; Resetear física Y del sprite 1
-    ld hl, CMP_PHYSICS_ADDRESS + 4  ; Física sprite 1
-    ld [hl], $00    ; VelY sprite 1 = 0
-    inc hl
-    inc hl          ; Saltar VelX
-    ld [hl], $00    ; AccY sprite 1 = 0
-    
-    ret
+    call change_entity_group_pos_y
 
-
-stop_physics_player::
-    ld a, $00
+.reset_physics:
+    ; Resetear física Y
+    ld a, e
     call man_entity_locate 
 
-    ;ld b, $00 ; Put VY to 0
-    ld c, $00 ; Put VX to 0
-    ld d, $02
-    call change_entity_group_vel
+    ld b, $00 
+    call change_entity_group_vel_y
 
-    ;ld b, $00 ; Put AY to 0
-    ld c, $00 ; Put AX to 0
-    ld d, $02
-    call change_entity_group_acc
-	ret
-
+    ld b, $00
+    call change_entity_group_acc_y
+    
+    ret
 
 
 ;;===========================================================

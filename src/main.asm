@@ -48,7 +48,7 @@ main::
 
       call joypad_read
       call process_input
-      ;call sys_gorilla_movement
+      call sys_gorilla_movement
 
       
       call compute_physics
