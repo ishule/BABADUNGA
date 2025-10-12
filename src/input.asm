@@ -96,6 +96,7 @@ process_input::
     ld d, $02
     call change_entity_group_acc
 
+    call player_set_walk_sprite
     ret
 
 .end:

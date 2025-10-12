@@ -18,7 +18,7 @@ main::
    call turn_screen_on
    call init_all_sprites
    call init_player
-   ;call init_gorilla
+   call init_gorilla
    call open_door
    call joypad_init
 
@@ -43,15 +43,16 @@ main::
 
    game_loop:
       call wait_vblank
-      ;call sys_sound_siguienteNota
-
+      call man_entity_draw
+      call sys_sound_siguienteNota
 
       call joypad_read
       call process_input
+      ;call sys_gorilla_movement
+
       
       call compute_physics
-      ;call bullet_update
-      call man_entity_draw
+      call bullet_update
       jr game_loop 
 
    di

@@ -48,6 +48,8 @@ DEF CMP_SPRITES_ADDRESS = $C000
 DEF VRAM_TILE_DATA_START equ $8000
 DEF VRAM_TILE_SIZE equ $10
 
+DEF ENTITY_SIZE 	equ 4
+
 ;; Componente de física
 DEF CMP_PHYSICS_SIZE equ 4
 DEF CMP_PHYSICS_OFFSET_X equ 0 	; 1 byte
@@ -59,11 +61,16 @@ DEF CMP_PHYSICS_H = $C1
 DEF CMP_PHYSICS_ADDRESS = $C100
 
 ; Física del jugador
-DEF PLAYER_SPEED			equ %10000001	; Velocidad horizontal
-DEF PLAYER_SPEED_NEGATIVE 	equ %00000001 
-DEF PLAYER_JUMP_SPEED		equ %00011001	; Fuerza de salto, como es negativo es hacia arriba
-DEF PLAYER_GRAVITY			equ %10000001 	; Gravedad 
-DEF PLAYER_MAX_FALL_SPEED	equ 4 	; Velocidad máxima de caída
+DEF PLAYER_SPEED			equ %10000001	; +1
+DEF PLAYER_SPEED_NEGATIVE 	equ %00000001 	; -1
+DEF PLAYER_JUMP_SPEED		equ %00011001	; -25
+DEF PLAYER_GRAVITY			equ %10000001 	; +1 
 DEF PLAYER_INITIAL_POS_X  	equ $13 ; Posición inicial del jugador en X
+
+; Física del gorila
+DEF GORILLA_JUMP_SPEED 		equ %00010001   ; -17
+DEF GORILLA_SPEED   		equ %10000001	; +1 
+DEF GORILLA_SPEED_NEGATIVE  equ %00000001	; -1 
+DEF GORILLA_GRAVITY     	equ %10000011   ; +3
 
 DEF GROUND_Y equ 124	; Altura del suelo
