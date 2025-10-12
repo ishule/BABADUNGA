@@ -43,7 +43,7 @@ main::
 
    game_loop:
       call wait_vblank
-      call sys_sound_siguienteNota
+      ;call sys_sound_siguienteNota
 
 
       call joypad_read

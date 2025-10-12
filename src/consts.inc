@@ -66,4 +66,4 @@ DEF PLAYER_GRAVITY			equ %10000001 	; Gravedad
 DEF PLAYER_MAX_FALL_SPEED	equ 4 	; Velocidad máxima de caída
 DEF PLAYER_INITIAL_POS_X  	equ $13 ; Posición inicial del jugador en X
 
-DEF GROUND_Y equ 140	; Altura del suelo
+DEF GROUND_Y equ 124	; Altura del suelo
