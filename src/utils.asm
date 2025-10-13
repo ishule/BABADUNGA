@@ -53,9 +53,11 @@ draw_map::
 ;; Apaga la pantalla del Game Boy
 ;; LCD_CONTROL ($FF40) bit 7 = LCD Display Enable
 turn_screen_off::
-   ld a,[LCD_CONTROL]
-   and %01111111
-   ld [LCD_CONTROL],a
+	di
+	call wait_vblank
+   ld hl, LCD_CONTROL
+   res 7, [hl]
+   ei
    ret
 
 ;; Enciende la pantalla del Game Boy

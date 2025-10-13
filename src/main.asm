@@ -9,7 +9,6 @@ main::
    ld de,$8010
    ld b, 4 * $10
    call memcpy_256
-   call wait_vblank
    call turn_screen_off
    call sys_sound_init
    call sys_sound_init_music
