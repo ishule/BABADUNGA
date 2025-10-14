@@ -30,18 +30,18 @@ bullet_update::
 	bit JOYPAD_A, a
 	jr z, exit
 
-	ld a, [$C005]
-	add 8
+	ld a, [$C105] ; MAGIC
+	add 8         ; MAGIC
 	ld b, a
 
-	ld a, [$C004]
+	ld a, [$C104] ; MAGIC
 	ld c, a
 
-	ld a, [$C007]
-	bit 5, a
+	ld a, [$C107] ; MAGIC
+	bit 5, a      ; MAGIC
 	jr z, looking_right
 	looking_left: 
-		ld a, $01
+		ld a, $01 ; MAGIC
 		jr call_shot
 
 	looking_right:
@@ -63,8 +63,8 @@ bullet_update::
 
 init_bullets::
 	ld hl, Player_bullet
-	ld de, $8200
-	ld b, 16
+	ld de, $8200 ; MAGIC
+	ld b, 16     ; MAGIC
 	call memcpy_256
 	xor a
 	ld [cooldown], a
@@ -88,13 +88,13 @@ shot_bullet:
 	;; APPLY VELOCITY
 	inc h
 
-	cp 0
+	cp 0 ; MAGIC
 	jr z, right_shot
 
-	cp 1
+	cp 1 ; MAGIC
 	jr z, left_shot
 
-	cp 2
+	cp 2 ; MAGIC
 	jr z, up_shot
 
 	down_shot:
@@ -102,13 +102,13 @@ shot_bullet:
 
 	right_shot:
 		inc l
-		ld [hl], $82
+		ld [hl], $81 ; MAGIC
 		dec l
 		jr spawn_bullet
 
 	left_shot:
 		inc l
-		ld [hl], $02
+		ld [hl], $01 ; MAGIC
 		dec l
 		jr spawn_bullet
 
@@ -116,7 +116,6 @@ shot_bullet:
 
 	spawn_bullet:
 	dec h
-	;; SPRITE 
 
 	ld [hl], c
 	inc hl
@@ -124,12 +123,9 @@ shot_bullet:
 	ld [hl], b
 	inc hl
 
-	ld [hl], $20
+	ld [hl], $20 ; MAGIC
 	inc hl
 
-	ld [hl], $00
-
-	;ld a, $01
-	;call man_entity_delete
+	ld [hl], $00 ; MAGIC
 
 	ret

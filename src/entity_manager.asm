@@ -1,14 +1,18 @@
 INCLUDE "consts.inc"
 
-SECTION "Entity Manager Data", WRAM0[$C000]
+SECTION "Entity Manager Data"          , WRAM0[$C000]
+component_info::      DS CMP_TOTALBYTES
+num_entities_alive::  DS 1	;; Contador de entidades activas
+next_free_entity::    DS 1		;; Índice de la siguiente entidad
 
-component_sprite:: DS CMP_SPRITES_TOTALBYTES	;; Array de memoria para almacenar los sprites de entidades
+SECTION "Entity Sprites"               , WRAM0[$C100]
+component_sprite::    DS CMP_TOTALBYTES	;; Array de memoria para almacenar los sprites de entidades
 
-num_entities_alive:: DS 1	;; Contador de entidades activas
-next_free_entity:: DS 1		;; Índice de la siguiente entidad
+SECTION "Entity Physics (pos and vel)" , WRAM0[$C200]
+component_physics_0:: DS CMP_TOTALBYTES
 
-SECTION "Entity Physiics", WRAM0[$C100]
-component_physics:: DS CMP_PHYSICS_TOTALBYTES
+SECTION "Entity Physics (acceleration)", WRAM0[$C300]
+component_physics_1:: DS CMP_TOTALBYTES
 
 
 SECTION "Entity Manager Code", ROM0
@@ -17,13 +21,19 @@ SECTION "Entity Manager Code", ROM0
 man_entity_init::
 	; Set Component Sprite Array to 0
 	ld hl, component_sprite
-	ld b, CMP_SPRITES_TOTALBYTES
+	ld b, CMP_TOTALBYTES
 	xor a 
 	call memset_256
 
-	; Limpiar física
-	ld hl, component_physics
-	ld b, CMP_PHYSICS_TOTALBYTES
+	; Limpiar física 0
+	ld hl, component_physics_0
+	ld b, CMP_TOTALBYTES
+	xor a 
+	call memset_256
+
+	; Limpiar física 1
+	ld hl, component_physics_1
+	ld b, CMP_TOTALBYTES
 	xor a 
 	call memset_256
 
@@ -56,7 +66,7 @@ man_entity_alloc:
 ;  hl -> entity_start_address
 man_entity_locate:
 	ld hl, CMP_SPRITES_ADDRESS
-	ld c, $03
+	ld c, $03 ; MAGIC
 	iter:
 		add a
 		dec c

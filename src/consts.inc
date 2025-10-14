@@ -1,3 +1,5 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; GENERAL
 DEF VBLANK_START equ $90
 
 DEF LCD_CONTROL equ $FF40
@@ -28,6 +30,27 @@ DEF rOBP1 equ $FF49
 DEF OAM_START equ $FE00
 DEF OAM_TOTAL_SPRITES equ 160
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ECS
+DEF CMP_START_H  = $C0
+DEF NUM_ENTITIES = 40
+DEF ENTITY_SIZE  = 4
+DEF CMP_TOTALBYTES = NUM_ENTITIES * ENTITY_SIZE
+
+;; Info Component
+DEF CMP_INFO_H = $C0
+
+;; Sprites Component
+DEF CMP_SPRITES_H = $C1
+DEF CMP_SPRITES_ADDRESS = $C100
+
+DEF VRAM_TILE_DATA_START equ $8000
+DEF VRAM_TILE_SIZE equ $10
+
 DEF SPRITE_SIZE = 4
 DEF SPRITE_OFFSET_Y equ 0
 DEF SPRITE_OFFSET_X equ 1
@@ -37,28 +60,13 @@ DEF SPRITE_OFFSET_ATTR equ 3
 DEF SPRITE_ATTR_FLIP_X  equ %10100000  ; Flip horizontal activado
 DEF SPRITE_ATTR_NO_FLIP	equ %10000000  ; Sin flip
 
-
-;; ECS
-;; Sprites
-DEF NUM_ENTITIES = 40
-DEF CMP_SPRITES_TOTALBYTES = NUM_ENTITIES * SPRITE_SIZE
-DEF CMP_SPRITES_H = $C0
-DEF CMP_SPRITES_ADDRESS = $C000
-
-DEF VRAM_TILE_DATA_START equ $8000
-DEF VRAM_TILE_SIZE equ $10
-
-DEF ENTITY_SIZE 	equ 4
-
-;; Componente de física
-DEF CMP_PHYSICS_SIZE equ 4
-DEF CMP_PHYSICS_OFFSET_X equ 0 	; 1 byte
-DEF CMP_PHYSICS_OFFSET_Y equ 1 	
-DEF CMP_PHYSICS_OFFSET_VX equ 2	
-DEF CMP_PHYSICS_OFFSET_VY equ 3
-DEF CMP_PHYSICS_TOTALBYTES equ CMP_PHYSICS_SIZE * NUM_ENTITIES	
+;; Physics Component
 DEF CMP_PHYSICS_H = $C1
 DEF CMP_PHYSICS_ADDRESS = $C100
+DEF CMP_PHYSICS_SIZE equ 6
+DEF CMP_PHYSICS_TOTALBYTES equ CMP_PHYSICS_SIZE * NUM_ENTITIES
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Física del jugador
 DEF PLAYER_SPEED			equ %10000001	; +1

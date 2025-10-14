@@ -4,9 +4,9 @@ SECTION "Entity Draw Code", ROM0
 ; En una sección de WRAM, alineada a 256 bytes
 DEF HRAM_ADDRESS equ $FF80
 DmaCopyFunc:
-ld a, $C0 ;;Byte alto
+ld a, CMP_SPRITES_H
 ldh [$FF46], a
-ld c, 40
+ld c, NUM_ENTITIES
 .wait_copy
 dec c
 jr nz, .wait_copy

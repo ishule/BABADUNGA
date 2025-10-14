@@ -1,18 +1,20 @@
 INCLUDE "consts.inc"
 
-def FRAME_RATE equ $60
-
-SECTION "Physics Variables", WRAM0
-physics_frame_index: ds 1 ; de 0 a FRAME_RATE
-
-
 ; Physics Component structure
-;  size:    4
-;  start address: $C100
-;  byte 0:  VELOCITY     Y
-;  byte 1:  VELOCITY     X
-;  byte 2:  ACCELERATION Y
-;  byte 3:  ACCELERATION X
+;  size:    6
+;  sprite H:   $C1
+;      byte 0:  POS          Y
+;      byte 1:  POS          X
+;      ...
+;  start H:    $C2
+;      byte 0:  POS DECIMAL  Y
+;      byte 1:  POS DECIMAL  X
+;      byte 2:  VELOCITY     Y
+;      byte 3:  VELOCITY     X
+;  continue H: $C3
+;      byte 4:  ACCELERATION Y
+;      byte 5:  ACCELERATION X
+
 SECTION "Physics Manager", ROM0
 
 ; Goes through each entity and aplies velocity
@@ -49,21 +51,11 @@ compute_physics::
 		cp l
 		jr nz, .velocity_loop
 
-    ld d, $02
-    ld e, $00 
 
+    ; # GROUND CHECK #
+    ld d, $02 ;MAGIC
+    ld e, $00 ;MAGIC
 	call check_ground_collision
-
-	; # UPDATE PHYSICS INDEX #
-	ld a, [physics_frame_index]
-	inc a
-	cp FRAME_RATE + 1
-	jr nz, go_on
-	reset_index:
-		xor a
-		ld [physics_frame_index], a
-	go_on:
-	ld [physics_frame_index], a
 
 	ret
 
@@ -72,9 +64,20 @@ compute_physics::
 ;  c  -> pos X
 ;  hl -> entity start address
 change_entity_pos::
+    ; Y pos
 	ld [hl], b
+    ; Y pos (decimal)
+    inc h
+    ld [hl], $00
+    dec h
+
+    ; X pos
 	inc l
 	ld [hl], c
+    ; X pos (decimal)
+    inc h
+    ld [hl], $00
+    dec h
 
 	ret
 
@@ -405,7 +408,7 @@ add_acceleration_to_axis:
     bit 7, b
     jr z, .sub_vel
     
-.add_vel:
+    .add_vel:
     ; Aceleración POSITIVA
     res 7, b
     ld c, a
@@ -423,17 +426,17 @@ add_acceleration_to_axis:
     set 7, a
     jr .save_new_vel
     
-.still_negative:
+    .still_negative:
     jr .save_new_vel
     
-.vel_positive:
+    .vel_positive:
     ; Vel+ + Acc+: Acelerar más
     res 7, a
     add a, b
     set 7, a
     jr .save_new_vel
     
-.sub_vel:
+    .sub_vel:
     ; Aceleración NEGATIVA
     ld c, a
     
@@ -448,21 +451,25 @@ add_acceleration_to_axis:
     set 7, a
     jr .save_new_vel
     
-.now_negative:
+    .now_negative:
     cpl
     inc a
     jr .save_new_vel
     
-.vel_negative:
+    .vel_negative:
     ; Vel- + Acc-: Acelerar más negativo
     add a, b
     
-.save_new_vel:
+    .save_new_vel:
     dec hl
     dec hl
     ld [hl], a
     pop hl
+
     ret
+
+
+
 
 ;; INPUT:
 ;;  D: Número de sprites de la entidad
@@ -530,6 +537,14 @@ check_ground_collision::
     ret
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                                                                                                 ;;;;
+;;;;                                   TODO ESTO FUERA DE PSHYSICS                                   ;;;;
+;;;;                                                                                                 ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 ;;===========================================================
 ;; flip_right
 ;; Orienta el jugador hacia la derecha
@@ -556,10 +571,10 @@ flip_right::
     ld [de], a
 
     ; Cargo la dirección del sprite de la cerbatana
-    ld hl, $C004
+    ld hl, $C104 ; MAGIC
 
-    ld a, [$C001]
-    add $08
+    ld a, [$C101] ; MAGIC
+    add $08 ; MAGIC
     ld c, a     ; Guardo en c la dirección x modificada de la cerbatana (cuerpo + 8)
 
     ld a, [CMP_SPRITES_ADDRESS] ; $C000
@@ -599,10 +614,10 @@ flip_left::
     ld [de], a
 
     ; Cargo la dirección del sprite de la cerbatana
-    ld hl, $C004
+    ld hl, $C104 ; MAGIC
 
-    ld a, [$C001]
-    sub $08
+    ld a, [$C101] ; MAGIC
+    sub $08 ; MAGIC
     ld c, a     ; Guardo en c la dirección x modificada de la cerbatana (cuerpo - 8)
 
     ld a, [CMP_SPRITES_ADDRESS] ; $C000
@@ -610,7 +625,7 @@ flip_left::
     call change_entity_pos
 
     ; Actualizar orientación
-    ld a, 01
+    ld a, 01 ; MAGIC
     ld [player_orientation], a 	; Orientación a la izquierda
     
     ret
@@ -625,7 +640,7 @@ choose_stand_or_walk::
     ld a, [player_anim_counter]
     inc a
     ld [player_anim_counter], a
-    cp 8                ; Cambiar animación cada 8 frames aprox
+    cp 8                ; Cambiar animación cada 8 frames aprox ; MAGIC
     jr c, .no_change    ; Si no ha llegado a 8, salir sin cambiar
 
     ; Reiniciar contador
@@ -649,7 +664,7 @@ choose_stand_or_walk::
 ;; MODIFICA: A, HL
 player_set_walk_sprite::
     ld hl, component_sprite + SPRITE_OFFSET_TILE
-    ld [hl], $0A  ; Tile de Player_walk
+    ld [hl], $0A  ; Tile de Player_walk ; MAGIC
     ld a, 00 
     ld [player_stand_or_walk], a
     ret
@@ -661,7 +676,7 @@ player_set_walk_sprite::
 ;; MODIFICA: A, HL
 player_set_stand_sprite::
     ld hl, component_sprite + SPRITE_OFFSET_TILE
-    ld [hl], $06  ; Tile de Player_stand 
-    ld a, 01
+    ld [hl], $06  ; Tile de Player_stand  ; MAGIC
+    ld a, 01 ; MAGIC
     ld [player_stand_or_walk], a
     ret
