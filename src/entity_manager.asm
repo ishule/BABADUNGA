@@ -66,3 +66,18 @@ man_entity_locate:
 
 	ret
 
+; INPUT
+; a -> entity ID
+man_entity_delete::
+	call man_entity_locate
+	ld d, h
+	ld e, l
+
+	ld a, [num_entities_alive]
+	dec a
+	call man_entity_locate
+
+	ld b, ENTITY_SIZE
+	call memcpy_256
+
+	ret

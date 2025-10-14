@@ -30,12 +30,24 @@ bullet_update::
 	bit JOYPAD_A, a
 	jr z, exit
 
-	ld hl, $C005
-	ld a, [hl]
+	ld a, [$C005]
 	add 8
 	ld b, a
-	ld c, $88
-	xor a
+
+	ld a, [$C004]
+	ld c, a
+
+	ld a, [$C007]
+	bit 5, a
+	jr z, looking_right
+	looking_left: 
+		ld a, $01
+		jr call_shot
+
+	looking_right:
+		xor a
+
+	call_shot:
 	call shot_bullet
 
 
@@ -68,8 +80,44 @@ init_bullets::
 ;   bc -> orígen (píxeles X|Y)
 ;   a  -> dirección ($00:> | $01:< | $02:^ | $03:v)
 shot_bullet:
+	push af
 	call man_entity_alloc
-	
+	pop af
+
+
+	;; APPLY VELOCITY
+	inc h
+
+	cp 0
+	jr z, right_shot
+
+	cp 1
+	jr z, left_shot
+
+	cp 2
+	jr z, up_shot
+
+	down_shot:
+
+
+	right_shot:
+		inc l
+		ld [hl], $82
+		dec l
+		jr spawn_bullet
+
+	left_shot:
+		inc l
+		ld [hl], $02
+		dec l
+		jr spawn_bullet
+
+	up_shot:
+
+	spawn_bullet:
+	dec h
+	;; SPRITE 
+
 	ld [hl], c
 	inc hl
 
@@ -80,5 +128,8 @@ shot_bullet:
 	inc hl
 
 	ld [hl], $00
+
+	;ld a, $01
+	;call man_entity_delete
 
 	ret
