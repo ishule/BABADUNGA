@@ -10,6 +10,8 @@ main::
    ld b, 4 * $10
    call memcpy_256
    call turn_screen_off
+   
+   call InitDmaCopy
    call sys_sound_init
    call sys_sound_init_music
    ld hl,map1
