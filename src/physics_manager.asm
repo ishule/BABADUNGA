@@ -1,36 +1,49 @@
 INCLUDE "consts.inc"
 
 ; Physics Component structure
-;  size:    6
+;  size:    8
 ;  sprite H:   $C1
-;      byte 0:  POS          Y
-;      byte 1:  POS          X
+;      byte 0:  POS          Y (Q8.0, Unsigned)
+;      byte 1:  POS          X (Q8.0, Unsigned)
 ;      ...
 ;  start H:    $C2
-;      byte 0:  POS DECIMAL  Y
-;      byte 1:  POS DECIMAL  X
-;      byte 2:  VELOCITY     Y
-;      byte 3:  VELOCITY     X
+;      byte 0:  POS DECIMAL  Y (Q0.8, Unsigned)
+;      byte 1:  POS DECIMAL  X (Q0.8, Unsigned)
+;      byte 2:  VELOCITY     Y (Q5.3, C2)
+;      byte 3:  VELOCITY     X (Q5.3, C2)
 ;  continue H: $C3
-;      byte 4:  ACCELERATION Y
-;      byte 5:  ACCELERATION X
+;      byte 0:  FREE
+;      byte 1:  FREE
+;      byte 2:  ACCELERATION Y (Q5.3, C2)
+;      byte 3:  ACCELERATION X (Q5.3, C2)
 
 SECTION "Physics Manager", ROM0
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PUBLIC                                                         ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; ## Main function ##
+;
 ; Goes through each entity and aplies velocity
 ;  
-;  MODIFIES: c, hl
+;  MODIFIES: all
 compute_physics::
 	
 	; # COMPUTE ACCELERATION #
 	; foreach (entity in entities) {
 	;	 apply_acceleration(entity)
 	; }
-	ld hl, CMP_SPRITES_ADDRESS
+	ld hl, CMP_PHYSICS_1_ADDRESS
 	.acceleration_loop:
+        ; Apply acceleration
 		call apply_acceleration_to_entity
-		inc hl
+		
+        ; Go to next entity
+        inc l
 
+        ; Check last entity
 		ld bc, next_free_entity
 		ld a, [bc]
 		cp l
@@ -41,11 +54,15 @@ compute_physics::
 	; foreach (entity in entities) {
 	;	 apply_velocity(entity)
 	; }
-	ld hl, CMP_SPRITES_ADDRESS	
+	ld hl, CMP_PHYSICS_0_ADDRESS	
 	.velocity_loop:
+        ; Apply velocity
 		call apply_velocity_to_entity
-		inc hl
+		
+        ; Go to next entity
+        inc l
 
+        ; Check last entity
 		ld bc, next_free_entity
 		ld a, [bc]
 		cp l
@@ -55,425 +72,474 @@ compute_physics::
     ; # GROUND CHECK #
     ld d, $02 ;MAGIC
     ld e, $00 ;MAGIC
-	call check_ground_collision
+	;call check_ground_collision
 
 	ret
 
-; INPUT
-;  b  -> pos Y
-;  c  -> pos X
-;  hl -> entity start address
-change_entity_pos::
-    ; Y pos
-	ld [hl], b
-    ; Y pos (decimal)
-    inc h
-    ld [hl], $00
-    dec h
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; ## Changers ##
 
-    ; X pos
-	inc l
-	ld [hl], c
-    ; X pos (decimal)
-    inc h
-    ld [hl], $00
-    dec h
+position_changers:
+    ; INPUT
+    ;  b  -> p_Y
+    ;  c  -> p_X
+    ;  hl -> entity start address
+    ;
+    ; MODIFIES: nothing
+    change_entity_pos::
+        ld h, CMP_SPRITES_H
+        ; Y pos
+    	ld [hl], b
+        ; Y pos (decimal)
+        inc h
+        ld [hl], $00
+        dec h
 
-	ret
+        ; X pos
+    	inc l
+    	ld [hl], c
+        ; X pos (decimal)
+        inc h
+        ld [hl], $00
 
-; INPUT
-;  b  -> vel Y
-;  c  -> vel X
-;  hl -> entity start address
-change_entity_vel::
-	inc h
-	ld [hl], b
+        dec h
+        dec l
 
-	inc l
-	ld [hl], c
+    	ret
 
-	ret
+    ; INPUT
+    ;  b  -> p_Y
+    ;  hl -> entity start address
+    ;
+    ; MODIFIES: nothing
+    change_entity_pos_y::
+        ld h, CMP_SPRITES_H
+        ; Y pos
+        ld [hl], b
+        ; Y pos (decimal)
+        inc h
+        ld [hl], $00
+        dec h
 
-; INPUT
-;  b  -> acc Y
-;  c  -> acc X
-;  hl -> entity start address
-change_entity_acc::
-	inc h
-	inc hl
-	inc hl
-	ld [hl], b
-	inc hl
-	ld [hl], c
+        ret
 
-	ret
+    ; INPUT
+    ;  c  -> p_X
+    ;  hl -> entity start address
+    ;
+    ; MODIFIES: nothing
+    change_entity_pos_x::
+        ld h, CMP_SPRITES_H
+        ; X pos
+        inc l
+        ld [hl], c
+        ; X pos (decimal)
+        inc h
+        ld [hl], $00
 
-; INPUT
-;  b  -> pos Y
-;  c  -> pos X
-;  hl -> entity start address
-;  d  -> group size
-change_entity_group_pos:
-	call change_entity_pos
-	inc hl
-	inc hl
-	inc hl
+        dec h
+        dec l
 
-	ld a, 8
-	add c
-	ld c, a
+        ret
 
-	dec d
-	jr nz, change_entity_group_pos
+    ; INPUT
+    ;  b  -> pos Y
+    ;  c  -> pos X
+    ;  hl -> first entity start address
+    ;  d  -> group size
+    ;
+    ; MODIFIES: a, c, d, hl
+    change_entity_group_pos:
+        call change_entity_pos
+        inc hl
+        inc hl
+        inc hl
+        inc hl
 
-	ret
+        ; Apply X offset to next entity
+        ld a, SPRITE_WIDTH
+        add c
+        ld c, a
 
+        dec d
+        jr nz, change_entity_group_pos
 
-; INPUT:
-;  b  -> nueva pos Y
-;  hl -> entity start address
-;  d  -> group size
-change_entity_group_pos_y::
-.loop:
-    ld [hl], b      ; Cambiar solo Y
-    inc hl          ; Saltar a X
-    inc hl          ; Saltar X (NO modificar)
-    inc hl          ; Saltar padding
-    inc hl          ; Saltar padding
-    
-    dec d
-    jr nz, .loop
-    ret
+        ret
 
+    ; INPUT:
+    ;  b  -> nueva pos Y
+    ;  hl -> first entity start address
+    ;  d  -> group size
+    ;
+    ; MODIFIES: d, hl
+    change_entity_group_pos_y::
+        call change_entity_pos_y
+        inc hl
+        inc hl
+        inc hl
+        inc hl
 
+        dec d
+        jr nz, change_entity_group_pos_y
+        
+        ret
 
-; INPUT
-;  b  -> base pos Y
-;  c  -> base pos X
-;  hl -> entity start address (primer sprite del grupo)
-;
-; Usa change_entity_group_pos para colocar dos filas de 4 sprites (32x32 total)
-;
-; MODIFICA: A, B, C, D, HL
-change_entity_group_pos_32x32::
-    push bc                ; guardar X e Y originales
+    ; INPUT
+    ;  b  -> base pos Y
+    ;  c  -> base pos X
+    ;  hl -> first entity start address
+    ;
+    ; Usa change_entity_group_pos para colocar dos filas de 4 sprites (32x32 total)
+    ;
+    ; MODIFICA: A, B, C, D, HL
+    change_entity_group_pos_32x32::
+        push bc                ; guardar X e Y originales
 
-    ; === Fila superior ===
-    ld d, 4
-    call change_entity_group_pos
+        ; === Fila superior ===
+        ld d, 4                ; MAGIC (ancho de el sprite 32x32)
+        call change_entity_group_pos
+        pop bc                 ; restaurar X e Y originales
+        
+        ; === Fila inferior ===
+        ld a, b
+        add a, SPRITE_HEIGHT              
+        ld b, a
 
-    pop bc                 ; restaurar X e Y originales
-    push bc                ; volver a guardar para la siguiente fila
+        ld d, 4
+        call change_entity_group_pos
 
-    ; === Fila inferior ===
-    ld a, b
-    add a, 16              ; siguiente fila (altura 16)
-    ld b, a
-    ld d, 4
-    call change_entity_group_pos
-
-    pop bc
-    ret
-
-
-; INPUT:
-;  b  -> nueva pos Y base (suelo)
-;  hl -> entity start address (primer sprite del grupo)
-;
-; Cambia solo las Y de un grupo 32x32 (4 columnas x 2 filas),
-; procesando 2 sprites por llamada a change_entity_group_pos_y
-;
-; MODIFICA: A, B, D, HL
-change_entity_group_pos_y_32x32::
-    ; === Fila superior (Y - 16) ===
-    push bc
-    ld a, b
-    sub 32          ; Y de la fila superior
-    ld b, a
-
-    ; Primera mitad (sprites 0–1)
-    ld d, 2
-    call change_entity_group_pos_y
-
-    ; Segunda mitad (sprites 2–3)
-    ld d, 2
-    call change_entity_group_pos_y
-
-    pop bc
-    ; === Fila inferior (Y base) ===
-    ld a, b
-    sub 16
-    ld b, a
-
-    ; Primera mitad inferior (sprites 4–5)
-    ld d, 2
-    call change_entity_group_pos_y
-
-    ; Segunda mitad inferior (sprites 6–7)
-    ld d, 2
-    call change_entity_group_pos_y
-
-    ret
+        ret
 
 
+    ; INPUT:
+    ;  b  -> nueva pos Y base (suelo)
+    ;  hl -> entity start address (primer sprite del grupo)
+    ;
+    ; Cambia solo las Y de un grupo 32x32 (4 columnas x 2 filas),
+    ; procesando 2 sprites por llamada a change_entity_group_pos_y
+    ;
+    ; MODIFICA: A, B, D, HL
+    change_entity_group_pos_y_32x32::
+        push bc                ; guardar X e Y originales
 
-; INPUT
-;  b  -> vel Y
-;  c  -> vel X
-;  hl -> entity start address
-;  d  -> group size
-change_entity_group_vel:
-	call change_entity_vel
-	dec h
-	inc hl
-	inc hl
-	inc hl
+        ; === Fila superior ===
+        ld d, 4                ; MAGIC (ancho de el sprite 32x32)
+        call change_entity_group_pos_y
+        pop bc                 ; restaurar X e Y originales
+        
+        ; === Fila inferior ===
+        ld a, b
+        add a, SPRITE_HEIGHT              
+        ld b, a
 
-	dec d
-	jr nz, change_entity_group_vel
+        ld d, 4
+        call change_entity_group_pos_y
+        ret
 
-	ret
+velocity_changers:
+    ; INPUT
+    ;  b  -> v_Y
+    ;  c  -> v_X
+    ;  hl -> entity start address
+    ;
+    ; MODIFIES: hl(h+2, l+3)
+    change_entity_vel::
+    	ld h, CMP_PHYSICS_0_H
+        inc l
+        inc l
 
+    	ld [hl], b
+    	inc l
+    	ld [hl], c
 
-; INPUT:
-;  b  -> nueva velocidad Y
-;  hl -> entity start address
-;  d  -> group size
-;
-; Cambia solo VelY, NO toca VelX
-change_entity_group_vel_y::
-    inc h           ; Cambiar de $C0xx a $C1xx (página de física)
-    
-.loop:
-    ld [hl], b      ; Escribir VelY
-    inc hl          ; Saltar a VelX
-    inc hl          ; NO modificar VelX, saltar padding
-    inc hl
-    inc hl          ; Siguiente sprite
-    
-    dec d
-    jr nz, .loop
-    
-    dec h           ; Volver a página de posiciones
-    ret
+    	ret
 
+    change_entity_vel_y::
+        ld h, CMP_PHYSICS_0_H
+        inc l
+        inc l
 
-change_entity_group_vel_x::
-    inc h           ; Cambiar de $C0xx a $C1xx (página de física)
-    
-.loop:
-    inc hl
-    ld [hl], c     ; Escribir VelX
-    inc hl          
-    inc hl
-    inc hl          ; Siguiente sprite
-    
-    dec d
-    jr nz, .loop
-    
-    dec h           ; Volver a página de posiciones
-    ret
+        ld [hl], b    
 
-; INPUT
-;  b  -> acc Y
-;  c  -> acc X
-;  hl -> entity start address
-;  d  -> group size
-change_entity_group_acc:
-	call change_entity_acc
-	dec h
-	inc hl
+        ret
 
-	dec d
-	jr nz, change_entity_group_acc
+    change_entity_vel_x::
+        ld h, CMP_PHYSICS_0_H
+        inc l
+        inc l
+        inc l
 
-	ret
+        ld [hl], b    
 
+        ret
 
-; INPUT:
-;  b  -> nueva aceleración Y
-;  hl -> entity start address
-;  d  -> group size
-;
-; Cambia solo AccY, NO toca AccX
-change_entity_group_acc_y::
-    inc h           ; Cambiar a página de física
-    inc hl          ; Saltar VelY
-    inc hl          ; Saltar VelX, ahora en AccY
-    
-.loop:
-    ld [hl], b      ; Escribir AccY
-    inc hl          ; Saltar AccX
-    inc hl          ; Siguiente sprite - VelY
-    inc hl          ; VelX
-    inc hl          ; AccY del siguiente
-    
-    dec d
-    jr nz, .loop
-    
-    dec hl          ; Retroceder a posición inicial
-    dec hl
-    dec h           ; Volver a página de posiciones
-    ret
+    ; INPUT
+    ;  b  -> vel Y
+    ;  c  -> vel X
+    ;  hl -> entity start address
+    ;  d  -> group size
+    change_entity_group_vel:
+        call change_entity_vel
+        dec h
+        dec h
+        inc l
+
+        dec d
+        jr nz, change_entity_group_vel
+
+        ret
+
+    ; INPUT:
+    ;  b  -> nueva velocidad Y
+    ;  hl -> entity start address
+    ;  d  -> group size
+    ;
+    ; Cambia solo VelY, NO toca VelX
+    change_entity_group_vel_y::
+        call change_entity_vel_y
+        dec h
+        dec h
+        inc l
+        inc l
+
+        dec d
+        jr nz, change_entity_group_vel_y
+        
+        ret
 
 
+    change_entity_group_vel_x::
+        call change_entity_vel_x
+        dec h
+        dec h
+        inc l
+
+        dec d
+        jr nz, change_entity_group_vel_x
+        ret
+
+acceleration_changers:
+    ; INPUT
+    ;  b  -> a_Y
+    ;  c  -> a_X
+    ;  hl -> entity start address
+    change_entity_acc::
+    	ld h, CMP_PHYSICS_1_H
+        inc l
+        inc l
+
+    	ld [hl], b
+    	inc l
+    	ld [hl], c
+
+    	ret
+
+    change_entity_acc_y::
+        ld h, CMP_PHYSICS_1_H
+        inc l
+        inc l
+
+        ld [hl], b
+
+        ret
+
+    ; INPUT
+    ;  b  -> a_Y
+    ;  c  -> a_X
+    ;  hl -> entity start address
+    ;  d  -> group size
+    change_entity_group_acc:
+        call change_entity_acc
+        dec h
+        dec h
+        dec h
+        inc l
+
+        dec d
+        jr nz, change_entity_group_acc
+
+        ret
 
 
-;; ## UTILS ##
+    ; INPUT:
+    ;  b  -> nueva aceleración Y
+    ;  hl -> entity start address
+    ;  d  -> group size
+    ;
+    ; Cambia solo A_Y, NO toca A_X
+    change_entity_group_acc_y::
+        call change_entity_acc_y
+        dec h
+        dec h
+        dec h
+        inc l
+        inc l
 
+        dec d
+        jr nz, change_entity_group_acc
+        ret
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRIVATE UTILS                                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; # VELOCITY UTILS #
-; Applies velocity to individual entity
-; 
-;  INPNUT
-;   hl -> Entity start address (Y POS)
+
+;  INPUT
+;   hl -> Entity physics_0 start address ($C2--)
 ;
-;  MODIFIES:  
+;  MODIFIES: HL
 apply_velocity_to_entity:
-	call add_velocity_to_axis ; Y axis
-	inc hl
-	call add_velocity_to_axis ; X axis
-	inc hl
-	inc hl
-
-	ret
-
-; INPUT
-; HL -> POS
-;
-; En función del bit 7 de la velocidad, es positiva(1) o negativa(0)
-;
-; MODIFIES: a, b
-add_velocity_to_axis:
-	push hl
-	ld a, [hl]  ;; read pos
-	inc h
-
-	ld b, [hl] ;; read vel
-	
-	bit 7, b
-	jr z, sub_pos
-
-	add_pos:
-		res 7, b
-		call normalize_velocity
-		add b
-		jr save_new_pos
-	
-	sub_pos:
-        res 7, b
-		sub b
-		call normalize_velocity
-
-	save_new_pos:
-	dec h
-	ld [hl], a  ;; save new pos
-	pop hl
-	ret
-
-; INPUT
-;   b -> velocity (desnormalizada)
-; OUTPUT
-;   b -> velocity (normalizada)
-; USES
-;   c, d
-normalize_velocity:
-    push af                ; guardamos A (posición actual)
     
-    ;; TODO: Normalizar la velocidad para poder poner vellocidades más pequeñas
+    ; Go to v_Y
+    inc l
+    inc l
 
-    pop af                 ; restauramos el valor original de A (posición)
-    ret
-
-
-; # ACCELERATION UTILS #
-; INPUT 
-; hl -> entity start address (Y POS)
-apply_acceleration_to_entity:
+	call apply_velocity_to_axis ; Y axis
+	
+    ; Go to axis X
     inc h
-    call add_acceleration_to_axis  ; ← Misma función para ambos
-    inc hl
-    call add_acceleration_to_axis  ; ← Misma función para ambos
-    inc hl 
-    inc hl 
+    ld de, CMP_PHYSICS_BYTE_V_X
+    add hl, de
+
+	call apply_velocity_to_axis ; X axis
+
+    inc h
+    ld de, CMP_PHYSICS_BYTE_V_X - 1
+    add hl, de
+
+	ret
+
+; INPUT
+;  HL -> v_[AXIS]
+;
+; MODIFIES: a, bc, de, hl (acaba en h-1 y l-3 )
+apply_velocity_to_axis:
+	push hl
+
+    call align_v_with_pos
+
+    ; ** Actualizar posición **
+    ; Carga de posición (16-bits, Q8.8, Unsigned) en HL
+    dec l
+    dec l
+    ld c, [hl]
+
     dec h
-    ret
+    ld b, [hl]
 
+    ld h, b
+    ld l, c
 
-add_acceleration_to_axis:
-    push hl
-    ld a, [hl+]     ; Leer velocidad
-    inc l           ; Saltar padding
-    ld b, [hl]      ; Leer aceleración
-    
-    bit 7, b
-    jr z, .sub_vel
-    
-    .add_vel:
-    ; Aceleración POSITIVA
-    res 7, b
-    ld c, a
-    
-    bit 7, c
-    jr nz, .vel_positive
-    
-    ; Vel- + Acc+: Frenar (restar de negativo)
-    sub a, b
-    jr nc, .still_negative
-    
-    ; Cruzó a positivo
-    cpl
-    inc a
-    set 7, a
-    jr .save_new_vel
-    
-    .still_negative:
-    jr .save_new_vel
-    
-    .vel_positive:
-    ; Vel+ + Acc+: Acelerar más
-    res 7, a
-    add a, b
-    set 7, a
-    jr .save_new_vel
-    
-    .sub_vel:
-    ; Aceleración NEGATIVA
-    ld c, a
-    
-    bit 7, c
-    jr z, .vel_negative
-    
-    ; Vel+ + Acc-: Frenar (restar de positivo)
-    res 7, a
-    sub a, b
-    jr c, .now_negative
-    
-    set 7, a
-    jr .save_new_vel
-    
-    .now_negative:
-    cpl
-    inc a
-    jr .save_new_vel
-    
-    .vel_negative:
-    ; Vel- + Acc-: Acelerar más negativo
-    add a, b
-    
-    .save_new_vel:
-    dec hl
-    dec hl
-    ld [hl], a
+    ; Suma la velocidad
+    add hl, de
+    ld d, h
+    ld e, l
+
     pop hl
 
+    ; Guardar la parte decimal
+    dec l
+    dec l
+    ld [hl], e
+
+    ; Guardar la parte entera
+    dec h
+    ld [hl], d
+
+	ret
+
+; INPUT
+;  HL -> v_[AXIS]
+;
+; RETURN
+;  DE -> v_[AXIS]_aligned
+;
+; MODIFIES: a, de
+align_v_with_pos:
+    ; ** Carga v_X para la suma **
+    ld a, [hl]
+    ld e, a    ; Byte bajo de DE = v_X
+    ld d, $00  ; Byte alto de DE = $00
+
+    ; ** Manejo del signo **
+    ; El bit 7 es el signo. Si es 1 necesitamos rellenar D con $FF
+    bit 7, e
+    jr z, .no_sign_extend
+
+    ld d, $FF
+
+    .no_sign_extend:
+
+    ; ** Alineación: Multiplicar por 32 (Shift Left 5)
+    
+    ; Shift 1
+    sla e
+    rl  d
+
+    ; Shift 2
+    sla e
+    rl  d
+
+    ; Shift 3
+    sla e
+    rl  d
+
+    ; Shift 4
+    sla e
+    rl  d
+
+    ; Shift 5
+    sla e
+    rl  d
+
+    ; Resultado: Ahora en DE está V << 5 (Q8.8 alineado)
+
     ret
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; # ACCELERATION UTILS #
 
+; INPUT 
+; hl -> Entity physics_0 start address ($C3--)
+;
+; MODIFIES: hl
+apply_acceleration_to_entity:
+    
+    ; Go to a_Y
+    inc l
+    inc l
 
+    call add_acceleration_to_axis
+    call add_acceleration_to_axis
 
-;; INPUT:
-;;  D: Número de sprites de la entidad
-;;  E: Posición de inicio de la entidad
+    ret
+
+; INPUT
+;  HL -> a_[AXIS]
+;
+; MODIFIES: L(++), a
+add_acceleration_to_axis:
+    
+    ld a, [hl]   ; Read a_[AXIS]
+    
+    ; Go to v_[AXIS]
+    dec h
+    add a, [hl]  ; a <- v_[AXIS] + a_[AXIS]
+
+    ld [hl+], a
+    inc h
+
+    ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; # GROUND CHECK UTILS
+
+;; INPUT
+;;  D -> Número de sprites de la entidad
+;;  E -> Posición de inicio de la entidad
 ;;
 check_ground_collision::
 
@@ -487,47 +553,47 @@ check_ground_collision::
     jr z, .is32
     jr nz, .isnot32
 
-.is32:
-    ; Leer posición Y
-    ld a, e
-    call man_entity_locate 
-    ld a, [hl]  ; PosY sprite 0
-    add 16  ; Al ser un sprite de 32x32, tengo que compararlo con el sprite de abajo (+16)
-    
-    ; Comparar con suelo
-    cp GROUND_Y
-    jr c, .not_on_ground
+    .is32:
+        ; Leer posición Y
+        ld a, e
+        call man_entity_locate 
+        ld a, [hl]  ; PosY sprite 0
+        add 16  ; Al ser un sprite de 32x32, tengo que compararlo con el sprite de abajo (+16)
+        
+        ; Comparar con suelo
+        cp GROUND_Y
+        jr c, .not_on_ground
 
-    call change_entity_group_pos_y_32x32
-    ld a, 1 
-    ld [gorilla_jumping_flag], a
-    jr .reset_physics 
+        call change_entity_group_pos_y_32x32
+        ld a, 1 
+        ld [gorilla_jumping_flag], a
+        jr .reset_physics 
 
-.isnot32:
-    ; Leer posición Y
-    ld a, e
-    call man_entity_locate 
-    ld a, [hl]  ; PosY sprite 0
-    
-    ; Comparar con suelo
-    cp GROUND_Y
-    jr c, .not_on_ground
+    .isnot32:
+        ; Leer posición Y
+        ld a, e
+        call man_entity_locate 
+        ld a, [hl]  ; PosY sprite 0
+        
+        ; Comparar con suelo
+        cp GROUND_Y
+        jr c, .not_on_ground
 
-    call change_entity_group_pos_y
+        call change_entity_group_pos_y
 
-.reset_physics:
-    ; Resetear física Y
-    ld a, e
-    call man_entity_locate 
+    .reset_physics:
+        ; Resetear física Y
+        ld a, e
+        call man_entity_locate 
 
-    ld b, $00 
-    call change_entity_group_vel_y
+        ld b, $00 
+        call change_entity_group_vel_y
 
-    ld b, $00
-    call change_entity_group_acc_y
+        ld b, $00
+        call change_entity_group_acc_y
 
-    ld a, 1 
-    ld [player_on_ground_flag], a
+        ld a, 1 
+        ld [player_on_ground_flag], a
     
     ret
 

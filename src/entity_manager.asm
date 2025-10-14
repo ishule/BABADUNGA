@@ -65,7 +65,7 @@ man_entity_alloc:
 ; RETURN
 ;  hl -> entity_start_address
 man_entity_locate:
-	ld hl, CMP_SPRITES_ADDRESS
+	ld hl, CMP_START_ADDRESS
 	ld c, $03 ; MAGIC
 	iter:
 		add a
@@ -87,7 +87,7 @@ man_entity_delete::
 	dec a
 	call man_entity_locate
 
-	ld b, ENTITY_SIZE
+	ld b, CMP_SIZE
 	call memcpy_256
 
 	ret

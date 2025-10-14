@@ -37,7 +37,7 @@ main::
    ;ld a, $00
    ;call man_entity_locate
 
-   ;ld bc, $0081
+   ;ld bc, $0001
    ;ld d, $02
    ;call change_entity_group_acc
 

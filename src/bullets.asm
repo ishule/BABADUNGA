@@ -79,14 +79,29 @@ init_bullets::
 ; INPUT
 ;   bc -> orígen (píxeles X|Y)
 ;   a  -> dirección ($00:> | $01:< | $02:^ | $03:v)
+;
+; MODIFIED: hl
 shot_bullet:
 	push af
 	call man_entity_alloc
 	pop af
 
+	;; CMP_SPRITE
+	ld [hl], c
+	inc hl
+
+	ld [hl], b
+	inc hl
+
+	ld [hl], $20 ; MAGIC
+	inc hl
+
+	ld [hl], $00 ; MAGIC
+
 
 	;; APPLY VELOCITY
 	inc h
+	dec l
 
 	cp 0 ; MAGIC
 	jr z, right_shot
@@ -102,30 +117,17 @@ shot_bullet:
 
 	right_shot:
 		inc l
-		ld [hl], $81 ; MAGIC
+		ld [hl], $10 ; MAGIC
 		dec l
 		jr spawn_bullet
 
 	left_shot:
 		inc l
-		ld [hl], $01 ; MAGIC
+		ld [hl], $F8 ; MAGIC
 		dec l
 		jr spawn_bullet
 
 	up_shot:
 
 	spawn_bullet:
-	dec h
-
-	ld [hl], c
-	inc hl
-
-	ld [hl], b
-	inc hl
-
-	ld [hl], $20 ; MAGIC
-	inc hl
-
-	ld [hl], $00 ; MAGIC
-
 	ret
