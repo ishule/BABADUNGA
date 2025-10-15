@@ -49,11 +49,12 @@ main::
 
       call joypad_read
       call process_input
-      call sys_gorilla_movement
+      ;call sys_gorilla_movement
 
       
       call compute_physics
       call bullet_update
+      ;call sys_collision_check_all
       jr game_loop 
 
    di

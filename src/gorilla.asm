@@ -155,9 +155,25 @@ init_gorilla_entity::
 gorilla_init_physics:: 
 	ld a, $01
 	call man_entity_locate 
+	push hl
 	
 	ld b, GROUND_Y - 16		; Y = suelo menos altura del gorila (32 píxeles)
-	ld c, $80				; X = 60 (bien visible, no en borde)
+	ld c, $40				
 	call change_entity_group_pos_32x32
+
+	;; ASIGNAR WIDTH Y HEIGHT
+	ld b, $08
+	pop hl
+	ld h, CMP_PHYSICS_1_H
+	.loop:
+   	ld a, GORILLA_HEIGHT 
+	ld [hl+], a 
+
+	ld a, GORILLA_WIDTH 
+	ld [hl+], a
+	inc l
+	inc l
+	dec b 
+	jr nz, .loop
 	
 	ret

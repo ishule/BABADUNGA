@@ -119,6 +119,7 @@ player_init_physics::
 
 	ld a, $00
 	call man_entity_locate 
+	push hl
 
 	ld b, GROUND_Y				; Y inicial
 	ld c, PLAYER_INITIAL_POS_X	; X inicial
@@ -127,13 +128,20 @@ player_init_physics::
    	ld d, $02
    	call change_entity_group_pos
 
-   	ld h, CMP_PHYSICS_1_H
-   	ld l, $00
+	;; ASIGNAR WIDTH Y HEIGHT
+	ld b, $02
+	pop hl
+	ld h, CMP_PHYSICS_1_H
+	.loop:
    	ld a, PLAYER_HEIGHT 
 	ld [hl+], a 
 
 	ld a, PLAYER_WIDTH 
-	ld [hl], a
+	ld [hl+], a
+	inc l
+	inc l 
+	dec b
+	jr nz, .loop
 
    	
 
