@@ -38,10 +38,7 @@ compute_physics::
 	ld hl, CMP_PHYSICS_1_ADDRESS
 	.acceleration_loop:
         ; Apply acceleration
-		call apply_acceleration_to_entity
-		
-        ; Go to next entity
-        inc l
+		call apply_acceleration_to_entity ; hl -> recibe $C3[entity_start] y devuelve $C3[next_entity_start]
 
         ; Check last entity
 		ld bc, next_free_entity
@@ -57,10 +54,7 @@ compute_physics::
 	ld hl, CMP_PHYSICS_0_ADDRESS	
 	.velocity_loop:
         ; Apply velocity
-		call apply_velocity_to_entity
-		
-        ; Go to next entity
-        inc l
+		call apply_velocity_to_entity ; hl -> recibe $C2[entity_start] y devuelve $C2[next_entity_start]
 
         ; Check last entity
 		ld bc, next_free_entity
@@ -269,7 +263,7 @@ velocity_changers:
         inc l
         inc l
 
-        ld [hl], b    
+        ld [hl], c 
 
         ret
 
@@ -388,26 +382,26 @@ acceleration_changers:
 ; # VELOCITY UTILS #
 
 ;  INPUT
-;   hl -> Entity physics_0 start address ($C2--)
+;   hl -> Entity physics_0 start address ($C2[entity_start])
 ;
-;  MODIFIES: HL
+;  MODIFIES: HL($C2[next_entity_start])
 apply_velocity_to_entity:
     
     ; Go to v_Y
     inc l
     inc l
 
-	call apply_velocity_to_axis ; Y axis
+	call apply_velocity_to_axis ; Y axis (hl -> recibe v_Y y devuelve h-1 l-2)
 	
     ; Go to axis X
     inc h
     ld de, CMP_PHYSICS_BYTE_V_X
     add hl, de
 
-	call apply_velocity_to_axis ; X axis
+	call apply_velocity_to_axis ; X axis (hl -> recibe v_X y devuelve h-1 l-2)
 
     inc h
-    ld de, CMP_PHYSICS_BYTE_V_X - 1
+    ld de, CMP_PHYSICS_BYTE_V_X
     add hl, de
 
 	ret
@@ -415,7 +409,7 @@ apply_velocity_to_entity:
 ; INPUT
 ;  HL -> v_[AXIS]
 ;
-; MODIFIES: a, bc, de, hl (acaba en h-1 y l-3 )
+; MODIFIES: a, bc, de, hl (acaba en h-1 y l-2)
 apply_velocity_to_axis:
 	push hl
 
@@ -503,9 +497,9 @@ align_v_with_pos:
 ; # ACCELERATION UTILS #
 
 ; INPUT 
-; hl -> Entity physics_0 start address ($C3--)
+; hl -> Entity physics_1 start address ($C3[entity_start])
 ;
-; MODIFIES: hl
+; MODIFIES: hl:($C3[next_entity_start])
 apply_acceleration_to_entity:
     
     ; Go to a_Y
@@ -520,7 +514,7 @@ apply_acceleration_to_entity:
 ; INPUT
 ;  HL -> a_[AXIS]
 ;
-; MODIFIES: L(++), a
+; MODIFIES: L(++), A
 add_acceleration_to_axis:
     
     ld a, [hl]   ; Read a_[AXIS]
