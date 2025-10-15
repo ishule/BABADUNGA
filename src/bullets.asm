@@ -99,9 +99,23 @@ shot_bullet:
 	ld [hl], $00 ; MAGIC
 
 
-	;; APPLY VELOCITY
+
+	;; ADD WIDTH AND HEIGHT
 	inc h
-	dec l
+	inc h
+	dec l 
+	dec l 
+	dec l  
+
+	ld a, BULLET_HEIGHT 
+	ld [hl+], a 
+
+	ld a, BULLET_WIDTH 
+	ld [hl+], a
+
+
+	;; APPLY VELOCITY
+	dec h
 
 	cp 0 ; MAGIC
 	jr z, right_shot
@@ -111,6 +125,9 @@ shot_bullet:
 
 	cp 2 ; MAGIC
 	jr z, up_shot
+
+
+
 
 	down_shot:
 

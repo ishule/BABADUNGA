@@ -42,9 +42,34 @@ DEF NUM_ENTITIES = 40
 DEF CMP_SIZE  = 4
 DEF CMP_TOTALBYTES = NUM_ENTITIES * CMP_SIZE
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Info Component
 DEF CMP_INFO_H = $C0
 
+;; Structure Info Component
+DEF E_ACTIVE 	= 0
+DEF E_TYPE 		= 1
+DEF E_FLAGS 	= 2
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Entity Types
+DEF TYPE_PLAYER			= 0 
+DEF TYPE_BOSS			= 1
+DEF TYPE_MINI_BOSS		= 2
+DEF TYPE_BULLET_PLAYER 	= 3
+DEF TYPE_BULLET_BOSS 	= 4 
+DEF TYPE_POWERUP		= 5
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Entity Flags
+DEF FLAG_CAN_TAKE_DAMAGE 	= %00000001
+DEF FLAG_CAN_DEAL_DAMAGE	= %00000010
+DEF FLAG_DESTROY_ON_HIT 	= %00000100
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sprites Component
 DEF CMP_SPRITES_H = $C1
 DEF CMP_SPRITES_ADDRESS = $C100
@@ -64,7 +89,7 @@ DEF SPRITE_ATTR_NO_FLIP	equ %10000000  ; Sin flip
 DEF SPRITE_WIDTH equ 8
 DEF SPRITE_HEIGHT equ 16
 
-;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Physics Component
 DEF CMP_PHYSICS_0_H = $C2
 DEF CMP_PHYSICS_0_ADDRESS = $C200
@@ -78,8 +103,8 @@ DEF CMP_PHYSICS_BYTE_V_X  equ 3
 DEF CMP_PHYSICS_1_H = $C3
 DEF CMP_PHYSICS_1_ADDRESS = $C300
 
-DEF CMP_PHYSICS_BYTE_FREE_0 equ 0
-DEF CMP_PHYSICS_BYTE_FREE_1 equ 1
+DEF CMP_PHYSICS_BYTE_HEIGHT equ 0
+DEF CMP_PHYSICS_BYTE_WIDTH  equ 1
 DEF CMP_PHYSICS_BYTE_A_Y    equ 2
 DEF CMP_PHYSICS_BYTE_A_X    equ 3
 
@@ -93,10 +118,22 @@ DEF PLAYER_GRAVITY			equ %00001000 	; +1
 
 DEF PLAYER_INITIAL_POS_X  	equ $13 ; Posición inicial del jugador en X
 
+DEF PLAYER_HEIGHT	equ 16
+DEF PLAYER_WIDTH	equ 16
+
 ; Física del gorila (Q5.3, C2)
 DEF GORILLA_JUMP_SPEED 		equ %00011000   ; -3
 DEF GORILLA_SPEED   		equ %00010000	; +2 
 DEF GORILLA_SPEED_NEGATIVE  equ %11110000	; -2 
 DEF GORILLA_GRAVITY     	equ %00001000   ; +1
 
+DEF GORILLA_HEIGHT 		equ 32
+DEF GORILLA_WIDTH		equ 32
+
 DEF GROUND_Y equ 124	; Altura del suelo
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Bullets
+DEF BULLET_HEIGHT 	equ 8
+DEF BULLET_WIDTH  	equ 8

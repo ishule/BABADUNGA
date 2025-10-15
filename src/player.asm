@@ -127,5 +127,15 @@ player_init_physics::
    	ld d, $02
    	call change_entity_group_pos
 
+   	ld h, CMP_PHYSICS_1_H
+   	ld l, $00
+   	ld a, PLAYER_HEIGHT 
+	ld [hl+], a 
+
+	ld a, PLAYER_WIDTH 
+	ld [hl], a
+
+   	
+
 	ret 
  

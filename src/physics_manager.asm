@@ -12,8 +12,8 @@ INCLUDE "consts.inc"
 ;      byte 2:  VELOCITY     Y (Q5.3, C2)
 ;      byte 3:  VELOCITY     X (Q5.3, C2)
 ;  continue H: $C3
-;      byte 0:  FREE
-;      byte 1:  FREE
+;      byte 0:  HEIGHT
+;      byte 1:  WIDTH
 ;      byte 2:  ACCELERATION Y (Q5.3, C2)
 ;      byte 3:  ACCELERATION X (Q5.3, C2)
 
