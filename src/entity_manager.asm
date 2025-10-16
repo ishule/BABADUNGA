@@ -120,6 +120,50 @@ man_entity_locate_v2:
     ret
 
 
+;; Busca la primera entidad del tipo dado
+;; INPUT:
+;;    A = tipo buscado
+;; OUTPUT:
+;;    HL = dirección de la entidad (o 0 si no existe)
+;; FLAGS:
+;;    CARRY = 1 si no encontró nada
+;; MODIFICA: AF, BC, DE, HL
+man_entity_locate_first_type::
+    ld c, a                   ; guardar tipo buscado en C
+
+    ld a, [num_entities_alive]
+    or a
+    jr z, .not_found          ; si no hay entidades, salir
+
+    ld b, a                   ; contador = número de entidades
+    xor a                     ; ID = 0
+
+.loop:
+    push af                   ; guardar ID actual
+    call man_entity_locate_v2 ; HL = dirección entidad(ID)
+    inc hl                    ; HL = dirección del campo TYPE
+    ld a, [hl]                ; A = tipo de la entidad
+    cp c                      ; comparar con tipo buscado
+    jr z, .found              ; si coincide, salir
+
+    pop af                    ; recuperar ID
+    inc a                     ; siguiente ID
+    dec b
+    jr nz, .loop              ; mientras queden entidades
+
+.not_found:
+    ld hl, $0000
+    scf                       ; Carry = 1 → no encontrado
+    ret
+
+.found:
+    pop af                    ; limpiar pila
+    call man_entity_locate_v2 ; HL = dirección exacta entidad
+    or a                      ; clear carry (carry=0 → éxito)
+    ret
+
+
+
 ; INPUT
 ;   A = tipo buscado
 ;   DE = puntero a callback

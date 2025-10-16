@@ -124,8 +124,8 @@ DEF PLAYER_GRAVITY			equ %00001000 	; +1
 
 DEF PLAYER_INITIAL_POS_X  	equ $13 ; Posición inicial del jugador en X
 
-DEF PLAYER_HEIGHT	equ 8
-DEF PLAYER_WIDTH	equ 8
+DEF PLAYER_HEIGHT	equ 6
+DEF PLAYER_WIDTH	equ 6
 
 ; Física del gorila (Q5.3, C2)
 DEF GORILLA_JUMP_SPEED 		equ %00011000   ; -3
@@ -133,7 +133,7 @@ DEF GORILLA_SPEED   		equ %00010000	; +2
 DEF GORILLA_SPEED_NEGATIVE  equ %11110000	; -2 
 DEF GORILLA_GRAVITY     	equ %00001000   ; +1
 
-DEF GORILLA_HEIGHT 		equ 16
+DEF GORILLA_HEIGHT 		equ 32
 DEF GORILLA_WIDTH		equ 16
 
 DEF GROUND_Y equ 124	; Altura del suelo
@@ -141,5 +141,5 @@ DEF GROUND_Y equ 124	; Altura del suelo
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bullets
-DEF BULLET_HEIGHT 	equ 2
-DEF BULLET_WIDTH  	equ 8
+DEF BULLET_HEIGHT 	equ 4
+DEF BULLET_WIDTH  	equ 4

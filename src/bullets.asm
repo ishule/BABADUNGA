@@ -85,6 +85,7 @@ shot_bullet:
 	push af
 	call man_entity_alloc
 	pop af
+	push af
 
 	;; Bullet INFO
 	push hl
@@ -131,6 +132,7 @@ shot_bullet:
 
 	;; APPLY VELOCITY
 	dec h
+	pop af
 
 	cp 0 ; MAGIC
 	jr z, right_shot

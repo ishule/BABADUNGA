@@ -15,6 +15,7 @@ SECTION "Collision System Code", ROM0
 sys_collision_check_all::
 	call sys_collision_check_player_vs_boss
 	call sys_collision_check_player_bullets_vs_boss
+	call sys_collision_check_player_bullets_vs_player
 	ret
 
 
@@ -173,11 +174,27 @@ sys_collision_check_AABB::
 
 
 sys_collision_check_player_vs_boss::
-	ld hl, $C000
-	ld de, $C008
+	ld hl, CMP_START_ADDRESS 	; Player en HL
+	push hl
+
+
+	ld a, TYPE_BOSS
+	call man_entity_locate_first_type 	; Boss en HL
+
+	ld d, h 
+	ld e, l 
+	pop hl
+
 	call sys_collision_check_AABB
 	ret c 
 
+;;====================================================
+	;; AQUÍ YA SABEMOS QUE HAY COLISIÓN
+	;; PROVISIONAL!!
+	;; El comportamiento que queremos es que el jugador pierda vida
+;;====================================================	
+
+	;; Eliminar
 	ld a, $00 
 	ld[$C100], a 
 	ld[$C101], a 
@@ -185,23 +202,44 @@ sys_collision_check_player_vs_boss::
 	ld [$C104], a 
 	ld [$C105], a
 
+	ld [CMP_START_ADDRESS], a  	; Marcar como inactiva cuando el jugador pierda todas las vidas
+	;call man_entity_delete 	; Activar cuando el jugador pierda todas las vidas
+
+
+	;; TODO: EL JUGADOR PIERDE VIDA
+
+    ; Código para hacer que el jugador parpadee + invencibilidad al jugador
+    ;ld a, $00
+    ;ld [blink_entity], a
+    ;ld a, 30
+    ;ld [blink_counter], a
+
 	ret
 
 
 
 sys_collision_check_player_bullets_vs_boss::
     ld a, 3
-    ld de, sys_collision_bullet_callback
+    ld de, sys_collision_bullet_boss_callback
     call man_entity_foreach_type
     ret
 
-sys_collision_bullet_callback:
+sys_collision_bullet_boss_callback:
     ; INPUT: A = ID de la bala, DE = dirección de la bala
     push de
     
     ld h, d
     ld l, e             ; HL = dirección de la bala
-    ld de, $C008        ; Boss
+    push hl
+
+
+	ld a, TYPE_BOSS
+	call man_entity_locate_first_type 	; Boss en HL
+
+	ld d, h 
+	ld e, l 
+	pop hl
+
     push hl
     call sys_collision_check_AABB
     
@@ -209,24 +247,88 @@ sys_collision_bullet_callback:
     pop de              ; Recuperar dirección bala
     ret c               ; No colisión
     
-    ; Colisión detectada
-    ;call man_entity_delete
-    
+
+;;====================================================
+	;; AQUÍ YA SABEMOS QUE HAY COLISIÓN
+	;; PROVISIONAL!!
+	;; El comportamiento que queremos es que el boss pierda vida y la bala desaparezca
+;;====================================================	
     ld [hl], 0  	; Marcar como inactiva
+    ;call man_entity_delete 	; Aplicar cuando funcione la función
+
+
+    ;; Eliminar
     inc h
     ld a, $00
     ld [hl+], a 
     ld [hl], a
 
-    ld b, 8
+    ;;TODO: EL BOSS PIERDE VIDA
 
-    .loop:
-    ld a, $02
-    ld [blink_entity], a
-    ld a, 30
-    ld [blink_counter], a
-    inc a 
-    dec b 
-    jr nz, .loop
+
+    ; Código para hacer que el boss parpadee + invencibilidad al boss
+    ;ld a, $02
+    ;ld [blink_entity], a
+    ;ld a, 30
+    ;ld [blink_counter], a
+
+    
+    ret
+
+
+
+
+sys_collision_check_player_bullets_vs_player::
+    ld a, 3
+    ld de, sys_collision_bullet_player_callback
+    call man_entity_foreach_type
+    ret
+
+sys_collision_bullet_player_callback:
+    ; INPUT: A = ID de la bala, DE = dirección de la bala
+    push de
+    
+    ld h, d
+    ld l, e             ; HL = dirección de la bala
+    push hl
+
+
+	ld a, TYPE_PLAYER
+	call man_entity_locate_first_type 	; Boss en HL
+
+	ld d, h 
+	ld e, l 
+	pop hl
+
+    push hl
+    call sys_collision_check_AABB
+    
+    pop hl
+    pop de              ; Recuperar dirección bala
+    ret c               ; No colisión
+    
+;;====================================================
+	;; AQUÍ YA SABEMOS QUE HAY COLISIÓN
+	;; PROVISIONAL!!
+	;; El comportamiento que queremos es que el jugador pierda vida y la bala desaparezca
+;;====================================================
+    ld [hl], 0  	; Marcar como inactiva
+    ;call man_entity_delete 	; Activar cuando vaya la función
+
+    ;; Eliminar 
+    inc h
+    ld a, $00
+    ld [hl+], a 
+    ld [hl], a
+
+    ;;TODO: EL BOSS PIERDE VIDA
+
+
+    ; Código para hacer que el boss parpadee + invencibilidad al boss
+    ;ld a, $02
+    ;ld [blink_entity], a
+    ;ld a, 30
+    ;ld [blink_counter], a
+
     
     ret
