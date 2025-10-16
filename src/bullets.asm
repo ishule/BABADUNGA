@@ -86,6 +86,21 @@ shot_bullet:
 	call man_entity_alloc
 	pop af
 
+	;; Bullet INFO
+	push hl
+	dec h 
+	ld a, BYTE_ACTIVE
+	ld [hl+], a 		; Active = 1 
+
+	ld a, TYPE_BULLET 	; Bullet = 3 
+	ld [hl+], a
+
+	ld a, [hl]                     ; carga el byte actual
+    or FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT
+    ld [hl], a                     ; guarda el nuevo valor
+
+	pop hl
+
 	;; CMP_SPRITE
 	ld [hl], c
 	inc hl

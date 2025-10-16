@@ -118,7 +118,34 @@ init_player_entity::
 player_init_physics:: 
 
 	ld a, $00
-	call man_entity_locate 
+	call man_entity_locate
+
+	push hl
+
+	;; Info Player
+	ld a, BYTE_ACTIVE
+	ld [hl+], a 		; Active = 1
+
+	ld a, TYPE_PLAYER
+	ld [hl+], a 	 	; Type = 0
+
+	ld a, [hl]                     ; carga el byte actual
+    or FLAG_CAN_TAKE_DAMAGE
+    ld [hl+], a                     ; guarda el nuevo valor 
+
+    inc l 
+    ld a, BYTE_ACTIVE
+	ld [hl+], a 		; Active = 1
+
+	ld a, TYPE_PLAYER
+	ld [hl+], a 	 	; Type = 0
+
+	ld a, [hl]                     ; carga el byte actual
+    or FLAG_CAN_TAKE_DAMAGE
+    ld [hl+], a                     ; guarda el nuevo valor 
+
+
+	pop hl 
 	push hl
 
 	ld b, GROUND_Y				; Y inicial

@@ -51,14 +51,20 @@ DEF E_ACTIVE 	= 0
 DEF E_TYPE 		= 1
 DEF E_FLAGS 	= 2
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Avtive / Non active
+DEF BYTE_ACTIVE 		= 1 
+DEF BYTE_NON_ACTIVE 	= 0
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entity Types
 DEF TYPE_PLAYER			= 0 
 DEF TYPE_BOSS			= 1
 DEF TYPE_MINI_BOSS		= 2
-DEF TYPE_BULLET_PLAYER 	= 3
-DEF TYPE_BULLET_BOSS 	= 4 
-DEF TYPE_POWERUP		= 5
+DEF TYPE_BULLET			= 3
+DEF TYPE_POWERUP		= 4
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -118,8 +124,8 @@ DEF PLAYER_GRAVITY			equ %00001000 	; +1
 
 DEF PLAYER_INITIAL_POS_X  	equ $13 ; Posición inicial del jugador en X
 
-DEF PLAYER_HEIGHT	equ 16
-DEF PLAYER_WIDTH	equ 16
+DEF PLAYER_HEIGHT	equ 8
+DEF PLAYER_WIDTH	equ 8
 
 ; Física del gorila (Q5.3, C2)
 DEF GORILLA_JUMP_SPEED 		equ %00011000   ; -3
@@ -127,8 +133,8 @@ DEF GORILLA_SPEED   		equ %00010000	; +2
 DEF GORILLA_SPEED_NEGATIVE  equ %11110000	; -2 
 DEF GORILLA_GRAVITY     	equ %00001000   ; +1
 
-DEF GORILLA_HEIGHT 		equ 32
-DEF GORILLA_WIDTH		equ 32
+DEF GORILLA_HEIGHT 		equ 16
+DEF GORILLA_WIDTH		equ 16
 
 DEF GROUND_Y equ 124	; Altura del suelo
 

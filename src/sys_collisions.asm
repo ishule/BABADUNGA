@@ -14,49 +14,56 @@ SECTION "Collision System Code", ROM0
 
 sys_collision_check_all::
 	call sys_collision_check_player_vs_boss
+	call sys_collision_check_player_bullets_vs_boss
 	ret
+
 
 ;; Verifica si se solapan dos intervalos 1D
 ;; INPUT:
-;;	- HL: puntero a (PosY, PosX, Height, Width)
+;;    - HL: puntero a (Y, H, X, W)
 ;;
 ;; MODIFICA: A, BC, HL
 ;;
 ;; RETURN: 
-;; 	- Registro F: C (carry) = no colisión, NC = colisión
+;;     - Registro F: C (carry) = no colisión, NC = colisión
 ;;
 sys_collision_check_overlap::
-	;; Caso 1: I2 está a la derecha de I1 
-	;; Condición: (PosY + Height - 1) - PosX < 0
-	;; Si es menor que 0 (se activa carry) no hay colisión
-	;; Si es mayor, si que la hay
-
-	ld a, [hl+] 	; A = PosY 
-	ld c, a  		; C = PosY (lo guardamos para el Caso 2)
-	inc hl			; HL: apunta a Height
-	add [hl] 		; A = PosY + Height 
-	dec a 			; A = PosY + Height - 1 
-	dec hl			; HL: apunta a PosX
-	sub [hl]		; A = (PosY + Height - 1) - PosX
-
-	;;; Ahora comprobamos si se solapan o no
-	;; (PosY + Height - 1) < 0
-	;; Si el flag carry se activa no hay colisión
-	ret c
-
-
-	;; Ahora verificamos para el Caso 2
-	;; Caso 2: I1 está a la derecha de I2 
-	;; Condición; (PosX + Width - 1) - PosY < 0
-
-	ld a, [hl+]		; A = PosX 
-	inc hl			; A = Width 
-	add [hl]		; A = PosX + Width 
-	dec a 			; A = PosX + Width - 1 
-	sub c 			; A = (PosX + Width - 1) - PosY
-
-	ret 			; Carry = no colisión, NoCarry = colisión
-
+    push bc            
+    push hl             
+    
+    ; Calcular I1.End = I1.Pos + I1.Size - 1
+    ld a, [I1]          ; A = I1.Pos
+    ld hl, I1 + 1
+    add [hl]            ; A = I1.Pos + I1.Size
+    dec a               ; A = I1.End
+    ld b, a             ; B = I1.End
+    
+    ; Caso 1: I1.End < I2.Start?
+    ld a, [I2]          ; A = I2.Start
+    cp b                ; Si I2.Start > I1.End
+    jr nc, .no_collision ; ← CAMBIAR ret nc por jr nc
+    
+    ; Caso 2: I2.End < I1.Start?
+    ld a, [I2]          ; A = I2.Pos
+    ld hl, I2 + 1
+    add [hl]            ; A = I2.Pos + I2.Size
+    dec a               ; A = I2.End
+    ld c, a             ; C = I2.End
+    ld a, [I1]          ; A = I1.Start
+    cp c                ; Si I1.Start > I2.End
+    jr c, .collision    ; Si I1.Start < I2.End → colisión
+    
+.no_collision:
+    pop hl              
+    pop bc              
+    scf                 ; Carry = no colisión
+    ret
+    
+.collision:
+    pop hl              
+    pop bc              
+    or a                ; Clear carry = colisión
+    ret
 
 ;; Verifica si 2 entidades colisionan
 ;; INPUT:
@@ -69,7 +76,9 @@ sys_collision_check_overlap::
 ;; 	- Registro F: C (carry) = no colisión, NC = colisión
 sys_collision_check_AABB::
 	;; Verificamos si ambas entidades están activas
+	push hl
 	push de 
+
 	ld a, [hl]	; E1.ACTIVE
 	cp 0 
 	jr z, .no_collision 
@@ -87,11 +96,11 @@ sys_collision_check_AABB::
 	push de 
 
 	;; E1.PosY y E1.Height -> I1 
-	inc h 
-	inc h 		; h = $C2
+	inc h 		; h = $C1
 	ld a, [hl] 	; A = E1.PosY
 	ld [I1 + I_POS], a 
 
+	inc h
 	inc h 		; h = $C3
 	ld a, [hl] 	; A = E1.Height 
 	ld[I1 + I_SIZE], a 
@@ -100,17 +109,16 @@ sys_collision_check_AABB::
 	ld h, d 
 	ld l, e 
 
-	inc h 
-	inc h 		; h = $C2
+	inc h 		; h = $C1
 	ld a, [hl] 	; A = E2.PosY
 	ld [I2 + I_POS], a 
 
+	inc h
 	inc h 		; h = $C3
 	ld a, [hl] 	; A = E2.Height 
 	ld[I2 + I_SIZE], a 
 
 	;; Verificar overlap en Y 
-	ld hl, intervalos 
 	call sys_collision_check_overlap
 
 	pop de 
@@ -124,12 +132,12 @@ sys_collision_check_AABB::
 	push de 
 
 	;; E1.PosX y E1.Width -> I1 
-	inc h 
-	inc h 		; h = $C2
+	inc h 		; h = $C1
 	inc l
 	ld a, [hl] 	; A = E1.PosX
 	ld [I1 + I_POS], a 
 
+	inc h
 	inc h 		; h = $C3
 	ld a, [hl] 	; A = E1.Width
 	ld[I1 + I_SIZE], a 
@@ -138,18 +146,17 @@ sys_collision_check_AABB::
 	ld h, d 
 	ld l, e 
 
-	inc h 
-	inc h 		; h = $C2
+	inc h 		; h = $C1
 	inc l
 	ld a, [hl] 	; A = E2.PosX
 	ld [I2 + I_POS], a 
 
+	inc h
 	inc h 		; h = $C3
 	ld a, [hl] 	; A = E2.Width
 	ld[I2 + I_SIZE], a 
 
 	;; Verificar overlap en Y 
-	ld hl, intervalos 
 	call sys_collision_check_overlap
 
 	pop de 
@@ -159,6 +166,7 @@ sys_collision_check_AABB::
 
 .no_collision:
 	pop de 
+	pop hl
 	scf 	; Set Carry = 1 (no hay colisión)
 	ret
 
@@ -171,6 +179,17 @@ sys_collision_check_player_vs_boss::
 	ret c 
 
 	ld a, $00 
-	call man_entity_delete
+	ld[$C100], a 
+	ld[$C101], a 
+
+	ld [$C104], a 
+	ld [$C105], a
+
+	ret
+
+
+sys_collision_check_player_bullets_vs_boss::
+	ld hl, $C000
+
 
 	ret

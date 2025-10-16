@@ -157,7 +157,27 @@ gorilla_init_physics::
 	call man_entity_locate 
 	push hl
 	
-	ld b, GROUND_Y - 16		; Y = suelo menos altura del gorila (32 píxeles)
+	;; Gorilla INFO 
+	ld b, $08 
+	.info_loop:
+		ld a, BYTE_ACTIVE
+		ld [hl+], a 		; Active = 1
+
+		ld a, TYPE_BOSS
+		ld [hl+], a 	 	; Type = 1
+
+		ld a, [hl]                     ; carga el byte actual
+	    or FLAG_CAN_TAKE_DAMAGE | FLAG_CAN_DEAL_DAMAGE
+	    ld [hl+], a                     ; guarda el nuevo valor
+	    inc l 
+	    dec b 
+	    jr nz, .info_loop 
+
+
+	pop hl 
+	push hl
+
+	ld b, GROUND_Y		; Y = suelo menos altura del gorila (32 píxeles)
 	ld c, $40				
 	call change_entity_group_pos_32x32
 

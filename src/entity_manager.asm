@@ -19,6 +19,13 @@ SECTION "Entity Manager Code", ROM0
 
 ;; Inicializa todos los sprites de entidades y contadores
 man_entity_init::
+
+	; Set Info Array to 0
+	ld hl, component_info
+	ld b, CMP_TOTALBYTES
+	xor a 
+	call memset_256
+
 	; Set Component Sprite Array to 0
 	ld hl, component_sprite
 	ld b, CMP_TOTALBYTES
