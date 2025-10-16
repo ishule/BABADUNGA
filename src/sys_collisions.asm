@@ -188,8 +188,45 @@ sys_collision_check_player_vs_boss::
 	ret
 
 
+
 sys_collision_check_player_bullets_vs_boss::
-	ld hl, $C000
+    ld a, 3
+    ld de, sys_collision_bullet_callback
+    call man_entity_foreach_type
+    ret
 
+sys_collision_bullet_callback:
+    ; INPUT: A = ID de la bala, DE = dirección de la bala
+    push de
+    
+    ld h, d
+    ld l, e             ; HL = dirección de la bala
+    ld de, $C008        ; Boss
+    push hl
+    call sys_collision_check_AABB
+    
+    pop hl
+    pop de              ; Recuperar dirección bala
+    ret c               ; No colisión
+    
+    ; Colisión detectada
+    ;call man_entity_delete
+    
+    ld [hl], 0  	; Marcar como inactiva
+    inc h
+    ld a, $00
+    ld [hl+], a 
+    ld [hl], a
 
-	ret
+    ld b, 8
+
+    .loop:
+    ld a, $02
+    ld [blink_entity], a
+    ld a, 30
+    ld [blink_counter], a
+    inc a 
+    dec b 
+    jr nz, .loop
+    
+    ret

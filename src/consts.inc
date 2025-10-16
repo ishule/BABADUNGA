@@ -141,5 +141,5 @@ DEF GROUND_Y equ 124	; Altura del suelo
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bullets
-DEF BULLET_HEIGHT 	equ 8
+DEF BULLET_HEIGHT 	equ 2
 DEF BULLET_WIDTH  	equ 8

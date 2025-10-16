@@ -54,6 +54,8 @@ main::
       
       call compute_physics
       call bullet_update
+      call sys_blink_update
+
       call sys_collision_check_all
       jr game_loop 
 
