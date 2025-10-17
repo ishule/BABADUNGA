@@ -410,12 +410,12 @@ sys_collision_check_entity_vs_tiles::
 	
 	;; HAY COLISIÓN CON EL SUELO
 	push hl	
-	ld h, CMP_PHYSICS_0_H
+	ld h, CMP_PHYSICS_V_H
 	inc l 
-	inc l 	; HL = $C202 = VY 
+	inc l 	; HL = $C302 = VY 
 	xor a 
 	ld [hl], a 
-	inc l 	; HL = $C302 = AY 
+	inc l 	; HL = $C402 = AY 
 	ld [hl], a
 
 	or a ;Para limpiar Carry (colisión)
@@ -477,13 +477,13 @@ sys_collision_check_entity_vs_tiles::
 	
 
 	;; Detener velocidad y aceleración de X
-	ld h, CMP_PHYSICS_0_H
+	ld h, CMP_PHYSICS_V_H
 	inc l 
 	inc l
-	inc l 	; HL = $C203 = VX 
+	inc l 	; HL = $C303 = VX 
 	xor a 
 	ld [hl], a 
-	inc l 	; HL = $C303 = AX 
+	inc l 	; HL = $C403 = AX 
 	ld [hl], a
 
 	ret 
@@ -561,11 +561,11 @@ sys_collision_check_entity_vs_tiles::
 	
 
 	;; Detener velocidad y aceleración de X
-	ld h, CMP_PHYSICS_0_H
-	inc l 	; HL = $C203 = VX 
+	ld h, CMP_PHYSICS_V_H
+	inc l 	; HL = $C303 = VX 
 	xor a 
 	ld [hl], a 
-	inc h 	; HL = $C303 = AX 
+	inc h 	; HL = $C403 = AX 
 	ld [hl], a
 
 	ret 
