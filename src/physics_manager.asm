@@ -1,21 +1,27 @@
 INCLUDE "consts.inc"
 
-; Physics Component structure
-;  size:    8
-;  sprite H:   $C1
-;      byte 0:  POS          Y (Q8.0, Unsigned)
-;      byte 1:  POS          X (Q8.0, Unsigned)
-;      ...
-;  start H:    $C2
-;      byte 0:  POS DECIMAL  Y (Q0.8, Unsigned)
-;      byte 1:  POS DECIMAL  X (Q0.8, Unsigned)
-;      byte 2:  VELOCITY     Y (Q5.3, C2)
-;      byte 3:  VELOCITY     X (Q5.3, C2)
-;  continue H: $C3
-;      byte 0:  HEIGHT
-;      byte 1:  WIDTH
-;      byte 2:  ACCELERATION Y (Q5.3, C2)
-;      byte 3:  ACCELERATION X (Q5.3, C2)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Physics Component structure
+;;
+;;  Component Size: 16
+;;  Format: Q8.8 (velocity and acceleration signed with C2)
+;;
+;;  Minimum step = 0.004px
+;;  Scale factor = 256
+;;
+;; CMP_sprite:      $C1
+;;   [p_y_real] [p_x_real] [-------] [-------]    ######################
+;;                                                #======= Range =======
+;; CMP_physics_pos: $C2                           #
+;;   [p_y_low]  [p_x_low]  [       ] [       ]    # (0, 255.996)
+;;                                                #
+;; CMP_physics_vel: $C3                           #
+;;   [v_y_high] [v_x_high]  [v_y_low] [v_x_low]    # (-127.996, +127.996)
+;;                                                #
+;; CMP_physics_acc: $C4                           #
+;;   [a_y_high] [a_x_high] [a_y_low] [a_x_low]    # (-127.996, +127.996)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 SECTION "Physics Manager", ROM0
 
@@ -35,10 +41,10 @@ compute_physics::
 	; foreach (entity in entities) {
 	;	 apply_acceleration(entity)
 	; }
-	ld hl, CMP_PHYSICS_1_ADDRESS
+	ld hl, CMP_PHYSICS_A_ADDRESS
 	.acceleration_loop:
         ; Apply acceleration
-		call apply_acceleration_to_entity ; hl -> recibe $C3[entity_start] y devuelve $C3[next_entity_start]
+		call apply_acceleration_to_entity ; hl -> recibe $C4[entity_start] y devuelve $C4[next_entity_start]
 
         ; Check last entity
 		ld bc, next_free_entity
@@ -51,10 +57,10 @@ compute_physics::
 	; foreach (entity in entities) {
 	;	 apply_velocity(entity)
 	; }
-	ld hl, CMP_PHYSICS_0_ADDRESS	
+	ld hl, CMP_PHYSICS_V_ADDRESS	
 	.velocity_loop:
         ; Apply velocity
-		call apply_velocity_to_entity ; hl -> recibe $C2[entity_start] y devuelve $C2[next_entity_start]
+		call apply_velocity_to_entity ; hl -> recibe $C3[entity_start] y devuelve $C3[next_entity_start]
 
         ; Check last entity
 		ld bc, next_free_entity
@@ -66,7 +72,7 @@ compute_physics::
     ; # GROUND CHECK #
     ld d, $02 ;MAGIC
     ld e, $00 ;MAGIC
-	;call check_ground_collision
+	call check_ground_collision
 
 	ret
 
@@ -232,68 +238,77 @@ position_changers:
 
 velocity_changers:
     ; INPUT
-    ;  b  -> v_Y
-    ;  c  -> v_X
+    ;  bc -> v_y_high, v_y_low 
+    ;  de -> v_x_high, v_x_low
     ;  hl -> entity start address
     ;
-    ; MODIFIES: hl(h+2, l+3)
+    ; MODIFIES: hl(h=C3, l+3)
     change_entity_vel::
-    	ld h, CMP_PHYSICS_0_H
-        inc l
+    	ld h, CMP_PHYSICS_V_H
+    	
+        ld [hl], b
+    	inc l
+    	
+        ld [hl], c
         inc l
 
-    	ld [hl], b
-    	inc l
-    	ld [hl], c
+        xor a
+        ld [hl+], a
+        ld [hl], a
 
     	ret
 
+    ; INPUT
+    ;  bc -> v_y_high, v_y_low
+    ;  hl -> entity start address
+    ;
+    ; MODIFIES: hl(h=C3, l+3)
     change_entity_vel_y::
-        ld h, CMP_PHYSICS_0_H
-        inc l
-        inc l
+        ld h, CMP_PHYSICS_V_H
 
-        ld [hl], b    
+        ld [hl], b
+        inc l 
+        inc l
+        ld [hl], c
+        inc l
 
         ret
 
+    ; INPUT
+    ;  bc -> v_x_high, v_x_low
+    ;  hl -> entity start address
+    ;
+    ; MODIFIES: hl(h=C3, l+3)
     change_entity_vel_x::
-        ld h, CMP_PHYSICS_0_H
+        ld h, CMP_PHYSICS_V_H
+        inc l
+        ld [hl], b
         inc l
         inc l
-        inc l
-
         ld [hl], c 
 
         ret
 
     ; INPUT
-    ;  b  -> vel Y
-    ;  c  -> vel X
+    ;  bc -> v_y_high, v_y_low
+    ;  de -> v_x_high, v_x_low
     ;  hl -> entity start address
-    ;  d  -> group size
+    ;  a  -> group size
     change_entity_group_vel:
         call change_entity_vel
-        dec h
-        dec h
         inc l
 
-        dec d
+        dec a
         jr nz, change_entity_group_vel
 
         ret
 
     ; INPUT:
-    ;  b  -> nueva velocidad Y
+    ;  bc -> v_y_high, v_y_low
     ;  hl -> entity start address
     ;  d  -> group size
-    ;
-    ; Cambia solo VelY, NO toca VelX
     change_entity_group_vel_y::
         call change_entity_vel_y
-        dec h
-        dec h
-        inc l
         inc l
 
         dec d
@@ -301,11 +316,12 @@ velocity_changers:
         
         ret
 
-
+    ; INPUT:
+    ;  bc -> v_x_high, v_x_low
+    ;  hl -> entity start address
+    ;  d  -> group size
     change_entity_group_vel_x::
         call change_entity_vel_x
-        dec h
-        dec h
         inc l
 
         dec d
@@ -314,63 +330,94 @@ velocity_changers:
 
 acceleration_changers:
     ; INPUT
-    ;  b  -> a_Y
-    ;  c  -> a_X
+    ;  bc -> a_y_high, a_y_low 
+    ;  de -> a_x_high, a_x_low
     ;  hl -> entity start address
+    ;
+    ; MODIFIES: hl(h=C3, l+3)
     change_entity_acc::
-    	ld h, CMP_PHYSICS_1_H
-        inc l
-        inc l
-
-    	ld [hl], b
-    	inc l
-    	ld [hl], c
-
-    	ret
-
-    change_entity_acc_y::
-        ld h, CMP_PHYSICS_1_H
-        inc l
-        inc l
-
+        ld h, CMP_PHYSICS_A_H
+        
         ld [hl], b
+        inc l
+        
+        ld [hl], c
+        inc l
+
+        xor a
+        ld [hl+], a
+        ld [hl], a
 
         ret
 
     ; INPUT
-    ;  b  -> a_Y
-    ;  c  -> a_X
+    ;  bc -> v_a_high, v_a_low
     ;  hl -> entity start address
-    ;  d  -> group size
-    change_entity_group_acc:
-        call change_entity_acc
-        dec h
-        dec h
-        dec h
+    ;
+    ; MODIFIES: hl(h=C3, l+3)
+    change_entity_acc_y::
+        ld h, CMP_PHYSICS_A_H
+
+        ld [hl], b
+        inc l 
+        inc l
+        ld [hl], c
         inc l
 
-        dec d
+        ret
+
+    ; INPUT
+    ;  bc -> a_x_high, a_x_low
+    ;  hl -> entity start address
+    ;
+    ; MODIFIES: hl(h=C3, l+3)
+    change_entity_acc_x::
+        ld h, CMP_PHYSICS_A_H
+        inc l
+        ld [hl], b
+        inc l
+        inc l
+        ld [hl], c 
+
+        ret
+
+    ; INPUT
+    ;  bc -> a_y_high, a_y_low
+    ;  de -> a_x_high, a_x_low
+    ;  hl -> entity start address
+    ;  a  -> group size
+    change_entity_group_acc:
+        call change_entity_acc
+        inc l
+
+        dec a
         jr nz, change_entity_group_acc
 
         ret
 
-
     ; INPUT:
-    ;  b  -> nueva aceleración Y
+    ;  bc -> a_y_high, a_y_low
     ;  hl -> entity start address
     ;  d  -> group size
-    ;
-    ; Cambia solo A_Y, NO toca A_X
     change_entity_group_acc_y::
         call change_entity_acc_y
-        dec h
-        dec h
-        dec h
-        inc l
         inc l
 
         dec d
-        jr nz, change_entity_group_acc
+        jr nz, change_entity_group_acc_y
+        
+        ret
+
+    ; INPUT:
+    ;  bc -> a_x_high, a_x_low
+    ;  hl -> entity start address
+    ;  d  -> group size
+    change_entity_group_acc_x::
+        call change_entity_acc_x
+        inc l
+
+        dec d
+        jr nz, change_entity_group_acc_x
         ret
 
 
@@ -382,149 +429,130 @@ acceleration_changers:
 ; # VELOCITY UTILS #
 
 ;  INPUT
-;   hl -> Entity physics_0 start address ($C2[entity_start])
+;   hl -> Entity physics_v start address ($C3[entity_start])
 ;
-;  MODIFIES: HL($C2[next_entity_start])
+;  MODIFIES: HL($C3[next_entity_start])
 apply_velocity_to_entity:
     
-    ; Go to v_Y
-    inc l
-    inc l
-
-	call apply_velocity_to_axis ; Y axis (hl -> recibe v_Y y devuelve h-1 l-2)
+	call apply_velocity_to_axis ; Y axis (hl -> recibe v_Y y devuelve h-1)
 	
     ; Go to axis X
     inc h
-    ld de, CMP_PHYSICS_BYTE_V_X
-    add hl, de
-
-	call apply_velocity_to_axis ; X axis (hl -> recibe v_X y devuelve h-1 l-2)
+    inc l
+	call apply_velocity_to_axis ; X axis (hl -> recibe v_X y devuelve h-1)
 
     inc h
-    ld de, CMP_PHYSICS_BYTE_V_X
-    add hl, de
+    inc l
+    inc l
+    inc l
 
 	ret
 
 ; INPUT
 ;  HL -> v_[AXIS]
 ;
-; MODIFIES: a, bc, de, hl (acaba en h-1 y l-2)
+; MODIFIES: a, bc, de, hl (acaba en h-1)
 apply_velocity_to_axis:
-	push hl
-
-    call align_v_with_pos
-
-    ; ** Actualizar posición **
-    ; Carga de posición (16-bits, Q8.8, Unsigned) en HL
-    dec l
-    dec l
-    ld c, [hl]
-
-    dec h
+	
+    ; v_high -> B
     ld b, [hl]
 
+    ; v_low -> C
+    inc l
+    inc l
+    ld c, [hl]
+
+    ; p_low -> E
+    dec l
+    dec l
+    dec h
+    ld e, [hl]
+
+    ; p_high -> D
+    dec h
+    ld d, [hl]
+
+    ; save entity
+    ld a, l
+
+    ; new_pos -> B.C
     ld h, b
     ld l, c
-
-    ; Suma la velocidad
     add hl, de
-    ld d, h
-    ld e, l
+    ld b, h
+    ld c, l
 
-    pop hl
-
-    ; Guardar la parte decimal
-    dec l
-    dec l
-    ld [hl], e
-
-    ; Guardar la parte entera
-    dec h
-    ld [hl], d
+    ; store new_pos
+    ld h, CMP_SPRITES_H
+    ld l, a
+    ld [hl], b
+    inc h
+    ld [hl], c
 
 	ret
-
-; INPUT
-;  HL -> v_[AXIS]
-;
-; RETURN
-;  DE -> v_[AXIS]_aligned
-;
-; MODIFIES: a, de
-align_v_with_pos:
-    ; ** Carga v_X para la suma **
-    ld a, [hl]
-    ld e, a    ; Byte bajo de DE = v_X
-    ld d, $00  ; Byte alto de DE = $00
-
-    ; ** Manejo del signo **
-    ; El bit 7 es el signo. Si es 1 necesitamos rellenar D con $FF
-    bit 7, e
-    jr z, .no_sign_extend
-
-    ld d, $FF
-
-    .no_sign_extend:
-
-    ; ** Alineación: Multiplicar por 32 (Shift Left 5)
-    
-    ; Shift 1
-    sla e
-    rl  d
-
-    ; Shift 2
-    sla e
-    rl  d
-
-    ; Shift 3
-    sla e
-    rl  d
-
-    ; Shift 4
-    sla e
-    rl  d
-
-    ; Shift 5
-    sla e
-    rl  d
-
-    ; Resultado: Ahora en DE está V << 5 (Q8.8 alineado)
-
-    ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; # ACCELERATION UTILS #
 
 ; INPUT 
-; hl -> Entity physics_1 start address ($C3[entity_start])
+; hl -> Entity physics_a start address ($C4[entity_start])
 ;
-; MODIFIES: hl:($C3[next_entity_start])
+; MODIFIES: hl:($C4[next_entity_start])
 apply_acceleration_to_entity:
     
-    ; Go to a_Y
-    inc l
-    inc l
+    call apply_acceleration_to_axis
 
-    call add_acceleration_to_axis
-    call add_acceleration_to_axis
+    ; Go to a_x
+    inc h
+    dec l
+    call apply_acceleration_to_axis
+
+    ; Go to next
+    inc h
+    inc l
 
     ret
 
 ; INPUT
-;  HL -> a_[AXIS]
+;  HL -> a_[AXIS]_high
 ;
-; MODIFIES: L(++), A
-add_acceleration_to_axis:
+; MODIFIES: HL(v_[axis]_low)
+apply_acceleration_to_axis:
     
-    ld a, [hl]   ; Read a_[AXIS]
+    ; a_high -> B
+    ld b, [hl]
     
-    ; Go to v_[AXIS]
-    dec h
-    add a, [hl]  ; a <- v_[AXIS] + a_[AXIS]
+    ; a_low  -> C
+    inc l
+    inc l
+    ld c, [hl]
 
-    ld [hl+], a
-    inc h
+    ; v_low  -> E
+    dec h
+    ld e, [hl]
+
+    ; v_high -> D
+    dec l
+    dec l
+    ld d, [hl]
+
+    ; save entity
+    ld a, l
+
+    ; new_vel -> B.C
+    ld h, b
+    ld l, c
+    add hl, de
+    ld b, h
+    ld c, l
+
+    ; store new_vel
+    ld h, CMP_PHYSICS_V_H
+    ld l, a
+    ld [hl], b
+    inc l
+    inc l
+    ld [hl], c
 
     ret
 
@@ -539,7 +567,7 @@ check_ground_collision::
 
     ; Ajustar posición Y al suelo exactamente
     ld a, e
-    call man_entity_locate 
+    call man_entity_locate_v2
 
     ld b, GROUND_Y
     ld a, d 
@@ -550,7 +578,8 @@ check_ground_collision::
     .is32:
         ; Leer posición Y
         ld a, e
-        call man_entity_locate 
+        call man_entity_locate_v2 
+        inc h
         ld a, [hl]  ; PosY sprite 0
         add 16  ; Al ser un sprite de 32x32, tengo que compararlo con el sprite de abajo (+16)
         
@@ -558,6 +587,8 @@ check_ground_collision::
         cp GROUND_Y
         jr c, .not_on_ground
 
+        ld b, GROUND_Y
+        ld c, $00
         call change_entity_group_pos_y_32x32
         ld a, 1 
         ld [gorilla_jumping_flag], a
@@ -566,24 +597,28 @@ check_ground_collision::
     .isnot32:
         ; Leer posición Y
         ld a, e
-        call man_entity_locate 
+        call man_entity_locate_v2 
+        inc h
         ld a, [hl]  ; PosY sprite 0
         
         ; Comparar con suelo
         cp GROUND_Y
         jr c, .not_on_ground
 
+        ld b, GROUND_Y
+        ld c, $00
+        ld d, $02
         call change_entity_group_pos_y
 
     .reset_physics:
         ; Resetear física Y
         ld a, e
-        call man_entity_locate 
+        call man_entity_locate_v2 
 
-        ld b, $00 
+        ld bc, $0000
         call change_entity_group_vel_y
 
-        ld b, $00
+        ld bc, $0000
         call change_entity_group_acc_y
 
         ld a, 1 

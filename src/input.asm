@@ -36,18 +36,16 @@ process_input::
 
 .do_jump:
     ld a, $00
-    call man_entity_locate
-    ld b, PLAYER_JUMP_SPEED
-    ld c, $00
+    call man_entity_locate_v2
+    ld bc, PLAYER_JUMP_SPEED
     ld d, $02
-    call change_entity_group_vel
+    call change_entity_group_vel_y
 
     ld a, $00
-    call man_entity_locate
-    ld b, PLAYER_GRAVITY
-    ld c, $00
+    call man_entity_locate_v2
+    ld bc, PLAYER_GRAVITY
     ld d, $02
-    call change_entity_group_acc
+    call change_entity_group_acc_y
 
     call player_set_walk_sprite
     jr .end
@@ -59,9 +57,9 @@ process_input::
     jr z, .check_left
 
     ld a, $00
-    call man_entity_locate
+    call man_entity_locate_v2
 
-    ld c, PLAYER_SPEED
+    ld bc, PLAYER_SPEED
     ld d, $02
     call change_entity_group_vel_x
     call flip_right
@@ -72,9 +70,9 @@ process_input::
     bit JOYPAD_LEFT, a
     jr z, .no_horizontal_input
     ld a, $00
-    call man_entity_locate
+    call man_entity_locate_v2
 
-    ld c, PLAYER_SPEED_NEGATIVE
+    ld bc, PLAYER_SPEED_NEGATIVE
     ld d, $02
     call change_entity_group_vel_x
     call flip_left
@@ -83,8 +81,8 @@ process_input::
 
 .no_horizontal_input:
     ld a, $00
-    call man_entity_locate
-    ld c, $00
+    call man_entity_locate_v2
+    ld bc, $0000
     ld d, $02
     call change_entity_group_vel_x
 

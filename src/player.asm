@@ -117,7 +117,7 @@ init_player_entity::
 player_init_physics:: 
 
 	ld a, $00
-	call man_entity_locate
+	call man_entity_locate_v2
 
 	push hl
 
@@ -157,7 +157,9 @@ player_init_physics::
 	;; ASIGNAR WIDTH Y HEIGHT
 	ld b, $02
 	pop hl
-	ld h, CMP_PHYSICS_1_H
+	ld h, CMP_PHYSICS_P_H
+	inc l
+	inc l
 	.loop:
    	ld a, PLAYER_HEIGHT 
 	ld [hl+], a 
