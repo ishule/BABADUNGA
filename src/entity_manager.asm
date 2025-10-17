@@ -80,9 +80,9 @@ man_entity_alloc:
 
 	;; Calcula la dirección del siguiente sprite libre
 	ld a, [next_free_entity]	;; Obtener índice actual
-	ld h, CMP_SPRITES_H			;; Parte alta de la dirección base
+	ld h, CMP_START_H			;; Parte alta de la dirección base
 	ld l, a 							;; Parte baja = índice
-	add SPRITE_SIZE				;; Avanza la dirección por el tamaño de un sprite
+	add CMP_SIZE				;; Avanza la dirección por el tamaño de un sprite
 	ld [next_free_entity], a 	;; Guarda el índice actualizado
 	ret
  

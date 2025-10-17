@@ -70,8 +70,8 @@ compute_physics::
 
 
     ; # GROUND CHECK #
-    ld d, $02 ;MAGIC
-    ld e, $00 ;MAGIC
+    ld d, PLAYER_SPRITES_SIZE
+    ld e, PLAYER_BODY_ENTITY_ID
 	call check_ground_collision
 
 	ret
@@ -607,7 +607,6 @@ check_ground_collision::
 
         ld b, GROUND_Y
         ld c, $00
-        ld d, $02
         call change_entity_group_pos_y
 
     .reset_physics:
@@ -616,9 +615,11 @@ check_ground_collision::
         call man_entity_locate_v2 
 
         ld bc, $0000
+        ld d, PLAYER_SPRITES_SIZE
         call change_entity_group_vel_y
 
         ld bc, $0000
+        ld d, PLAYER_SPRITES_SIZE
         call change_entity_group_acc_y
 
         ld a, 1 

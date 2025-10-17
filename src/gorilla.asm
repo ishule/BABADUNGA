@@ -77,6 +77,7 @@ init_gorilla_tiles::
 init_gorilla_entity::
 	; Alocar sprite 0
 	call man_entity_alloc
+	inc h
 	ld d, h 
 	ld e, l 
 	ld hl, gorilla_sprites
@@ -85,6 +86,7 @@ init_gorilla_entity::
 	
 	; Alocar sprite 1
 	call man_entity_alloc
+	inc h
 	ld d, h 
 	ld e, l 
 	ld hl, gorilla_sprites + 4
@@ -93,6 +95,7 @@ init_gorilla_entity::
 	
 	; Alocar sprite 2
 	call man_entity_alloc
+	inc h
 	ld d, h 
 	ld e, l 
 	ld hl, gorilla_sprites + 8
@@ -101,6 +104,7 @@ init_gorilla_entity::
 	
 	; Alocar sprite 3
 	call man_entity_alloc
+	inc h
 	ld d, h 
 	ld e, l 
 	ld hl, gorilla_sprites + 12
@@ -109,6 +113,7 @@ init_gorilla_entity::
 	
 	; Alocar sprite 4
 	call man_entity_alloc
+	inc h
 	ld d, h 
 	ld e, l 
 	ld hl, gorilla_sprites + 16
@@ -117,6 +122,7 @@ init_gorilla_entity::
 	
 	; Alocar sprite 5
 	call man_entity_alloc
+	inc h
 	ld d, h 
 	ld e, l 
 	ld hl, gorilla_sprites + 20
@@ -125,6 +131,7 @@ init_gorilla_entity::
 	
 	; Alocar sprite 6
 	call man_entity_alloc
+	inc h
 	ld d, h 
 	ld e, l 
 	ld hl, gorilla_sprites + 24
@@ -133,6 +140,7 @@ init_gorilla_entity::
 	
 	; Alocar sprite 7
 	call man_entity_alloc
+	inc h
 	ld d, h 
 	ld e, l 
 	ld hl, gorilla_sprites + 28
@@ -153,12 +161,12 @@ init_gorilla_entity::
 ;;
 ;; MODIFICA: A, BC, DE
 gorilla_init_physics:: 
-	ld a, $01
+	ld a, ENEMY_START_ENTITY_ID
 	call man_entity_locate_v2
 	push hl
 	
 	;; Gorilla INFO 
-	ld b, $08 
+	ld b, GORILLA_SPRITES_SIZE 
 	.info_loop:
 		ld a, BYTE_ACTIVE
 		ld [hl+], a 		; Active = 1
@@ -182,7 +190,7 @@ gorilla_init_physics::
 	call change_entity_group_pos_32x32
 
 	;; ASIGNAR WIDTH Y HEIGHT
-	ld b, $08
+	ld b, GORILLA_SPRITES_SIZE
 	pop hl
 	ld h, CMP_PHYSICS_P_H
 	inc l

@@ -1,21 +1,129 @@
 INCLUDE "consts.inc"
 
-def COOLDOWN_SHOT equ 40
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Structure
+;;  [tile_ID], [v_high], [v_low], [height], [width]
+SECTION "Bullet Presets", ROM0
+player_bullet_preset_h::
+	DB PLAYER_BULLET_TILE_HORIZONTAL, PLAYER_BULLET_SPEED_HIGH, PLAYER_BULLET_SPEED_LOW, PLAYER_BULLET_HEIGHT, PLAYER_BULLET_WIDTH
+player_bullet_preset_v::
+	DB PLAYER_BULLET_TILE_VERTICAL,   PLAYER_BULLET_SPEED_HIGH, PLAYER_BULLET_SPEED_LOW, PLAYER_BULLET_HEIGHT, PLAYER_BULLET_WIDTH
+snake_bullet_preset::
+	DB SNAKE_BULLET_TILE,             SNAKE_BULLET_SPEED_HIGH,  SNAKE_BULLET_SPEED_LOW,  SNAKE_BULLET_HEIGHT,  SNAKE_BULLET_WIDTH
+spider_bullet_preset::
+	DS 5
 
-SECTION "variables", WRAM0
-cooldown: ds 1
-can_shot_flag: ds 1
+SECTION "Bullets Code" , ROM0
 
-SECTION "Bullets utils", ROM0
+; ============ ESTÁ SIN HACER ===============
+; Falta ver como hago para no necesitar tantos registros
+; INPUT 
+;  HL -> preset address
+;  BC -> "gun sprite" origin
+;  D  -> direction
+;
+; MODIFIES:
+shot_bullet_for_preset::
+	
+
+
+	ret
+
+; INPUT
+;  BC -> "gun sprite" origin
+;  D  -> direction   ($00:< | $01:>)
+;
+; MODIFIES:
+shot_bullet_for_snake::
+	call man_entity_alloc
+
+	;; Bullet INFO
+	ld a, BYTE_ACTIVE
+	ld [hl+], a 		; Active = 1 
+
+	ld a, TYPE_BULLET 	; Bullet = 3 
+	ld [hl+], a
+
+	xor a
+    or FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT
+    ld [hl+], a                     ; guarda el nuevo valor y se posiciona para actualizar ATTR
+ 
+ 	ld a, d
+	cp RIGHT_SHOT_DIRECTION
+	jr z, .shot_right
+
+	.shot_left:
+		; Set origin
+		ld a, c
+		sub SPRITE_WIDTH + 4 ; 4 = offset para evitar colision con nosotros mismos
+		ld c, a
+
+		; Set velocity
+		ld de, SNAKE_BULLET_SPEED
+		call positive_to_negative_DE
+
+		; Set ATTR -> Flip sprite
+		inc h
+		ld [hl], SPRITE_ATTR_FLIP_X
+		
+		jr .spawn_bullet
+
+	.shot_right:
+		; Set origin
+		ld a, c
+		add SPRITE_WIDTH + 4 ; 4 = offset
+		ld c, a
+
+		; Set velocity
+		ld de, SNAKE_BULLET_SPEED
+
+		; Set ATTR -> No flip Sprite
+		inc h
+		ld [hl], SPRITE_ATTR_NO_FLIP
+
+
+	.spawn_bullet:
+	; === Set tile ===
+	dec l
+	ld [hl], SNAKE_BULLET_TILE
+
+	; === Set Position ===
+	; set pos x
+	dec l
+	ld [hl], c
+
+	; set pos y
+	dec l
+	ld [hl], b
+
+	;; === Set Size === 
+	inc h
+	inc l
+	inc l
+
+	ld a, SNAKE_BULLET_HEIGHT 
+	ld [hl+], a 
+
+	ld a, SNAKE_BULLET_WIDTH 
+	ld [hl], a
+
+	; === Set Velocity ===
+	inc h
+	ld [hl], e ; vel_x_low
+	dec l
+	dec l
+	ld [hl], d ; vel_x_high
+
+	ret
 
 bullet_update::
 	ld a, [can_shot_flag]  ; if can_shot == true => shot:
 	bit 0, a
 	jr nz, shot
 
-	ld a, [cooldown]       ; if cooldown != 0    => exit
+	ld a, [shot_cooldown]       ; if shot_cooldown != 0    => exit
 	dec a
-	ld [cooldown], a
+	ld [shot_cooldown], a
 	jr nz, exit
 
 	xor a
@@ -30,29 +138,46 @@ bullet_update::
 	bit JOYPAD_A, a
 	jr z, exit
 
-	ld a, [$C105] ; MAGIC
-	add 8         ; MAGIC
-	ld b, a
+	; Check up shot
+	bit JOYPAD_UP, a
+	jr nz, .looking_up
 
-	ld a, [$C104] ; MAGIC
-	ld c, a
+	; Check direction
+	ld a, PLAYER_GUN_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	ld b, [hl] ; Y pos -> B
+	inc l
+	ld c, [hl] ; X pos -> C
+	inc l
+	inc l
+	ld a, [hl] ; Read Sprite ATTR
+	bit 5, a   ; Check flip
+	jr z, .looking_right
 
-	ld a, [$C107] ; MAGIC
-	bit 5, a      ; MAGIC
-	jr z, looking_right
-	looking_left: 
-		ld a, $01 ; MAGIC
+	.looking_left:
+		ld d, LEFT_SHOT_DIRECTION
 		jr call_shot
 
-	looking_right:
-		xor a
+	.looking_right:
+		ld d, RIGHT_SHOT_DIRECTION
+		jr call_shot
+
+	.looking_up:
+		ld a, PLAYER_GUN_ENTITY_ID
+		call man_entity_locate_v2
+		inc h
+		ld b, [hl]
+		inc l
+		ld c, [hl]
+		ld d, UP_SHOT_DIRECTION
 
 	call_shot:
 	call shot_bullet
 
 
-	ld a, COOLDOWN_SHOT
-	ld [cooldown], a
+	ld a, COOLDOWN_SHOT_DELAY
+	ld [shot_cooldown], a
 	
 	xor a
 	ld [can_shot_flag], a
@@ -67,7 +192,7 @@ init_bullets::
 	ld b, 16     ; MAGIC
 	call memcpy_256
 	xor a
-	ld [cooldown], a
+	ld [shot_cooldown], a
 	inc a
 	ld [can_shot_flag], a
 	ret
@@ -77,110 +202,145 @@ init_bullets::
 ; Dispara una bala desde la posición indicada hacia la dirección indicada
 ;
 ; INPUT
-;   bc -> orígen (píxeles X|Y)
-;   a  -> dirección ($00:> | $01:< | $02:^ | $03:v)
+;   bc -> gun origin  (píxeles Y|X)
+;   d  -> direction   ($00:< | $01:> | $02:^ | $03:v)
 ;
 ; MODIFIED: hl
 shot_bullet:
-	push af
 	call man_entity_alloc
-	pop af
-	push af
 
 	;; Bullet INFO
-	push hl
-	dec h 
 	ld a, BYTE_ACTIVE
 	ld [hl+], a 		; Active = 1 
 
 	ld a, TYPE_BULLET 	; Bullet = 3 
 	ld [hl+], a
 
-	ld a, [hl]                     ; carga el byte actual
+	xor a
     or FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT
-    ld [hl], a                     ; guarda el nuevo valor
+    ld [hl+], a                     ; guarda el nuevo valor y se posiciona para actualizar ATTR
+ 
+ 	ld a, d
+	cp RIGHT_SHOT_DIRECTION
+	jr z, .shot_right
 
-	pop hl
+	cp UP_SHOT_DIRECTION
+	jr z, .shot_up
 
-	pop af 
-	push af 
-	cp 01 	; Si va hacia la izquierda desplazamos origen de la bala
-	jr z, .move_bullet_left
+	.shot_left:
+		; Set origin
+		ld a, c
+		sub SPRITE_WIDTH + 4 ; 4 = offset para evitar colision con nosotros mismos
+		ld c, a
 
-.move_bullet_left:
-	;; CMP_SPRITE
+		; Set velocity
+		ld de, PLAYER_BULLET_SPEED
+		call positive_to_negative_DE
+
+		; Set ATTR -> Flip sprite
+		inc h
+		ld [hl], SPRITE_ATTR_FLIP_X
+		
+		jr .spawn_bullet_horizontal
+
+	.shot_right:
+		; Set origin
+		ld a, c
+		add SPRITE_WIDTH + 4 ; 4 = offset
+		ld c, a
+
+		; Set velocity
+		ld de, PLAYER_BULLET_SPEED
+
+		; Set ATTR -> No flip Sprite
+		inc h
+		ld [hl], SPRITE_ATTR_NO_FLIP
+
+		jr .spawn_bullet_horizontal
+
+	.shot_up:
+		; Set origin
+		ld a, b
+		add SPRITE_HEIGHT / 2 ; 4 = offset
+		ld b, a
+
+		; Set velocity
+		ld de, PLAYER_BULLET_SPEED
+		call positive_to_negative_DE
+
+		; Set ATTR -> No flip Sprite
+		inc h
+		ld [hl], SPRITE_ATTR_NO_FLIP
+
+		jr .spawn_bullet_vertical
+
+	.spawn_bullet_horizontal:
+	; === Set tile ===
+	dec l
+	ld [hl], PLAYER_BULLET_TILE_HORIZONTAL
+
+	; === Set Position ===
+	; set pos x
+	dec l
 	ld [hl], c
-	inc hl
 
-	ld a, b 
-	sub 4  	; Offset para ajustar posicion bala (así evitamos que nos toque)
-	ld [hl], a
-	inc hl
-	
-	jr .continue
-
-.move_bullet_right:	
-	;; CMP_SPRITE
-	ld [hl], c
-	inc hl
-
+	; set pos y
+	dec l
 	ld [hl], b
-	inc hl
 
-	.continue:
-	ld [hl], $20 ; MAGIC
-	inc hl
-
-	ld [hl], $00 ; MAGIC
-
-
-
-	;; ADD WIDTH AND HEIGHT
+	;; === Set Size === 
 	inc h
-	inc h
-	dec l 
-	dec l 
-	dec l  
+	inc l
+	inc l
 
-	ld a, BULLET_HEIGHT 
+	ld a, PLAYER_BULLET_HEIGHT 
 	ld [hl+], a 
 
-	ld a, BULLET_WIDTH 
-	ld [hl+], a
+	ld a, PLAYER_BULLET_WIDTH 
+	ld [hl], a
 
+	; === Set Velocity ===
+	inc h
+	ld [hl], e ; vel_x_low
+	dec l
+	dec l
+	ld [hl], d ; vel_x_high
 
-	;; APPLY VELOCITY
-	dec h
-	pop af
+	jr .finish
 
-	cp 0 ; MAGIC
-	jr z, right_shot
+	.spawn_bullet_vertical:
+	; === Set tile ===
+	dec l
+	ld [hl], PLAYER_BULLET_TILE_VERTICAL
 
-	cp 1 ; MAGIC
-	jr z, left_shot
+	; === Set Position ===
+	; set pos x
+	dec l
+	ld [hl], c
 
-	cp 2 ; MAGIC
-	jr z, up_shot
+	; set pos y
+	dec l
+	ld [hl], b
 
+	;; === Set Size === 
+	inc h
+	inc l
+	inc l
 
+	ld a, PLAYER_BULLET_HEIGHT 
+	ld [hl+], a 
 
+	ld a, PLAYER_BULLET_WIDTH 
+	ld [hl], a
 
-	down_shot:
+	; === Set Velocity ===
+	inc h
+	dec l
+	ld [hl], e ; vel_y_low
+	dec l
+	dec l
+	ld [hl], d ; vel_y_high
 
+	.finish:
 
-	right_shot:
-		inc l
-		ld [hl], $10 ; MAGIC
-		dec l
-		jr spawn_bullet
-
-	left_shot:
-		inc l
-		ld [hl], $F8 ; MAGIC
-		dec l
-		jr spawn_bullet
-
-	up_shot:
-
-	spawn_bullet:
 	ret

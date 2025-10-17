@@ -3,6 +3,8 @@ INCLUDE "consts.inc"
 SECTION "Player Variables", WRAM0 
 player_orientation:: DS 1	; 0 = derecha, 1 = izquierda
 player_stand_or_walk:: DS 1 ; 0 = parado, 1 = caminando
+shot_cooldown:: ds 1
+can_shot_flag:: ds 1
 
 SECTION "Player Code", ROM0
 
@@ -82,7 +84,8 @@ init_player_entity::
 
 	; Alocar primer sprite
 	call man_entity_alloc
-	;; HL = $C000 (primera posición OAM)
+	inc h
+	;; HL = $C100 (primera posición OAM)
 	ld d, h 
 	ld e, l 
 	ld hl, player_sprites
@@ -91,7 +94,8 @@ init_player_entity::
 
 	; Alocar segundo sprite
 	call man_entity_alloc
-	;; HL = $C004 (segunda posición OAM)
+	inc h
+	;; HL = $C104 (segunda posición OAM)
 	ld d, h 
 	ld e, l 
 	ld hl, player_sprites + 4

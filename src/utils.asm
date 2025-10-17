@@ -171,3 +171,38 @@ init_sound::
 	ld [hl],a
 	ret
 
+; INPUT
+;  BC -> positive number
+;
+; RETURN
+;  BC -> BC x (-1)
+positive_to_negative_BC::
+	ld a, b
+	cpl
+	ld b, a
+
+	ld a, c
+	cpl
+	ld c, a
+
+	inc bc
+
+	ret
+
+; INPUT
+;  DE -> positive number
+;
+; RETURN
+;  DE -> DE x (-1)
+positive_to_negative_DE::
+	ld a, d
+	cpl
+	ld d, a
+
+	ld a, e
+	cpl
+	ld e, a
+
+	inc de
+
+	ret
