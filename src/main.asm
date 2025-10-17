@@ -56,7 +56,7 @@ main::
       call bullet_update
       ;call sys_blink_update
 
-      call sys_collision_check_all
+      ;call sys_collision_check_all
       jr game_loop 
 
    di

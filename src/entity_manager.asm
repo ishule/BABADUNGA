@@ -1,18 +1,33 @@
 INCLUDE "consts.inc"
 
-SECTION "Entity Manager Data"          , WRAM0[$C000]
+SECTION "Entity Manager Data"        , WRAM0[$C000]
 component_info::      DS CMP_TOTALBYTES
 num_entities_alive::  DS 1	;; Contador de entidades activas
 next_free_entity::    DS 1		;; Índice de la siguiente entidad
 
-SECTION "Entity Sprites"               , WRAM0[$C100]
+;; Structure
+;; [p_y_sprite] [p_x_sprite] [-------] [-------]
+SECTION "Entity Sprites"             , WRAM0[$C100]
 component_sprite::    DS CMP_TOTALBYTES	;; Array de memoria para almacenar los sprites de entidades
 
-SECTION "Entity Physics (pos and vel)" , WRAM0[$C200]
-component_physics_0:: DS CMP_TOTALBYTES
 
-SECTION "Entity Physics (acceleration)", WRAM0[$C300]
-component_physics_1:: DS CMP_TOTALBYTES
+;; Structure
+;; [p_y_low]  [p_x_low]  [       ] [       ]
+SECTION "Entity Physics Position"    , WRAM0[$C200]
+component_physics_p:: DS CMP_TOTALBYTES
+
+
+;; Structure
+;; [v_y_high] [v_x_high]  [v_y_low] [v_x_low]
+SECTION "Entity Physics Velocity"    , WRAM0[$C300]
+component_physics_v:: DS CMP_TOTALBYTES
+
+
+;; Structure
+;; [a_y_high] [a_x_high] [a_y_low] [a_x_low]
+SECTION "Entity Physics Acceleration", WRAM0[$C400]
+component_physics_a:: DS CMP_TOTALBYTES
+
 
 
 SECTION "Entity Manager Code", ROM0
@@ -33,18 +48,24 @@ man_entity_init::
 	call memset_256
 
 	; Limpiar física 0
-	ld hl, component_physics_0
+	ld hl, component_physics_p
 	ld b, CMP_TOTALBYTES
 	xor a 
 	call memset_256
 
 	; Limpiar física 1
-	ld hl, component_physics_1
+	ld hl, component_physics_v
 	ld b, CMP_TOTALBYTES
 	xor a 
 	call memset_256
 
-	; Inicializa contadores de entidades
+	; Limpiar física 2
+	ld hl, component_physics_a
+	ld b, CMP_TOTALBYTES
+	xor a 
+	call memset_256
+
+	; Inicializa contadores de entidades a 0
 	ld [next_free_entity], a 
 	ld [num_entities_alive], a 
 	ret 
@@ -65,20 +86,33 @@ man_entity_alloc:
 	ld [next_free_entity], a 	;; Guarda el índice actualizado
 	ret
  
+; INPUT
+; C  -> CMP_SIZE
+; HL -> Source
+; DE -> Destination
+go_to_next_entity_start_DE_HL:
+	; Prepare HL
+	inc h
+	ld a, l
+	sub a, c
+	ld l, a
+
+	; Prepare DE
+	inc d
+	ld a, e
+	sub c
+	ld e, a
+
+	ret
 
 ; INPUT
-;  a -> entity ID
-; 
-; RETURN
-;  hl -> entity_start_address
-man_entity_locate:
-	ld hl, CMP_START_ADDRESS
-	ld c, $03 ; MAGIC
-	iter:
-		add a
-		dec c
-		jr nz, iter
-	
+; C  -> CMP_SIZE
+; HL -> Source
+go_to_next_entity_start_HL:
+	; Prepare HL
+	inc h
+	ld a, l
+	sub a, c
 	ld l, a
 
 	ret
@@ -86,16 +120,88 @@ man_entity_locate:
 ; INPUT
 ; a -> entity ID
 man_entity_delete::
-	call man_entity_locate
+	ld c, CMP_SIZE
+
+	; Search entity to delete
+	call man_entity_locate_v2
 	ld d, h
 	ld e, l
-
+	
+	; If last -> memset_256 a $00
+	ld a, l
+	add CMP_SIZE
+	ld hl, next_free_entity
+	ld b, [hl]
+	cp b
+	jr z, .is_last_entity
+	
+	.not_last_entity:
+	; Search last entity
 	ld a, [num_entities_alive]
 	dec a
-	call man_entity_locate
+	ld [num_entities_alive], a
+	call man_entity_locate_v2
 
-	ld b, CMP_SIZE
-	call memcpy_256
+	; Copy CMP_INFO
+	ld b, c ; CMP_SIZE
+	call memcut_256
+
+	; Copy CMP_SPRITE
+	call go_to_next_entity_start_DE_HL
+	ld b, c; CMP_SIZE
+	call memcut_256
+
+	; Copy CMP_PHYSICS_P
+	call go_to_next_entity_start_DE_HL
+	ld b, c; CMP_SIZE
+	call memcut_256
+
+	; Copy CMP_PHYSICS_V
+	call go_to_next_entity_start_DE_HL
+	ld b, c; CMP_SIZE
+	call memcut_256
+
+	; Copy CMP_PHYSICS_A
+	call go_to_next_entity_start_DE_HL
+	ld b, c; CMP_SIZE
+	call memcut_256
+
+	; Decrement next_free_entity
+	ld a, [next_free_entity]
+	sub c; CMP_SIZE
+	ld [next_free_entity], a
+	jr .exit
+
+	.is_last_entity:
+	xor a
+
+	; CMP_INFO
+	ld h, d
+	ld l, e
+	ld b, c; CMP_SIZE
+	call memset_256
+
+	;CMP_SPRITE
+	call go_to_next_entity_start_HL
+	ld b, c; CMP_SIZE
+	call memset_256
+
+	;CMP_PHYSICS_P
+	call go_to_next_entity_start_HL
+	ld b, c; CMP_SIZE
+	call memset_256
+
+	;CMP_PHYSICS_V
+	call go_to_next_entity_start_HL
+	ld b, c; CMP_SIZE
+	call memset_256
+
+	;CMP_PHYSICS_A
+	call go_to_next_entity_start_HL
+	ld b, c; CMP_SIZE
+	call memset_256
+
+	.exit:
 
 	ret
 
@@ -108,15 +214,12 @@ man_entity_delete::
 ;   HL = C000 + (A * 4)
 
 man_entity_locate_v2:
-    ld hl, $C000      ; base address
+    ld h, CMP_INFO_H      ; base address
 
     add a             ; A = A * 2
     add a             ; A = A * 4
 
-    ld e, a           ; E = offset (low byte)
-    ld d, $00         ; D = 0
-
-    add hl, de        ; HL = C000 + offset
+    ld l, a           ; E = offset (low byte)
     ret
 
 

@@ -15,10 +15,10 @@ sys_gorilla_movement::
 
     ; Si no está saltando, aplica el impulso inicial
     ld a, $01
-    call man_entity_locate 
-    ld b, GORILLA_JUMP_SPEED
-    ld c, GORILLA_SPEED_NEGATIVE
-    ld d, $08
+    call man_entity_locate_v2 
+    ld bc, GORILLA_JUMP_SPEED
+    ld de, GORILLA_SPEED_NEGATIVE
+    ld a, $08
     call change_entity_group_vel
 
     ld a, 0
@@ -26,10 +26,10 @@ sys_gorilla_movement::
 
 .apply_gravity:
     ld a, $01
-    call man_entity_locate
-    ld b, GORILLA_GRAVITY
-    ld c, $00
-    ld d, $08
+    call man_entity_locate_v2
+    ld bc, GORILLA_GRAVITY
+    ld de, $0000
+    ld a, $08
     call change_entity_group_acc
 
     ld d, $08

@@ -154,7 +154,7 @@ init_gorilla_entity::
 ;; MODIFICA: A, BC, DE
 gorilla_init_physics:: 
 	ld a, $01
-	call man_entity_locate 
+	call man_entity_locate_v2
 	push hl
 	
 	;; Gorilla INFO 
@@ -184,7 +184,9 @@ gorilla_init_physics::
 	;; ASIGNAR WIDTH Y HEIGHT
 	ld b, $08
 	pop hl
-	ld h, CMP_PHYSICS_1_H
+	ld h, CMP_PHYSICS_P_H
+	inc l
+	inc l
 	.loop:
    	ld a, GORILLA_HEIGHT 
 	ld [hl+], a 

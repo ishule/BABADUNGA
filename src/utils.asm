@@ -20,6 +20,23 @@ memcpy_256::
 		dec b
 	jr nz,memcpy_256
 	ret
+
+;; memcut_256:  ¡¡ADVERTENCIA!! : Solo sirve para cuando h no cambia al ir incrementando
+;; INPUT 
+;; hl: Source
+;; de: Destination
+;; b: bytes
+memcut_256::
+		ld a,[hl]
+		ld [hl], $00
+		inc l
+		ld [de],a
+		inc de
+		dec b
+	jr nz,memcut_256
+	ret
+
+
 ;; draw_map: Draws a map on the screen
 ;; hl: Puntero a tilemap
 draw_map::
@@ -112,6 +129,17 @@ memset_256::
 	ld [hl+], a
 	dec b 
 	jr nz, memset_256
+	ret
+
+;; INPUT
+;;		HL: Destination
+;;		B: bytes
+;;	Escribe en hl 0 hasta que b sea cero
+memreset_256::
+	ld [hl], $00
+	inc hl
+	dec b 
+	jr nz, memreset_256
 	ret
 
 ;;Abre la puerta para avanzar al siguiente nivel
