@@ -4,6 +4,7 @@ INCLUDE "collisions.inc"
 
 SECTION "Collision System Values", WRAM0
 ;; Almacenan temporalmente los intervalos a comparar
+temp_wall_x: DS 1
 intervalos:
 I1: DS 2 	; Intervalo 1: [Pos, Size]
 I2: DS 2 	; Intervalo 2: [Pos, Size]
@@ -15,7 +16,20 @@ SECTION "Collision System Code", ROM0
 sys_collision_check_all::
 	call sys_collision_check_player_vs_boss
 	call sys_collision_check_player_bullets_vs_boss
-	call sys_collision_check_player_bullets_vs_player
+	call sys_collision_check_boss_bullets_vs_player
+
+	;; Check collision between player and tiles
+	ld hl, CMP_START_ADDRESS 	; Player
+	call sys_collision_check_entity_vs_tiles
+
+	;; Check collision between boss and tiles
+	ld a, TYPE_BOSS
+	call man_entity_locate_first_type 	; Boss en HL
+	call sys_collision_check_entity_vs_tiles
+
+	;call sys_collision_check_bullets_vs_tiles
+
+
 	ret
 
 
@@ -276,9 +290,7 @@ sys_collision_bullet_boss_callback:
     ret
 
 
-
-
-sys_collision_check_player_bullets_vs_player::
+sys_collision_check_boss_bullets_vs_player::
     ld a, 3
     ld de, sys_collision_bullet_player_callback
     call man_entity_foreach_type
@@ -332,3 +344,252 @@ sys_collision_bullet_player_callback:
 
     
     ret
+
+
+sys_collision_check_bullets_vs_tiles::
+    ld a, 3
+    ld de, move_from_de_to_hl
+    call man_entity_foreach_type
+    ret
+
+move_from_de_to_hl::
+	ld h, d 
+	ld l, e
+	call sys_collision_check_entity_vs_tiles
+	ret
+
+;; INPUT: HL: direction to the player or the boss
+sys_collision_check_entity_vs_tiles::
+	ld a, [hl] 	; E_ACTIVE 
+	cp 0 
+	ret z 	; Si está inactiva, salir 
+
+	;; Verificar colisión con el suelo
+	push hl
+	call .check_floor
+	pop hl
+
+	;; Verificar colisíon con pared izquierda
+	push hl
+	call .check_wall_left 
+	pop hl
+	ret nc 
+
+	;; Verificar colisión con pared derecha
+	push hl
+	call .check_wall_right 
+	pop hl
+	ret nc 
+
+	scf 	; Set Carry (no hay colisión)
+
+	ret 
+
+.check_floor
+	push hl
+	ld h, CMP_SPRITES_H
+	ld a, [hl] 	 
+	ld d, a 	; D = Entity.PosY
+
+	inc h 
+	inc h
+	ld a, [hl] 	
+	ld e, a 	; E = Entity.Height	
+
+	ld a, d 
+	add e 
+	ld b, a 	; B = Entity.PosY + Entity.Height
+
+	ld de, collision_array 
+	ld a, [de] 	; Suelo.PosY
+	sub $08
+	cp b 
+	pop hl
+
+	jr nc, .no_floor_collision ; Si Suelo.PosY - 8 (margen) > (Entity.PosY + Entity.Height), no hay colisión
+	
+	;; HAY COLISIÓN CON EL SUELO
+	push hl	
+	ld h, CMP_PHYSICS_0_H
+	inc l 
+	inc l 	; HL = $C202 = VY 
+	xor a 
+	ld [hl], a 
+	inc l 	; HL = $C302 = AY 
+	ld [hl], a
+
+	or a ;Para limpiar Carry (colisión)
+	pop hl
+
+	ret
+
+	.no_floor_collision:
+		scf 	; Set Carry (no colisión)
+		ret
+
+
+.check_wall_left:
+	push hl
+	ld a, l
+	ld hl, CMP_SPRITES_ADDRESS
+	ld l, a 
+	inc l
+	ld a, [hl] 	 ; A = Entity.PosX
+	push af
+
+	ld de, collision_array 
+	ld h, d 
+	ld l, e 
+	ld de, SIZEOF_COLLISION 
+	add hl, de
+	ld de, C_POSX 
+	add hl, de
+	ld a, [hl+] 	
+	ld b, a 		; B = WallLeft.X
+
+	inc l
+	ld a, [hl] 		; A = WallLeft.Width
+
+	add b 			; A = WallLeft.X + WallLeft.Width 
+	ld b, a 		; B = WallLeft.X + WallLeft.Width
+	pop af  		; A = Entity.PosX
+
+	cp b
+	pop hl 
+
+	jr nc, .no_left_collision 	; Si Entity.PosX >= límite, no hay colisión
+
+	;;HAY COLISIÓN: Empujar hacia la derecha 
+	ld hl, CMP_START_ADDRESS
+	inc l
+	ld a, [hl]
+	cp 03 	
+	jr z, .delete_bullet 	; Si el tipo es 3, eliminamos la bala 
+	dec l 
+
+
+	ld a, l
+	ld hl, CMP_SPRITES_ADDRESS
+	ld l, a
+	inc l 	; HL = Entity.PosX
+	ld a, b 	; A = Límite izquierdo
+	ld [hl], a 	; Entity.X = Límite izquierdo
+	
+
+	;; Detener velocidad y aceleración de X
+	ld h, CMP_PHYSICS_0_H
+	inc l 
+	inc l
+	inc l 	; HL = $C203 = VX 
+	xor a 
+	ld [hl], a 
+	inc l 	; HL = $C303 = AX 
+	ld [hl], a
+
+	ret 
+
+.no_left_collision:
+	scf 	; Set Carry (no hay colisión)
+	ret
+
+
+.check_wall_right:
+	push hl
+	ld a, l
+	ld hl, CMP_SPRITES_ADDRESS
+	ld l, a 
+	inc l
+	ld a, [hl] 	 
+	ld d, a 	; D = Entity.PosX
+
+	inc h 
+	ld a, [hl]
+	ld e, a 	; E = Entity.Width
+	push de
+
+	ld a, d 	; A = Entity.PosX 
+	add e 		; 
+	ld b, a 	; B = Entity.PosX + Entity.Width
+
+	ld de, collision_array 
+	ld h, d 
+	ld l, e 
+	ld de, SIZEOF_COLLISION 
+	add hl, de
+	add hl, de 	; Ahora si apunto al muro derecho
+	ld de, C_POSX 
+	add hl, de
+	ld a, [hl] 	; A = WallRight.X
+	push af
+
+	cp b
+
+	jr nc, .no_right_collision 	; Si límite >= Entity.PosX + Entity.Width, no hay colisión
+
+	;;HAY COLISIÓN: Empujar hacia la izquierda 
+	pop af 		; A = WallRight.X
+	pop de 		; D = Entity.PosX   E = Entity.Width
+	pop hl
+	sub e 		; A = WallRight.X - Entity.Width
+	ld [temp_wall_x], a 	;Guardo en VRAM el valor de a
+
+	inc l 
+	ld a, l 
+	cp 0
+	jr z, .assign_player
+
+
+.assign_boss 
+	ld a, TYPE_BOSS
+	jr .continue
+
+.assign_player
+	ld a, TYPE_PLAYER
+
+.continue
+	ld de, .move_left
+	call man_entity_foreach_type
+	ret
+
+.move_left:
+	ld h, CMP_SPRITES_H
+	ld l, e
+	inc l 	; HL = Entity.PosX
+
+	ld a, [temp_wall_x]
+	ld [hl], a 	; Entity.X = Límite derecho - WallRight.X
+	
+
+	;; Detener velocidad y aceleración de X
+	ld h, CMP_PHYSICS_0_H
+	inc l 	; HL = $C203 = VX 
+	xor a 
+	ld [hl], a 
+	inc h 	; HL = $C303 = AX 
+	ld [hl], a
+
+	ret 
+
+.no_right_collision:
+	pop af 
+	pop de
+	pop hl
+	scf 	; Set Carry (no hay colisión)
+	ret
+
+
+
+.delete_bullet:
+	dec l
+    ld [hl], 0  	; Marcar como inactiva
+    ;call man_entity_delete 	; Activar cuando vaya la función
+
+    ;; Eliminar 
+    inc h
+    ld a, $00
+    ld [hl+], a 
+    ld [hl], a
+    ret nc
+
+
+

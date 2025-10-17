@@ -7,6 +7,15 @@ SECTION "Gorilla Movement Code", ROM0
 
 
 sys_gorilla_movement::
+    ld a, $01
+    call man_entity_locate 
+    ld b, $00
+    ld c, GORILLA_SPEED
+    ld d, $08
+    call change_entity_group_vel
+    ret
+
+sys_gorilla_movement_v2::
 
     ; Comprobamos si está en el aire
     ld a, [gorilla_jumping_flag]

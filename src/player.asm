@@ -79,7 +79,6 @@ init_player_tiles::
 ;;
 ;; MODIFICA: A, BC, DE, HL
 init_player_entity::
-	call man_entity_init	; Inicializar gestor de entidades
 
 	; Alocar primer sprite
 	call man_entity_alloc
@@ -149,7 +148,7 @@ player_init_physics::
 	push hl
 
 	ld b, GROUND_Y				; Y inicial
-	ld c, PLAYER_INITIAL_POS_X	; X inicial
+	ld c, PLAYER_INITIAL_POS_X 	; X inicial
 
 	; Guardamos la posicion incial en C000
    	ld d, $02

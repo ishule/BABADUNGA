@@ -102,6 +102,24 @@ shot_bullet:
 
 	pop hl
 
+	pop af 
+	push af 
+	cp 01 	; Si va hacia la izquierda desplazamos origen de la bala
+	jr z, .move_bullet_left
+
+.move_bullet_left:
+	;; CMP_SPRITE
+	ld [hl], c
+	inc hl
+
+	ld a, b 
+	sub 4  	; Offset para ajustar posicion bala (así evitamos que nos toque)
+	ld [hl], a
+	inc hl
+	
+	jr .continue
+
+.move_bullet_right:	
 	;; CMP_SPRITE
 	ld [hl], c
 	inc hl
@@ -109,6 +127,7 @@ shot_bullet:
 	ld [hl], b
 	inc hl
 
+	.continue:
 	ld [hl], $20 ; MAGIC
 	inc hl
 

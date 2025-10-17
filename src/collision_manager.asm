@@ -21,23 +21,33 @@ man_collision_init::
 ;;	RETURN:
 ;;		HL -> Dirección del sprite de la nueva entidad en collision_array		
 man_collision_alloc:
-	ld hl, collision_array 
-	ld b, MAX_COLLISIONS 
-	ld de, SIZEOF_COLLISION 
-
-	.loop:
-		ld a, [hl]
-		inc l 
-		inc l 	; Me desplazo hasta height 
-		cp 0 
-		ret z 	; si es 0, se que he encontrado el hueco 
-		add hl, de 
-		dec b 
-		jr .loop 
-
-	ld hl, $FFFF 	; Pongo hl a $FFFF si no he encontrado ningún hueco en collisions_array
-
-	ret 
+    ld hl, collision_array 
+    ld b, MAX_COLLISIONS 
+    
+.loop:
+    ; Verificar HEIGHT (offset +2)
+    push hl
+    inc l
+    inc l
+    ld a, [hl]
+    pop hl
+    or a
+    ret z                       ; Si HEIGHT = 0, HL ya apunta al inicio
+    
+    ; Siguiente colisión
+    ld a, l
+    add SIZEOF_COLLISION
+    ld l, a
+    jr nc, .no_carry
+    inc h
+.no_carry:
+    
+    dec b
+    jr nz, .loop
+    
+    ; No hay espacio
+    ld hl, $FFFF
+    ret
 
 
 ;; Crea una colisión en las coordenadas dadas
@@ -95,7 +105,7 @@ man_collision_create_collision::
 man_collision_create_all_collisions::
 
 	;; Crear suelo
-	ld b, 136 
+	ld b, 124 
 	ld c, 8 
 	ld d, 8 
 	ld e, 144

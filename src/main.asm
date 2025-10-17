@@ -18,6 +18,11 @@ main::
    call draw_map
    call turn_screen_on
    call init_all_sprites
+
+   call man_entity_init ; Inicializar gestor de entidades
+   call man_collision_init ; Inicializar array de colisiones
+   call man_collision_create_all_collisions  ; Crear colisiones de arena (PROVISIONAL, SE DEBERIA CREAR UNO PARA CADA ESCENA)
+
    call init_player
    call init_gorilla
    call open_door

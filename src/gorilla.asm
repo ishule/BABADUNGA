@@ -177,7 +177,7 @@ gorilla_init_physics::
 	pop hl 
 	push hl
 
-	ld b, GROUND_Y		; Y = suelo menos altura del gorila (32 píxeles)
+	ld b, GROUND_Y - 16	; Y = suelo menos altura del gorila (32 píxeles)
 	ld c, $40				
 	call change_entity_group_pos_32x32
 
