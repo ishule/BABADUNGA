@@ -56,10 +56,11 @@ main::
       call joypad_read
       call process_input
       ;call sys_gorilla_movement
-      call sys_snake_movement
+      ;call sys_snake_movement
+
       
       call compute_physics
-      call bullet_update
+      call check_player_shot
       ;call sys_blink_update
 
       call sys_collision_check_all
