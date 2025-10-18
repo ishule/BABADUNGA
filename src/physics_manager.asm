@@ -249,12 +249,13 @@ velocity_changers:
         ld [hl], b
     	inc l
     	
-        ld [hl], c
+        ld [hl], d
         inc l
 
-        xor a
-        ld [hl+], a
-        ld [hl], a
+        ld [hl], c
+        inc l
+        
+        ld [hl], e
 
     	ret
 

@@ -90,6 +90,7 @@ DEF SPRITE_OFFSET_TILE equ 2
 DEF SPRITE_OFFSET_ATTR equ 3 
 
 DEF SPRITE_ATTR_FLIP_X  equ %10100000  ; Flip horizontal activado
+DEF SPRITE_ATTR_FLIP_Y  equ %11000000  ; Flip vertical activado
 DEF SPRITE_ATTR_NO_FLIP	equ %10000000  ; Sin flip
 
 DEF SPRITE_WIDTH equ 8
@@ -186,7 +187,8 @@ DEF SNAKE_BULLET_SPEED_LOW   equ $F0   ;
 DEF PLAYER_BULLET_TILE_HORIZONTAL equ $20
 DEF PLAYER_BULLET_TILE_VERTICAL   equ $20 ; TODO: Cambiarlo por el real
 
-DEF SNAKE_BULLET_TILE             equ $20 ; TODO: Cambiarlo por el real
+DEF SNAKE_BULLET_TILE_HORIZONTAL  equ $20 ; TODO: Cambiarlo por el real
+DEF SNAKE_BULLET_TILE_VERTICAL    equ $20 ; TODO: Cambiarlo por el real
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Player consts
 DEF PLAYER_SPRITES_SIZE   equ 2

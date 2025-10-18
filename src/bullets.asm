@@ -2,33 +2,192 @@ INCLUDE "consts.inc"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Structure
-;;  [tile_ID], [v_high], [v_low], [height], [width]
+;;  [tile_h_ID], [tile_h_ID], [width], [height], [v_high], [v_low] 
 SECTION "Bullet Presets", ROM0
-player_bullet_preset_h::
-	DB PLAYER_BULLET_TILE_HORIZONTAL, PLAYER_BULLET_SPEED_HIGH, PLAYER_BULLET_SPEED_LOW, PLAYER_BULLET_HEIGHT, PLAYER_BULLET_WIDTH
-player_bullet_preset_v::
-	DB PLAYER_BULLET_TILE_VERTICAL,   PLAYER_BULLET_SPEED_HIGH, PLAYER_BULLET_SPEED_LOW, PLAYER_BULLET_HEIGHT, PLAYER_BULLET_WIDTH
+player_bullet_preset::
+	DB PLAYER_BULLET_TILE_HORIZONTAL, PLAYER_BULLET_TILE_VERTICAL, PLAYER_BULLET_WIDTH, PLAYER_BULLET_HEIGHT,  PLAYER_BULLET_SPEED_HIGH, PLAYER_BULLET_SPEED_LOW 
 snake_bullet_preset::
-	DB SNAKE_BULLET_TILE,             SNAKE_BULLET_SPEED_HIGH,  SNAKE_BULLET_SPEED_LOW,  SNAKE_BULLET_HEIGHT,  SNAKE_BULLET_WIDTH
+	DB SNAKE_BULLET_TILE_HORIZONTAL,  SNAKE_BULLET_TILE_VERTICAL,  SNAKE_BULLET_SPEED_HIGH,  SNAKE_BULLET_SPEED_LOW,  SNAKE_BULLET_HEIGHT,  SNAKE_BULLET_WIDTH
 spider_bullet_preset::
-	DS 5
+	DS 6
 
 SECTION "Bullets Code" , ROM0
 
-; ============ ESTÁ SIN HACER ===============
-; Falta ver como hago para no necesitar tantos registros
+; ============= Main method to shot ======================
 ; INPUT 
-;  HL -> preset address
+;  DE -> preset address
 ;  BC -> "gun sprite" origin
-;  D  -> direction
+;  a  -> direction ($00:< | $01:> | $02:^ | $03:v) 
+;                  (%00:< | %01:> | %10:^ | %11:v)
+;                   ## bit 1 -> 0:Horizontal | 1:Vertical 
+;                   ## bit 0 -> 0:Negative   | 1:Positive
 ;
-; MODIFIES:
+; MODIFIES: All
 shot_bullet_for_preset::
+	push af ; Save direction
 	
+	call man_entity_alloc
 
+	;; Bullet INFO
+	ld a, BYTE_ACTIVE
+	ld [hl+], a 		
+
+	ld a, TYPE_BULLET 
+	ld [hl+], a
+
+	xor a
+    or FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT
+    ld [hl], a
+    inc h ; Prepare for CMP_SPRITE_TILE
+
+    ; HL = CMP_SPRITE_TILE ($C102)
+
+ 	pop af  ; Retrieve direction
+ 	push af ; Save direction
+	bit 1, a
+	jr z, .shot_horizontal
+
+	.shot_vertical:
+		inc de ; Go to vertical tile of preset
+		ld a, [de]  ; Read TILE_V
+		ld [hl+], a ; Set entity Tile
+		
+		; Go to preset width
+		inc de
+
+		; HL = CMP_SPTITE_ATTR ($C103)
+
+		pop af
+		push af
+		bit 0, a
+		jr  nz, .no_flip_y
+
+		.flip_y:                             ;; UP SHOT
+			;; Set ATTR
+			ld [hl], SPRITE_ATTR_FLIP_Y
+
+			;; Set spawn pint
+			ld a, b
+			sub SPRITE_WIDTH
+			ld b, a
+
+			jr .bullet_settings
+
+		.no_flip_y:                          ;; DOWN SHOT
+			;; Set ATTR
+			ld [hl], SPRITE_ATTR_NO_FLIP
+			
+			;; Set spawn point
+			ld a, b
+			add SPRITE_HEIGHT
+			ld b, a
+
+			jr .bullet_settings
+
+	.shot_horizontal:
+		ld a, [de]  ; Read TILE_H
+		ld [hl+], a ; Set entity Tile
+		
+		; Go to preset width
+		inc de
+		inc de
+
+		; HL = CMP_SPTITE_ATTR ($C103)
+
+		pop af
+		push af
+		bit 0, a
+		jr nz, .no_flip_x
+
+		.flip_x:                             ;; LEFT SHOT
+			;; Set ATTR
+			ld [hl], SPRITE_ATTR_FLIP_X
+
+			;; Set spawn point
+			ld a, c
+			sub SPRITE_WIDTH
+			ld c, a
+
+			jr .bullet_settings
+
+		.no_flip_x:                          ;; RIGHT SHOT
+			;; Set ATTR
+			ld [hl], SPRITE_ATTR_NO_FLIP
+
+			;; Set spawn point
+			ld a, c
+			add SPRITE_WIDTH
+			ld c, a
+
+
+	.bullet_settings:
+		;; ========== Set Size ==========
+		; Set Width
+		inc h       ; Go to entity width
+		ld a, [de]
+		ld [hl-], a
+
+		; HL = PHYSICS_WIDTH
+
+		;Set Hight
+		inc de      ; Go to preset height
+		ld a, [de]
+		ld [hl-], a
+		; HL = PHYSICS_POS_LOW_X
+
+		;; ========== Set Pos ==========
+		; Set pos_x_high
+		dec h
+		ld [hl], c
+
+		; HL = SPRITE_POS_X
+
+		; Set pos_y_high
+		dec l
+		ld [hl], b
+
+		; HL = SPRITE_POS_Y
+
+		;; ========== Set Vel ==========
+		inc h
+		inc h
+
+		;HL = PHYSICS_VEL_Y
+
+		inc de        ; Go to preset v_high
+		pop af
+		push af
+		bit 1, a      ; 0:x | 1:y
+		jr nz, .vel_y
+
+		.vel_x:
+			inc l
+			jr .change_vel
+		.vel_y: 
+
+		.change_vel:
+			ld a, [de]
+			ld b, a
+
+			inc de
+			ld a, [de]
+			ld c, a
+			
+			pop af
+			bit 0, a ; 0:- | 1:+
+			jr nz, .skip_conversion
+			call positive_to_negative_BC
+			.skip_conversion:
+
+			ld [hl], b
+			inc l
+			inc l
+			ld [hl], c
 
 	ret
 
+; ============== DEPRECATED ======================
+; Will be deleted. Now we have to use shot_bullet_for_preset
 ; INPUT
 ;  BC -> "gun sprite" origin
 ;  D  -> direction   ($00:< | $01:>)
@@ -85,7 +244,7 @@ shot_bullet_for_snake::
 	.spawn_bullet:
 	; === Set tile ===
 	dec l
-	ld [hl], SNAKE_BULLET_TILE
+	ld [hl], SNAKE_BULLET_TILE_HORIZONTAL
 
 	; === Set Position ===
 	; set pos x
@@ -116,6 +275,9 @@ shot_bullet_for_snake::
 
 	ret
 
+
+; ============== DEPRECATED ======================
+; Move it to input.asm
 bullet_update::
 	ld a, [can_shot_flag]  ; if can_shot == true => shot:
 	bit 0, a
@@ -173,7 +335,9 @@ bullet_update::
 		ld d, UP_SHOT_DIRECTION
 
 	call_shot:
-	call shot_bullet
+	ld a, d
+	ld de, player_bullet_preset
+	call shot_bullet_for_preset
 
 
 	ld a, COOLDOWN_SHOT_DELAY
@@ -185,7 +349,7 @@ bullet_update::
 	exit:
 	ret
 
-
+; Init bullets sprites and variables
 init_bullets::
 	ld hl, Player_bullet
 	ld de, $8200 ; MAGIC
@@ -197,7 +361,9 @@ init_bullets::
 	ld [can_shot_flag], a
 	ret
 
-
+; ================ DEPRECATED ===============================
+; Now we have to use shot_bullet_for_preset
+;
 ; shot_bullet
 ; Dispara una bala desde la posición indicada hacia la dirección indicada
 ;
@@ -206,7 +372,7 @@ init_bullets::
 ;   d  -> direction   ($00:< | $01:> | $02:^ | $03:v)
 ;
 ; MODIFIED: hl
-shot_bullet:
+shot_bullet_for_player:
 	call man_entity_alloc
 
 	;; Bullet INFO
