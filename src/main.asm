@@ -58,7 +58,7 @@ main::
 
       
       call compute_physics
-      call bullet_update
+      call check_player_shot
       ;call sys_blink_update
 
       call sys_collision_check_all
