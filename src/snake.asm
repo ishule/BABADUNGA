@@ -176,7 +176,7 @@ snake_init_physics::
 
 
 ;============================================================
-; _snake_update_sprites (VERSIÓN CORREGIDA PARA ECS)
+; snake_update_sprites (VERSIÓN CORREGIDA PARA ECS)
 ; Copia los 4 sprites (16 bytes) desde la ROM a las ubicaciones
 ; correctas y no contiguas de los componentes de sprite en WRAM.
 ;

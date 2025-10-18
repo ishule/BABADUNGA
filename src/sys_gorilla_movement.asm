@@ -61,77 +61,219 @@ sys_gorilla_movement_v2::
 
     ret
 
-
-
-
+; -----------------------
+; sys_snake_movement
+; Usa:
+;   snake_flags (bits: 0 dir, 1-2 state, 3-4 shot count)
+; Constantes esperadas: MASK_STATE, MASK_DIRECTION, MASK_SHOT_COUNT,
+;                      STATE_INIT, STATE_SHOOT, STATE_MOVE, STATE_TURN
+; -----------------------
 
 sys_snake_movement::
     ld a, [snake_flags]
     and MASK_STATE
     cp STATE_INIT
-    jr z, .init_state
+    jp z, .init_state
     cp STATE_SHOOT
-    jr z, .shoot_state
+    jp z, .shoot_state
     cp STATE_MOVE
-    jr z, .move_state
+    jp z, .move_state
     cp STATE_TURN
-    jr z, .turn_state
+    jp z, .turn_state
     ret
 
 .init_state:
-    jr .turn_state
+    ; Al iniciar, vamos a movernos
+    jr .move_state
 
+; -------------------------
+; SHOOT STATE: dispara hasta 2 veces (bits 3-4)
+; -------------------------
 .shoot_state:
-    ld a,[snake_flags]
-    bit 0,a
-    ld d,1
-    jr nz ,.disparar
-    ld d,0
-    .disparar:
-    ;call shot_bullet_for_snake
-    ld a, STATE_MOVE
+    ; Limpia contador de disparos al entrar en estado SHOOT (asegura 0)
+    ld a, [snake_flags]
+    and %11100111           ; limpia bits 3-4
+    ld [snake_flags], a
+
+    ; Preparar dirección de disparo: bit0 = 1 -> left, 0 -> right
+    ld a, [snake_flags]
+    bit 0, a
+    jr nz, .shoot_left
+    ; ---> disparo a la derecha
+.shoot_right:
+    ; Obtener la posición de la entidad (para pasar coords a la rutina de disparo)
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc h
+    ld b, [hl]      ; X
+    inc l
+    ld c, [hl]      ; Y
+    ; d = 0 => hacia la derecha (convención tuya)
+    ld d, 0
+    ld de, snake_bullet_preset
+    call shot_bullet_for_preset
+    jr .post_shoot
+
+.shoot_left:
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc h
+    ld b, [hl]
+    inc l
+    ld c, [hl]
+    ; d = 1 => hacia la izquierda
+    ld d, 1 ;; MAGIC
+    ld de, snake_bullet_preset
+    call shot_bullet_for_preset
+
+.post_shoot:
+    ; Incrementar contador de disparos (bits 3-4) sin tocar resto de bits
+    ld a, [snake_flags]
+    and MASK_SHOT_COUNT    ; b = current shot bits (8/16/24/0)
+    add a, %00001000       ; b = b + 8 (incrementar)
+    and MASK_SHOT_COUNT    ; mantener solo bits de contador
+    ld b,a
+
+    ; limpiar bits en flags y setear los nuevos
+    ld a, [snake_flags]
+    and %11100111          ; limpiar bits 3-4
+    or b
+    ld [snake_flags], a
+
+    ; Si b >= %00010000 (es decir hemos alcanzado 2 disparos o más) -> cambiar a MOVE
+    ld a, b
+    and %00010000
+    jr z, .stay_shoot      ; si no alcanzado, seguimos en shoot
+
+    ; Hemos alcanzado 2 disparos -> pasar a MOVE y limpiar contador de disparos
+    ld a, [snake_flags]
+    and %11100111          ; limpiar contador de disparos
+    and %11111001          ; limpiamos bits de estado (1-2)
+    or STATE_MOVE
     ld [snake_flags], a
     ret
 
-.move_state:
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld a, [snake_flags]
-    bit 0, a
-    jr nz, .left
-    
-    ; Movimiento a la derecha
-    ld bc, SNAKE_SPEED_NEGATIVE
-    jr .apply_velocity
-    ret
-.left:
-    ld bc, SNAKE_SPEED
-    
-.apply_velocity:
-    ld d,$04
-    call change_entity_group_vel_x
-    ; Comentado para que no cambie estado automáticamente
-    ; ld a, STATE_TURN
-    ; ld [snake_flags], a
+.stay_shoot:
+    ; Quedarse en shoot_state (se llamará de nuevo en el siguiente frame)
     ret
 
+; -------------------------
+; MOVE STATE
+; -------------------------
+.move_state:
+    ; Localizar entidad
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+
+    ; Comprobar dirección y aplicar velocidad
+    ld a, [snake_flags]
+    bit 0, a
+    jr nz, .move_left
+
+    ; Mover a la derecha
+    ld bc, SNAKE_SPEED_NEGATIVE
+    jr .apply_velocity
+
+.move_left:
+    ld bc, SNAKE_SPEED
+    jr .apply_velocity
+
+.apply_velocity:
+    ld d, $04
+    call change_entity_group_vel_x
+    ; Tras aplicar velocidad, comprobar colisión con paredes
+    ; Re-localizamos entidad y leemos OAM_X (offset +1)
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc hl
+    ld a, [hl]          ; OAM_X
+    ; Si venimos por derecha, comprobamos límite derecho (136)
+    ld e, a             ; guardar OAM_X en e temporario
+    ; Determinar si estamos en modo left o right (re-uso flag)
+    ld a, [snake_flags]
+    bit 0, a
+    jr nz, .check_left_collision
+    ; right-moving: check right limit
+    ld a, e
+    cp 136
+    jr c, .no_turn
+    ; handle right hit
+    jr .handle_hit_right
+
+.check_left_collision:
+    ld a, e
+    cp 8
+    jr nc, .no_turn
+    ; handle left hit
+    jr .handle_hit_left
+
+.no_turn:
+    ret
+
+; ----------------------------
+; On hit: clamp position, zero velocity, set TURN state
+; ----------------------------
+.handle_hit_left:
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc hl
+    ld [hl], 8           ; set OAM_X = 8 (clamp)
+    ; detener velocidad
+    ld bc, 0
+    ld d, $04
+    call change_entity_group_vel_x
+    ; marcar colisión (bit5)
+    ld a, [snake_flags]
+    or %00100000
+    ld [snake_flags], a
+    ; transición MOVE -> TURN
+    ld a, [snake_flags]
+    and %11111001
+    or STATE_TURN
+    ld [snake_flags], a
+    ; girar sprite
+    call snake_flip
+    ret
+
+.handle_hit_right:
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc hl
+    ld [hl], 136         ; set OAM_X = 136 (clamp)
+    ld bc, 0
+    ld d, $04
+    call change_entity_group_vel_x
+    ld a, [snake_flags]
+    or %00100000
+    ld [snake_flags], a
+    ld a, [snake_flags]
+    and %11111001
+    or STATE_TURN
+    ld [snake_flags], a
+    call snake_unflip
+    ret
+
+; -------------------------
+; TURN STATE
+; -------------------------
 .turn_state:
     ld a, [snake_flags]
     bit 0, a
     jr z, .turn_left
-    
+
 .turn_right:
     call snake_unflip
     jr .finish_turn
-    
+
 .turn_left:
     call snake_flip
-    
+
 .finish_turn:
-    ; Establecer el siguiente estado y toggle del bit de dirección
+    ; Toggle direction bit and set next state to SHOOT (and zero shot count)
     ld a, [snake_flags]
-    xor %00000001        ; Invertir bit de dirección
-    and %11111001        ; Limpiar bits de estado (bits 1-2)
-    or STATE_SHOOT       ; Establecer nuevo estado
+    xor %00000001            ; flip direction bit
+    and %11100111            ; clear shot count
+    and %11111001            ; clear state bits
+    or STATE_MOVE
     ld [snake_flags], a
     ret
