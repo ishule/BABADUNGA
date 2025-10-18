@@ -186,6 +186,8 @@ shot_bullet_for_preset::
 
 	ret
 
+; ============== DEPRECATED ======================
+; Will be deleted. Now we have to use shot_bullet_for_preset
 ; INPUT
 ;  BC -> "gun sprite" origin
 ;  D  -> direction   ($00:< | $01:>)
@@ -273,6 +275,9 @@ shot_bullet_for_snake::
 
 	ret
 
+
+; ============== DEPRECATED ======================
+; Move it to input.asm
 bullet_update::
 	ld a, [can_shot_flag]  ; if can_shot == true => shot:
 	bit 0, a
@@ -344,6 +349,7 @@ bullet_update::
 	exit:
 	ret
 
+; Init bullets sprites and variables
 init_bullets::
 	ld hl, Player_bullet
 	ld de, $8200 ; MAGIC
@@ -355,6 +361,9 @@ init_bullets::
 	ld [can_shot_flag], a
 	ret
 
+; ================ DEPRECATED ===============================
+; Now we have to use shot_bullet_for_preset
+;
 ; shot_bullet
 ; Dispara una bala desde la posición indicada hacia la dirección indicada
 ;
@@ -363,7 +372,7 @@ init_bullets::
 ;   d  -> direction   ($00:< | $01:> | $02:^ | $03:v)
 ;
 ; MODIFIED: hl
-shot_bullet:
+shot_bullet_for_player:
 	call man_entity_alloc
 
 	;; Bullet INFO
