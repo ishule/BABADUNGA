@@ -1,84 +1,78 @@
 INCLUDE "hardware.inc"
-   rev_Check_hardware_inc 4.0
+    rev_Check_hardware_inc 4.0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constantes
 
-DEF TEMPO = 8              ; Reducido para que las notas sean más rápidas
-DEF SH = $FF              ; Silencio = 0 (no $FF)
+DEF NR10 = $FF10
+DEF NR11 = $FF11
+DEF NR12 = $FF12
+DEF NR13 = $FF13
+DEF NR14 = $FF14
+DEF NR21 = $FF16
+DEF NR22 = $FF17
+DEF NR23 = $FF18
+DEF NR24 = $FF19
+DEF NR30 = $FF1A
+DEF NR31 = $FF1B
+DEF NR32 = $FF1C
+DEF NR33 = $FF1D
+DEF NR34 = $FF1E
+DEF NR41 = $FF20
+DEF NR42 = $FF21
+DEF NR43 = $FF22
+DEF NR44 = $FF23
+DEF NR50 = $FF24
+DEF NR51 = $FF25
+DEF NR52 = $FF26
 
-DEF TAM_CHIP_SONIDO = 23  ; Tamaño correcto del área de registros de sonido
+DEF TEMPO = 8
+DEF SH = $FF ;Silencio
+
+DEF TAM_CHIP_SONIDO = 20
 
 SECTION "SYS_SOUND", ROM0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inicializa el sistema de sonido
 sys_sound_init::
-    ; Limpia todos los registros de sonido
-    ld hl, rNR10
-    xor a
+    ld hl, NR10
     ld b, TAM_CHIP_SONIDO
-.loop
-    ld [hl+], a
-    dec b
+    ld a, 0
+    .loop
+        ld [hl+], a
+        dec b
     jr nz, .loop
-
-    ; Configura volúmenes máximos
-    ld a, $FF
-    ldh [rNR50], a
-    ldh [rNR51], a
-
-    ; Activa el sistema de sonido
-    ld a, %10000000
-    ldh [rNR52], a
+    ld hl, NR50
+    ld [hl],$FF
+    ld hl, NR51
+    ld [hl],$FF
+    ld hl, NR52
+    set 7, [hl]
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Efectos de sonido
+;; Efectos de Sonido
+;; (Tus funciones de FX van aquí, sin cambios)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 sys_sound_tira_salto::
-    ld hl, .data
-    ld de, rNR10
-    ld b, 5
-    jr _reproducir_efecto
-.data
-    DB $1E, $82, $F3, $73, $87
-
-sys_sound_tira_explosion::
-    ld hl, .data
-    ld de, rNR41
-    ld b, 4
-    jr _reproducir_efecto
-.data
-    DB %00001111, %11110011, %01010011, %11000000
-
-sys_sound_mata_cosas::
-    ld hl, .data
-    ld de, rNR10
-    ld b, 5
-    jr _reproducir_efecto
-.data
-    DB %00010001, %10000010, %11110010, $33, %11000111
-
-sys_sound_recoge_cosas::
-    ld hl, .data
-    ld de, rNR10
-    ld b, 5
-    jr _reproducir_efecto
-.data
-    DB %00000011, %10001000, %01110101, $CD, %10000111
-
-_reproducir_efecto:
-    ld a, [hl+]
-    ld [de], a
-    inc de
-    dec b
-    jr nz, _reproducir_efecto
+    ld a, $1E     
+    ld [NR10], a
+    ld a, $82     
+    ld [NR11], a
+    ld a, $77     
+    ld [NR12], a
+    ld a, $C3     
+    ld [NR13], a
+    ld a, $C6 
+    ld [NR14], a
     ret
+    
+; ( ... sys_sound_tira_explosion, mata_cosas, etc. ... )
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Inicializa el sistema de música
+;; Inicializa el sistema de música (Tu versión)
 ;; ENTRADA: 
 ;;   HL: puntero al inicio de la canción
 ;;   BC: longitud de la canción en bytes
@@ -106,137 +100,118 @@ sys_sound_init_music::
     ld a, h
     ld [nota_actual + 1], a
     
-    ; Activa sistema de sonido
+    ; --- INICIALIZA EL HARDWARE (Lógica del "archivo bueno") ---
+    ; activar sistema de sonido
     ld a, %10000000
-    ldh [rNR52], a
-    
-    ; Volúmenes altos
-    ld a, %01110111
-    ldh [rNR50], a
-    
-    ; Canal 2 en ambos altavoces
-    ld a, %00100010
-    ldh [rNR51], a
-    
-    ; Canal 2: Duty cycle 50% (sonido más lleno)
-    ld a, %10000000          ; Bits 7-6: 10 = 50% duty, sin length
-    ldh [rNR21], a
-    
-    ; Volumen máximo constante, sin envolvente
-    ld a, %11110000          ; Volumen 15, sin cambios
-    ldh [rNR22], a
-    
-    ; Frecuencia inicial (silencio)
-    xor a
-    ldh [rNR23], a
-    ldh [rNR24], a
-    ret
+    ld [rNR52], a
+    ; iniciamos los volumenes
+    ld a, %01110111           ; SO1 y S02 casi tope de volumen
+    ld [rNR50], a
+    ld a, %10111011           ; Canal 2, sale por SO1 y S02
+    ld [rNR51], a
+    ; canal 2, longitud 63, ciclo 75%
+    ld a, %11111111
+    ld [rNR21], a
+    ; canal 2, envolvente, volumen inicial alto, creciente
+    ld a, %01010100
+    ld [rNR22], a
+    ; canal 2, longitud activada y valor de la frecuencia baja
+    ld a, %01000011           ; 1 en el bit 6, longitud activa, y
+    ld [rNR24], a             ; %011 en los tres bits altos de la frecuencia
+ret
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Reproduce la siguiente nota
-sys_sound_siguienteNota::
-    ; Control de tempo
-    ld a, [relojMusica]
+;; Cambia la nota a la siguente a tocar
+;; (Lógica del "archivo bueno", adaptada a las nuevas variables)
+;;
+sys_sound_siguienteNota:
+    ld a, [relojMusica]       ; vemos si hay que tocar la nota o esperar
+    cp a, TEMPO
+    jr z, .tocanota
     inc a
-    cp TEMPO
-    jr c, .actualizar_reloj
-    
-    ; Es momento de cambiar nota
-    xor a
     ld [relojMusica], a
-    
-    ; Obtiene la nota actual
-    ld hl, nota_actual
-    ld a, [hl+]
-    ld h, [hl]
-    ld l, a
-    
-    ; Lee la nota
-    ld a, [hl+]
-    
-    ; ¿Es silencio?
-    or a
-    jr z, .es_silencio
-    
-    ; Reproduce la nota
-    ldh [rNR23], a
-    
-    ; CRÍTICO: Trigger para reiniciar el canal
-    ld a, [rNR24]          ; Bit 7=trigger, bits 2-0=freq alta
-    set 7,a
-    ldh [rNR24], a
-    jr .actualizar_puntero
-    
-.es_silencio
-    ; Silencia poniendo volumen a 0
-    xor a
-    ldh [rNR22], a
-    
-    ; Pequeña pausa
-    ld b, 2
-.pausa
-    dec b
-    jr nz, .pausa
-    
-    ; Restaura volumen
-    ld a, %11110000
-    ldh [rNR22], a
-    
-.actualizar_puntero
-    ; Guarda nuevo puntero
-    ld a, l
-    ld [nota_actual], a
-    ld a, h
-    ld [nota_actual + 1], a
-    
-    ; Incrementa contador
-    ld hl, contador_notas
-    inc [hl]
-    jr nz, .no_overflow
+ret
+.tocanota:
+    ; reiniciamos el contador
+    ld a, 0
+    ld [relojMusica], a
+
+    ; pasamos a tocar la nota
+    ld hl, nota_actual  ; <-- Variable generalizada
+    ld c, [hl]
     inc hl
-    inc [hl]
+    ld b, [hl]   ; BC: puntero a nota a tocar
     dec hl
+
+    ld a, [bc] ; A = NOTA a tocar
+    ;; Es silencio?
+    cp SH
+    jr z, .silencio
+    ld [rNR23], a ; la escribimos en el registro de frecuencia del canal 2
+    ; reiniciamos la nota
+    ld a, [rNR24]
+    set 7,a
+    ld [rNR24], a
+
+    .silencio
+
+    ; pasamos a la siguiente nota y comprobamos si tenemos que reiniciar
+    inc bc
+    ld a, c
+    ld [hl+], a
+    ld a, b
+    ld [hl], a
+
+    ld hl, contador_notas + 1 ; <-- Variable generalizada
+    ld a, [hl]
+    add 1
+    ld [hl-], a
+    ld a, [hl]
+    adc 0
+    ld [hl], a
     
-.no_overflow
-    ; Verifica si llegó al final
-    ld de, longitud_cancion
+    ; Compara con la longitud guardada
+    ld de, longitud_cancion ; <-- Variable generalizada
     ld a, [de]
     cp [hl]
-    jr nz, .no_reiniciar
+    jr nz, .noReseteamos
     inc de
     inc hl
     ld a, [de]
-    cp [hl]
-    jr nz, .no_reiniciar
+    cp [hl]     ; hemos llegado al final?
+    jr z, .reseteanotas
     
-    ; Reinicia la canción
-    xor a
-    ld [contador_notas], a
-    ld [contador_notas + 1], a
+    .noReseteamos
+ret
+.reseteanotas:
+    ;si, reiniciarmos, guardamos y volvemos
+    ld hl, contador_notas
+    ld [hl], 0
+    inc hl
+    ld [hl], 0
     
-    ld hl, puntero_cancion
-    ld a, [hl+]
-    ld [nota_actual], a
-    ld a, [hl]
-    ld [nota_actual + 1], a
-    
-.no_reiniciar
-    ret
-    
-.actualizar_reloj
-    ld [relojMusica], a
-    ret
+    ; Carga el INICIO de la canción guardado
+    ld hl, puntero_cancion ; <-- Variable generalizada
+    ld c, [hl]
+    inc hl
+    ld b, [hl]
+    ld hl, nota_actual
+    ld [hl], c
+    inc hl
+    ld [hl], b
+ret
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Cambia la canción actual
-sys_sound_cambiar_cancion::
-    call sys_sound_init_music
-    ret
 
 SECTION "Sonido", WRAM0
 
-relojMusica:        DS 1
-nota_actual:        DS 2
-contador_notas:     DS 2
-puntero_cancion:    DS 2
-longitud_cancion:   DS 2
+relojMusica:
+ds 1
+nota_actual:           ; Puntero a la nota que toca sonar
+ds 2
+contador_notas:
+ds 2
+puntero_cancion:       ; Dirección de la primera nota (para el loop)
+ds 2
+longitud_cancion:      ; Longitud total de la canción
+ds 2

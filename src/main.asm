@@ -13,8 +13,8 @@ main::
    
    call InitDmaCopy
    call sys_sound_init
-   ld hl, InicioMusic
-   ld bc, EndInicioMusic - InicioMusic
+   ld hl, GorillaMusic
+   ld bc, EndGorillaMusic - GorillaMusic
    call sys_sound_init_music
    ld hl,map1
    call draw_map

@@ -33,7 +33,7 @@ DEF SH = $FF ;Silencio
 InicioMusic::
 
 ;; JUNGLE FREAKOUT
-
+Notas::
     ;Intro (Ritmo de tambores) --------------------
     ; Intro rítmica para crear ambiente
     DB DO5, SH, DO5, DO5, SH, SH, DO5, DO5
@@ -70,7 +70,7 @@ InicioMusic::
     DB DO6, SH, RE6, SH, MI6, SH, FA6, SH
     
     ; Loop de vuelta a A
-
+EndNotas::
 EndInicioMusic::
 GorillaMusic::
 
