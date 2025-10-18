@@ -52,15 +52,14 @@ sys_sound_init::
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Efectos de Sonido
-;; (Tus funciones de FX van aquí, sin cambios)
+;; Sound Effects
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-sys_sound_tira_salto::
+sys_sound_shoot_effect::
     ld a, $1E     
     ld [NR10], a
     ld a, $82     
     ld [NR11], a
-    ld a, $77     
+    ld a, $47     
     ld [NR12], a
     ld a, $C3     
     ld [NR13], a
@@ -68,9 +67,38 @@ sys_sound_tira_salto::
     ld [NR14], a
     ret
     
-; ( ... sys_sound_tira_explosion, mata_cosas, etc. ... )
-
-
+sys_sound_death_effect::
+    ; Canal 4 (Ruido) para una muerte
+    ld a, %00111111   ; Longitud
+    ld [NR41], a
+    ld a, %11110010   ; Volumen 15 (¡FUERTE!), DECAY, Período 2
+    ld [NR42], a
+    ld a, %01010101   ; Ruido "crujiente"
+    ld [NR43], a
+    ld a, %10000000   ; Trigger
+    ld [NR44], a
+    ret
+sys_sound_hit_effect::
+    ld a, %00000101   ; NR41: Longitud MUY corta (5)
+    ld [NR41], a
+    ld a, %10000010   ; NR42: Volumen 8 (¡FLOJO!), DECAY, Período 2 (muy rápido)
+    ld [NR42], a
+    ld a, %01010101   ; NR43: Ruido "crujiente" (buen pop)
+    ld [NR43], a
+    ld a, %11000000   ; NR44: Trigger Y 'length enable' (se apaga por longitud)
+    ld [NR44], a
+    ret
+sys_sound_spit_effect::
+    ; Canal 4 (Ruido) para un "spit" (escupitajo) Para la serpiente
+    ld a, %00000101   ; NR41: Longitud MUY corta (5)
+    ld [NR41], a
+    ld a, %11110010   ; NR42: Volumen 15 (Fuerte), DECAY, Período 2 (muy rápido)
+    ld [NR42], a
+    ld a, %01010001   ; NR43: Ruido "hissy" agudo (Clock 5, 15-bit, Div 1)
+    ld [NR43], a
+    ld a, %11000000   ; NR44: Trigger Y 'length enable' (se apaga por longitud)
+    ld [NR44], a
+    ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inicializa el sistema de música (Tu versión)
 ;; ENTRADA: 
@@ -120,10 +148,9 @@ sys_sound_init_music::
     ld [rNR24], a             ; %011 en los tres bits altos de la frecuencia
 ret
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Cambia la nota a la siguente a tocar
-;; (Lógica del "archivo bueno", adaptada a las nuevas variables)
+;; (CON EL BUG DEL CONTADOR CORREGIDO)
 ;;
 sys_sound_siguienteNota:
     ld a, [relojMusica]       ; vemos si hay que tocar la nota o esperar
@@ -163,13 +190,18 @@ ret
     ld a, b
     ld [hl], a
 
-    ld hl, contador_notas + 1 ; <-- Variable generalizada
-    ld a, [hl]
-    add 1
-    ld [hl-], a
-    ld a, [hl]
-    adc 0
-    ld [hl], a
+; --- INICIO DEL BLOQUE CORREGIDO ---
+    ; Incrementa el contador de 16 bits (contador_notas)
+    ld hl, contador_notas
+    inc [hl]                ; Incrementa el byte bajo (LSB)
+    jr nz, .comprobarFinal  ; Si no es cero (no hay overflow), saltamos
+    inc hl                  ; Si hubo overflow, apuntamos al byte alto (MSB)
+    inc [hl]                ; Incrementamos el byte alto
+    
+.comprobarFinal:
+    ; Recargamos HL al inicio del contador para la comparación
+    ld hl, contador_notas
+; --- FIN DEL BLOQUE CORREGIDO ---
     
     ; Compara con la longitud guardada
     ld de, longitud_cancion ; <-- Variable generalizada
@@ -197,9 +229,9 @@ ret
     inc hl
     ld b, [hl]
     ld hl, nota_actual
-    ld [hl],c
-    inc c 
-    ld [hl], b
+    ld [hl], c       ; Guarda el byte bajo (LSB)
+    inc hl           ; Apunta al byte alto (MSB) de nota_actual
+    ld [hl], b       ; Guarda el byte alto (MSB)
 ret
 
 sys_sound_init_inicio_music::
