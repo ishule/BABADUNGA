@@ -72,6 +72,7 @@ man_entity_init::
 
 ;;	RETURN:
 ;;		HL -> Dirección del sprite de la nueva entidad en component_sprite		
+;;  MODIFIES: A
 man_entity_alloc:
 	;; +1 Entity
 	ld a, [num_entities_alive]

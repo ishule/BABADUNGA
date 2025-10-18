@@ -176,6 +176,8 @@ init_sound::
 ;
 ; RETURN
 ;  BC -> BC x (-1)
+;
+; MODIFIES: A
 positive_to_negative_BC::
 	ld a, b
 	cpl
@@ -194,6 +196,8 @@ positive_to_negative_BC::
 ;
 ; RETURN
 ;  DE -> DE x (-1)
+;
+; MODIFIES: A
 positive_to_negative_DE::
 	ld a, d
 	cpl
