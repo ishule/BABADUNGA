@@ -31,9 +31,7 @@ DEF SI6 = $BE
 
 DEF SH = $FF ;Silencio
 InicioMusic::
-
 ;; JUNGLE FREAKOUT
-Notas::
     ;Intro (Ritmo de tambores) --------------------
     ; Intro rítmica para crear ambiente
     DB DO5, SH, DO5, DO5, SH, SH, DO5, DO5
@@ -70,12 +68,11 @@ Notas::
     DB DO6, SH, RE6, SH, MI6, SH, FA6, SH
     
     ; Loop de vuelta a A
-EndNotas::
+
 EndInicioMusic::
 GorillaMusic::
 
 ;; PRIMAL RAGE
-
     ;Intro (Tambores de Guerra) -----------------
     ; El ritmo de tambor que te gustó, pero más oscuro
     DB DO5, SH, DO5, DO5, SH, RE5s, RE5s, SH
@@ -113,7 +110,6 @@ GorillaMusic::
     DB SOL5, FA5, MI5, RE5, DO5, SH, SH, SH
     
     ; Loop de vuelta a A
-
 EndGorillaMusic::
 
 SnakeMusic::

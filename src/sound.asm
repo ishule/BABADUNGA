@@ -197,11 +197,31 @@ ret
     inc hl
     ld b, [hl]
     ld hl, nota_actual
-    ld [hl], c
-    inc hl
+    ld [hl],c
+    inc c 
     ld [hl], b
 ret
 
+sys_sound_init_inicio_music::
+    ld hl,InicioMusic
+    ld bc,EndInicioMusic-InicioMusic
+    call sys_sound_init_music
+    ret
+sys_sound_init_gorilla_music::
+    ld hl,GorillaMusic
+    ld bc,EndGorillaMusic-GorillaMusic
+    call sys_sound_init_music
+    ret
+sys_sound_init_snake_music::
+    ld hl,SnakeMusic
+    ld bc,EndSnakeMusic-SnakeMusic
+    call sys_sound_init_music
+    ret
+sys_sound_init_spider_music::
+    ld hl,SpiderMusic
+    ld bc,EndSpiderMusic-SpiderMusic
+    call sys_sound_init_music
+    ret
 
 SECTION "Sonido", WRAM0
 

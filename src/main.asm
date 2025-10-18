@@ -13,9 +13,7 @@ main::
    
    call InitDmaCopy
    call sys_sound_init
-   ld hl, GorillaMusic
-   ld bc, EndGorillaMusic - GorillaMusic
-   call sys_sound_init_music
+   call sys_sound_init_gorilla_music
    ld hl,map1
    call draw_map
    call turn_screen_on
