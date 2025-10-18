@@ -5,30 +5,24 @@ component_info::      DS CMP_TOTALBYTES
 num_entities_alive::  DS 1	;; Contador de entidades activas
 next_free_entity::    DS 1		;; Índice de la siguiente entidad
 
-;; Structure
-;; [p_y_sprite] [p_x_sprite] [-------] [-------]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; =========== Entities array structure ===========
+;;
+;; [p_y_sprite] [p_x_sprite] [tile]    [ATTR]
 SECTION "Entity Sprites"             , WRAM0[$C100]
-component_sprite::    DS CMP_TOTALBYTES	;; Array de memoria para almacenar los sprites de entidades
+component_sprite::    DS CMP_TOTALBYTES
 
-
-;; Structure
-;; [p_y_low]  [p_x_low]  [       ] [       ]
+;; [p_y_low]    [p_x_low]    [height]  [width]
 SECTION "Entity Physics Position"    , WRAM0[$C200]
 component_physics_p:: DS CMP_TOTALBYTES
 
-
-;; Structure
-;; [v_y_high] [v_x_high]  [v_y_low] [v_x_low]
+;; [v_y_high]   [v_x_high]   [v_y_low] [v_x_low]
 SECTION "Entity Physics Velocity"    , WRAM0[$C300]
 component_physics_v:: DS CMP_TOTALBYTES
 
-
-;; Structure
-;; [a_y_high] [a_x_high] [a_y_low] [a_x_low]
+;; [a_y_high]   [a_x_high]   [a_y_low] [a_x_low]
 SECTION "Entity Physics Acceleration", WRAM0[$C400]
 component_physics_a:: DS CMP_TOTALBYTES
-
-
 
 SECTION "Entity Manager Code", ROM0
 

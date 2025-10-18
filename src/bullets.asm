@@ -278,7 +278,7 @@ shot_bullet_for_snake::
 
 ; ============== DEPRECATED ======================
 ; Move it to input.asm
-bullet_update::
+check_player_shot::
 	ld a, [can_shot_flag]  ; if can_shot == true => shot:
 	bit 0, a
 	jr nz, shot
