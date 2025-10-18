@@ -146,6 +146,13 @@ DEF GORILLA_WIDTH		equ 16
 
 DEF GROUND_Y equ 124	; Altura del suelo
 
+; Física de la serpiente
+DEF SNAKE_SPEED equ $0200
+DEF SNAKE_SPEED_NEGATIVE equ $FE00
+
+DEF SNAKE_HEIGHT equ 16
+DEF SNAKE_WIDTH equ 32
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bullets
@@ -191,3 +198,4 @@ def COOLDOWN_SHOT_DELAY equ 40
 ;; Enemies consts
 DEF ENEMY_START_ENTITY_ID equ 2
 DEF GORILLA_SPRITES_SIZE  equ 8
+DEF SNAKE_SPRITES_SIZE equ 4
