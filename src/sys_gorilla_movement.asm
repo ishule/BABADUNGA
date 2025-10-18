@@ -22,12 +22,11 @@ SECTION "Gorilla Movement Code", ROM0
 
 
 sys_gorilla_movement::
-    ld a, $01
+    ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
-    ld b, $00
-    ld c, GORILLA_SPEED
+    ld bc, GORILLA_SPEED_NEGATIVE
     ld d, $08
-    call change_entity_group_vel
+    call change_entity_group_vel_x
     ret
 
 sys_gorilla_movement_v2::

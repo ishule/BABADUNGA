@@ -13,6 +13,8 @@ main::
    
    call InitDmaCopy
    call sys_sound_init
+   ld hl, InicioMusic
+   ld bc, EndInicioMusic - InicioMusic
    call sys_sound_init_music
    ld hl,map1
    call draw_map
@@ -54,7 +56,7 @@ main::
 
       call joypad_read
       call process_input
-      call sys_gorilla_movement
+      ;call sys_gorilla_movement
 
       
       call compute_physics

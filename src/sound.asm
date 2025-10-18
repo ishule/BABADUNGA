@@ -1,195 +1,242 @@
 INCLUDE "hardware.inc"
+   rev_Check_hardware_inc 4.0
 
-DEF NR10=$FF10
-DEF NR11=$FF11
-DEF NR12=$FF12
-DEF NR13=$FF13
-DEF NR14=$FF14
-DEF NR21=$FF16
-DEF NR22=$FF17
-DEF NR23=$FF18
-DEF NR24=$FF19
-DEF NR30=$FF1A
-DEF NR31=$FF1B
-DEF NR32=$FF1C
-DEF NR33=$FF1D
-DEF NR34=$FF1E
-DEF NR41=$FF20
-DEF NR42=$FF21
-DEF NR43=$FF22
-DEF NR44=$FF23
-DEF NR50=$FF24
-DEF NR51=$FF25
-DEF NR52=$FF26
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Constantes
 
-DEF TEMPO=12
-DEF SH=$FF
-DEF TAM_CHIP_SONIDO=20
+DEF TEMPO = 8              ; Reducido para que las notas sean más rápidas
+DEF SH = $FF              ; Silencio = 0 (no $FF)
 
-SECTION "SYS_SOUND",ROM0
+DEF TAM_CHIP_SONIDO = 23  ; Tamaño correcto del área de registros de sonido
 
-;;
-; Inicializa sistema de sonido
-;;
+SECTION "SYS_SOUND", ROM0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Inicializa el sistema de sonido
 sys_sound_init::
-    ld hl,NR10
-    ld b,TAM_CHIP_SONIDO
+    ; Limpia todos los registros de sonido
+    ld hl, rNR10
     xor a
-    .loop:
-        ld [hl+],a
-        dec b
-    jr nz,.loop
-    ld hl,NR50
-    ld [hl],$FF
-    ld hl, NR51
-    ld [hl],$FF
-    ld hl,NR52
-    set 7,[hl]
+    ld b, TAM_CHIP_SONIDO
+.loop
+    ld [hl+], a
+    dec b
+    jr nz, .loop
+
+    ; Configura volúmenes máximos
+    ld a, $FF
+    ldh [rNR50], a
+    ldh [rNR51], a
+
+    ; Activa el sistema de sonido
+    ld a, %10000000
+    ldh [rNR52], a
     ret
 
-;;
-; Sonido de salto
-;;
-sys_sound_jump::
-    ld a,$1E
-    ld [NR10],a
-    ld a,$82
-    ld [NR11],a
-    ld a,$77
-    ld [NR12],a
-    ld a,$C3
-    ld [NR13],a
-    ld a,$C6
-    ld [NR14],a
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Efectos de sonido
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+sys_sound_tira_salto::
+    ld hl, .data
+    ld de, rNR10
+    ld b, 5
+    jr _reproducir_efecto
+.data
+    DB $1E, $82, $F3, $73, $87
+
+sys_sound_tira_explosion::
+    ld hl, .data
+    ld de, rNR41
+    ld b, 4
+    jr _reproducir_efecto
+.data
+    DB %00001111, %11110011, %01010011, %11000000
+
+sys_sound_mata_cosas::
+    ld hl, .data
+    ld de, rNR10
+    ld b, 5
+    jr _reproducir_efecto
+.data
+    DB %00010001, %10000010, %11110010, $33, %11000111
+
+sys_sound_recoge_cosas::
+    ld hl, .data
+    ld de, rNR10
+    ld b, 5
+    jr _reproducir_efecto
+.data
+    DB %00000011, %10001000, %01110101, $CD, %10000111
+
+_reproducir_efecto:
+    ld a, [hl+]
+    ld [de], a
+    inc de
+    dec b
+    jr nz, _reproducir_efecto
     ret
 
-;;
-; Inicializa música
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Inicializa el sistema de música
+;; ENTRADA: 
+;;   HL: puntero al inicio de la canción
+;;   BC: longitud de la canción en bytes
 sys_sound_init_music::
+    ; Guarda puntero y longitud
+    ld a, l
+    ld [puntero_cancion], a
+    ld a, h
+    ld [puntero_cancion + 1], a
+    
+    ld a, c
+    ld [longitud_cancion], a
+    ld a, b
+    ld [longitud_cancion + 1], a
+    
+    ; Reinicia contadores
     xor a
-    ld [current_score],a
-    ld [relojMusica],a
-    ld hl,contadorNotas
-    ld [hl+],a
-    ld [hl],a
-
-    ld hl,nota
-    ld [hl],LOW(OST)
-    inc hl
-    ld [hl],HIGH(OST)
+    ld [relojMusica], a
+    ld [contador_notas], a
+    ld [contador_notas + 1], a
     
-    ; Activar sistema de sonido
-    ld a,%10000000
-    ld [rNR52],a
+    ; Inicializa puntero a primera nota
+    ld a, l
+    ld [nota_actual], a
+    ld a, h
+    ld [nota_actual + 1], a
     
-    ; Volumen maestro moderado
-    ld a,%01110111
-    ld [rNR50],a
+    ; Activa sistema de sonido
+    ld a, %10000000
+    ldh [rNR52], a
+    
+    ; Volúmenes altos
+    ld a, %01110111
+    ldh [rNR50], a
     
     ; Canal 2 en ambos altavoces
-    ld a,%00100010
-    ld [rNR51],a
+    ld a, %00100010
+    ldh [rNR51], a
     
-    ; Duty cycle 50%
-    ld a,%10000000
-    ld [rNR21],a
+    ; Canal 2: Duty cycle 50% (sonido más lleno)
+    ld a, %10000000          ; Bits 7-6: 10 = 50% duty, sin length
+    ldh [rNR21], a
     
-    ; **CAMBIO CRÍTICO**: Volumen 9, CONSTANTE (sin decay)
-    ; Tu valor: %01010100 = Vol 5, decreciente, período 4 → se apaga
-    ; Nuevo:    %10010000 = Vol 9, constante, período 0 → se mantiene
-    ld a,%10010000
-    ld [rNR22],a
+    ; Volumen máximo constante, sin envolvente
+    ld a, %11110000          ; Volumen 15, sin cambios
+    ldh [rNR22], a
     
-    ; Frecuencia inicial
+    ; Frecuencia inicial (silencio)
     xor a
-    ld [rNR23],a
-    ld [rNR24],a
-ret
+    ldh [rNR23], a
+    ldh [rNR24], a
+    ret
 
-;;
-; Toca la siguiente nota
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Reproduce la siguiente nota
 sys_sound_siguienteNota::
-    ld a,[relojMusica]
-    cp TEMPO
-    jr z,.tocanota
+    ; Control de tempo
+    ld a, [relojMusica]
     inc a
-    ld [relojMusica],a
-ret
-
-.tocanota:
-    ; Reiniciar contador
+    cp TEMPO
+    jr c, .actualizar_reloj
+    
+    ; Es momento de cambiar nota
     xor a
-    ld [relojMusica],a
-
-    ; Cargar puntero
-    ld hl,nota
-    ld c,[hl]
-    inc hl
-    ld b,[hl]
-    dec hl
-
-    ; Leer nota
-    ld a,[bc]
+    ld [relojMusica], a
+    
+    ; Obtiene la nota actual
+    ld hl, nota_actual
+    ld a, [hl+]
+    ld h, [hl]
+    ld l, a
+    
+    ; Lee la nota
+    ld a, [hl+]
     
     ; ¿Es silencio?
-    cp SH
-    jr z,.silencio
+    or a
+    jr z, .es_silencio
     
-    ; Escribir frecuencia
-    ld [rNR23],a
+    ; Reproduce la nota
+    ldh [rNR23], a
     
-    ; Reconfigurar volumen antes de trigger (seguridad)
-    ld a,%10010000
-    ld [rNR22],a
-    
-    ; Trigger nota
-    ld a,[rNR24]
+    ; CRÍTICO: Trigger para reiniciar el canal
+    ld a, [rNR24]          ; Bit 7=trigger, bits 2-0=freq alta
     set 7,a
-    ld [rNR24],a
-
-.silencio:
-    ; Avanzar puntero
-    inc bc
-    ld a,c
-    ld [hl+],a
-    ld a,b
-    ld [hl],a
-
-    ; Incrementar contador
-    ld hl,contadorNotas+1
-    ld a,[hl]
-    add 1
-    ld [hl-],a
-    ld a,[hl]
-    adc 0
-    ld [hl],a
+    ldh [rNR24], a
+    jr .actualizar_puntero
     
-    ; Verificar fin
-    ld bc,EndOST-OST
-    ld a,[hl+]
-    cp b
-    jr nz,.noReset
-    ld a,[hl]
-    cp c
-    jr z,.resetearNotas
-
-.noReset:
-    ret
-
-.resetearNotas:
+.es_silencio
+    ; Silencia poniendo volumen a 0
     xor a
-    ld hl,contadorNotas
-    ld [hl+],a
-    ld [hl],a
-    ld hl,nota
-    ld [hl],LOW(OST)
+    ldh [rNR22], a
+    
+    ; Pequeña pausa
+    ld b, 2
+.pausa
+    dec b
+    jr nz, .pausa
+    
+    ; Restaura volumen
+    ld a, %11110000
+    ldh [rNR22], a
+    
+.actualizar_puntero
+    ; Guarda nuevo puntero
+    ld a, l
+    ld [nota_actual], a
+    ld a, h
+    ld [nota_actual + 1], a
+    
+    ; Incrementa contador
+    ld hl, contador_notas
+    inc [hl]
+    jr nz, .no_overflow
     inc hl
-    ld [hl],HIGH(OST)
+    inc [hl]
+    dec hl
+    
+.no_overflow
+    ; Verifica si llegó al final
+    ld de, longitud_cancion
+    ld a, [de]
+    cp [hl]
+    jr nz, .no_reiniciar
+    inc de
+    inc hl
+    ld a, [de]
+    cp [hl]
+    jr nz, .no_reiniciar
+    
+    ; Reinicia la canción
+    xor a
+    ld [contador_notas], a
+    ld [contador_notas + 1], a
+    
+    ld hl, puntero_cancion
+    ld a, [hl+]
+    ld [nota_actual], a
+    ld a, [hl]
+    ld [nota_actual + 1], a
+    
+.no_reiniciar
+    ret
+    
+.actualizar_reloj
+    ld [relojMusica], a
     ret
 
-SECTION "Sound",WRAM0
-relojMusica: ds 1
-nota: ds 2
-contadorNotas: ds 2
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Cambia la canción actual
+sys_sound_cambiar_cancion::
+    call sys_sound_init_music
+    ret
+
+SECTION "Sonido", WRAM0
+
+relojMusica:        DS 1
+nota_actual:        DS 2
+contador_notas:     DS 2
+puntero_cancion:    DS 2
+longitud_cancion:   DS 2
