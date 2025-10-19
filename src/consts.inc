@@ -133,8 +133,8 @@ DEF PLAYER_GRAVITY			equ $0050 	; +1
 
 DEF PLAYER_INITIAL_POS_X  	equ $13 ; Posición inicial del jugador en X
 
-DEF PLAYER_HEIGHT	equ 6
-DEF PLAYER_WIDTH	equ 6
+DEF PLAYER_HEIGHT	equ 16
+DEF PLAYER_WIDTH	equ 8
 
 ; Física del gorila (Q5.3, C2)
 DEF GORILLA_JUMP_SPEED 		equ $FD00   ; -3
