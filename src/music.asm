@@ -155,47 +155,77 @@ SnakeMusic::
 EndSnakeMusic::
 
 SpiderMusic::
+;Intro (Warning Scuttle) --------------------
+    ; Faster, more agitated intro
+    DB MI5, SH, FA5, SH, SOL5s, SH, LA5, SH
+    DB SI5, SH, LA5s, SH, SOL5s, SH, FA5, SH
+    DB MI5, FA5, SOL5s, LA5, SI5, DO6, RE6, MI6
+    DB SH, SH, SH, SH, SH, SH, SH, SH
 
-;; SILK TRAP
+    ;A (Main Threat Theme) ----------------------
+    ; Driving, repetitive, minor feel
+    DB LA5, SH, LA5, DO6, SH, LA5, DO6, RE6
+    DB MI6, SH, RE6, DO6, SH, RE6, DO6, SI5
+    DB LA5, SH, LA5, DO6, SH, LA5, DO6, RE6
+    DB MI6, RE6, DO6, SI5, LA5, SOL5s, FA5s, MI5 ; Descending threat
 
-    ;Intro (El Acecho) --------------------------
-    ; Un arpegio "picado" que sube y baja
-    DB DO5, SH, MI5, SH, SOL5, SH, SH, SH
-    DB SI5, SH, SOL5, SH, MI5, SH, DO5, SH
-    DB DO5, SH, MI5, SH, SOL5, SH, SH, SH
-    DB DO6, SI5, LA5, SOL5, FA5, MI5, RE5, DO5
-    
-    ;A (Tema "Arácnido") ------------------------
-    ; Rítmico y "puntiagudo"
-    DB MI5, SH, SH, MI5, SH, SH, SOL5, SH
-    DB LA5, SH, SH, LA5, SH, SH, SI5, SH
-    ; "El Ataque" (Arpegio rápido)
-    DB DO6, MI6, DO6, SI5, SOL5, SI5, SOL5, MI5
-    DB DO5, SH, SH, SH, SH, SH, SH, SH
-    
-    ;A' (Repetición) ---------------------------
-    DB MI5, SH, SH, MI5, SH, SH, SOL5, SH
-    DB LA5, SH, SH, LA5, SH, SH, SI5, SH
-    ; "El Ataque" (Variación)
-    DB DO6, RE6, MI6, DO6, SI5, SOL5, FA5, MI5
-    DB RE5, SH, SH, SH, SH, SH, SH, SH
+    ;B (Tension Build) --------------------------
+    ; Rising sequence, increasing urgency
+    DB FA5, SH, SOL5, SH, LA5, SH, SI5, SH
+    DB DO6, SH, RE6, SH, MI6, SH, FA6, SH
+    ; Rapid diminished arpeggio (attack!)
+    DB SOL6s, FA6, RE6, DO6, SI5, LA5, SOL5s, FA5
+    DB MI5, SH, SH, SH, SH, SH, SH, SH
 
-    ;Puente (Tensión) --------------------------
-    DB SH, FA5, FA5, FA5, SH, SOL5, SOL5, SH
-    DB SH, LA5, LA5, LA5, SH, SI5, SI5, SH
-    DB SH, FA5, FA5, FA5, SH, SOL5, SOL5, SH
-    DB SH, LA5, SH, SI5, SH, DO6, SH, SH
+    ;A' (Return of Threat) ----------------------
+    DB LA5, SH, LA5, DO6, SH, LA5, DO6, RE6
+    DB MI6, SH, RE6, DO6, SH, RE6, DO6, SI5
+    DB LA5, SH, LA5, DO6, SH, LA5, DO6, RE6
+    DB MI6, FA6, SOL6s, FA6, MI6, RE6, DO6, SI5 ; Faster descent
 
-    ;B (Furia de la Araña) ----------------------
-    ; Rápido y melódico
-    DB DO6, SI5, LA5, SOL5, LA5, SI5, DO6, SH
-    DB RE6, DO6, SI5, LA5, SI5, DO6, RE6, SH
-    DB DO6, SI5, LA5, SOL5, LA5, SI5, DO6, SH
-    DB MI6, RE6, DO6, SI5, LA5, SOL5, FA5, SH
-    
-    ; Loop de vuelta a A
+    ;Climax (Frenzy) ----------------------------
+    ; Highest and fastest part
+    DB LA6, SH, SOL6s, SH, FA6, SH, MI6, SH
+    DB RE6, SH, DO6, SH, SI5, SH, LA5, SH
+    DB LA5, SI5, DO6, RE6, MI6, FA6, SOL6s, LA6
+    DB LA6, SH, LA6, SH, LA6, SH, SH, SH ; Final stabs before loop
+
+    ; Loop back to A
 
 EndSpiderMusic::
+
+VictoryMusic::
+;Intro (Fanfarria Ascendente) ---------------
+    ; Un arpegio rápido y brillante
+    DB DO5, MI5, SOL5, DO6, MI6, SOL6, SH, SH
+    DB SOL6, MI6, DO6, SOL5, MI5, DO5, SH, SH
+
+    ;A (Tema Principal Victorioso) --------------
+    ; La melodía principal, clara y heroica
+    DB SOL5, SH, SOL5, LA5, SI5, DO6, SH, SH
+    DB SI5, LA5, SOL5, FA5, MI5, RE5, DO5, SH
+    DB SOL5, SH, SOL5, LA5, SI5, DO6, SH, SH
+    DB DO6, RE6, MI6, FA6, MI6, RE6, DO6, SH
+
+    ;Final (Conclusión Triunfal) ----------------
+    ; Resolución final en Do Mayor
+    DB SOL5, LA5, SI5, DO6, RE6, MI6, FA6, SOL6
+    DB DO6, DO6, DO6, SH, SH, SH, SH, SH ; ¡Victoria!
+EndVictoryMusic::
+
+DefeatMusic::
+;Intro (Descenso Lento) ---------------------
+    ; Un arpegio descendente en La menor
+    DB MI6, SH, DO6, SH, LA5, SH, SH, SH
+    DB SOL5, SH, MI5, SH, DO5, SH, SH, SH
+
+    ;A (Tema Principal Triste) ------------------
+    ; Melodía lenta y descendente
+    DB LA5, SH, SOL5, SH, FA5, SH, MI5, SH
+    DB RE5, SH, MI5, SH, FA5, SH, MI5, SH
+    DB LA5, SH, SOL5, SH, FA5, SH, MI5, SH
+    DB RE5, DO5, SI5, LA5, SH, SH, SH, SH ; Nota La grave final
+EndDefeatMusic::
 
 SECTION "Mi Nota", WRAM0
 miNota:

@@ -254,6 +254,16 @@ sys_sound_init_spider_music::
     ld bc,EndSpiderMusic-SpiderMusic
     call sys_sound_init_music
     ret
+sys_sound_init_victory_music::
+    ld hl, VictoryMusic
+    ld bc,EndVictoryMusic-VictoryMusic
+    call sys_sound_init_music
+    ret
+sys_sound_init_defeat_music::
+    ld hl, DefeatMusic
+    ld bc,EndDefeatMusic-DefeatMusic
+    call sys_sound_init_music
+    ret
 
 SECTION "Sonido", WRAM0
 
