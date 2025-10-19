@@ -274,7 +274,7 @@ sys_collision_bullet_boss_callback:
 	;; El comportamiento que queremos es que el boss pierda vida y la bala desaparezca
 ;;====================================================	
     ld [hl], 0  	; Marcar como inactiva
-    ld a, [num_entities_alive]
+    ld a, [num_entities_alive] ; TODO: Usar el id de la bala. No la última
     dec a
     call man_entity_delete 	; Aplicar cuando funcione la función
 

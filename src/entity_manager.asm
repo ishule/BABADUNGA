@@ -170,33 +170,31 @@ man_entity_delete::
 	jr .exit
 
 	.is_last_entity:
-	xor a
-
 	; CMP_INFO
 	ld h, d
 	ld l, e
 	ld b, c; CMP_SIZE
-	call memset_256
+	call memreset_256
 
 	;CMP_SPRITE
 	call go_to_next_entity_start_HL
 	ld b, c; CMP_SIZE
-	call memset_256
+	call memreset_256
 
 	;CMP_PHYSICS_P
 	call go_to_next_entity_start_HL
 	ld b, c; CMP_SIZE
-	call memset_256
+	call memreset_256
 
 	;CMP_PHYSICS_V
 	call go_to_next_entity_start_HL
 	ld b, c; CMP_SIZE
-	call memset_256
+	call memreset_256
 
 	;CMP_PHYSICS_A
 	call go_to_next_entity_start_HL
 	ld b, c; CMP_SIZE
-	call memset_256
+	call memreset_256
 
 	.exit:
 
