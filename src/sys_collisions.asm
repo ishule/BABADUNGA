@@ -366,7 +366,7 @@ sys_collision_check_entity_vs_tiles::
 
 	;; Verificar colisión con el suelo
 	push hl
-	call .check_floor
+	;call .check_floor
 	pop hl
 
 	;; Verificar colisíon con pared izquierda
@@ -412,11 +412,10 @@ sys_collision_check_entity_vs_tiles::
 	;; HAY COLISIÓN CON EL SUELO
 	push hl	
 	ld h, CMP_PHYSICS_V_H
-	inc l 
-	inc l 	; HL = $C302 = VY 
+	; HL = $C300 = VY 
 	xor a 
 	ld [hl], a 
-	inc l 	; HL = $C402 = AY 
+	inc h 	; HL = $C400 = AY 
 	ld [hl], a
 
 	or a ;Para limpiar Carry (colisión)
@@ -479,12 +478,11 @@ sys_collision_check_entity_vs_tiles::
 
 	;; Detener velocidad y aceleración de X
 	ld h, CMP_PHYSICS_V_H
-	inc l 
-	inc l
-	inc l 	; HL = $C303 = VX 
+	inc l 	; HL = $C301 = VX 
 	xor a 
 	ld [hl], a 
-	inc l 	; HL = $C403 = AX 
+	inc h
+	; HL = $C401 = AX 
 	ld [hl], a
 
 	ret 
@@ -503,7 +501,9 @@ sys_collision_check_entity_vs_tiles::
 	ld a, [hl] 	 
 	ld d, a 	; D = Entity.PosX
 
-	inc h 
+	inc h
+	inc l 
+	inc l
 	ld a, [hl]
 	ld e, a 	; E = Entity.Width
 	push de
@@ -563,10 +563,9 @@ sys_collision_check_entity_vs_tiles::
 
 	;; Detener velocidad y aceleración de X
 	ld h, CMP_PHYSICS_V_H
-	inc l 	; HL = $C303 = VX 
 	xor a 
 	ld [hl], a 
-	inc h 	; HL = $C403 = AX 
+	inc h 	; HL = $C401 = AX 
 	ld [hl], a
 
 	ret 
