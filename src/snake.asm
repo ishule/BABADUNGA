@@ -184,8 +184,6 @@ snake_init_physics::
 ;   HL: Dirección de origen de los datos (ej. snake_sprites_turned)
 ; MODIFICA: A, BC, DE, HL
 snake_update_sprites::
-    push bc
-    push de
 
     ld c, ENEMY_START_ENTITY_ID ; C = Contador de ID de entidad (empezamos en la entidad 1)
     ld b, 4 ; B = Contador de sprites a procesar
@@ -224,8 +222,6 @@ snake_update_sprites::
     dec b
     jr nz, .sprite_loop ; Repetir si quedan sprites
 
-    pop de
-    pop bc
     ret
     
 ;============================================================

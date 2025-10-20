@@ -63,6 +63,7 @@ man_entity_init::
 	ld [next_free_entity], a 
 	ld [num_entities_alive], a 
 	;Inicializa flags bosses
+	ld a,%00100000
 	ld [snake_flags],a
 	ret 
 

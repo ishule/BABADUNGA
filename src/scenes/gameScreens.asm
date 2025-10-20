@@ -39,6 +39,14 @@ draw_title_screen::
 	ld hl,StartScreen
 	call draw_map
 	ret
+
+init_victory_screen::
+
+draw_victory_screen::
+
+init_defeat_screen::
+
+draw_defeat_screen::
 ;;Fonttiles son los tiles grandes del menú de inicio
 fontTiles0::
 DB $00,$00,$00,$00,$00,$00,$00,$00
