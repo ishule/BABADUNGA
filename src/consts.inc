@@ -155,6 +155,17 @@ DEF SNAKE_HEIGHT equ 16
 DEF SNAKE_WIDTH equ 32
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Physics Component
+DEF CMP_COLLISIONS = $C5
+DEF CMP_COLLISIONS_ADDRESS = $C500
+
+DEF CMP_COLLISIONS_OFFSET_Y equ 0
+DEF CMP_COLLISIONS_OFFSET_X equ 1
+DEF CMP_COLLISIONS_HEIGHT  	equ 2
+DEF CMP_COLLISIONS_WIDTH	equ 3
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bullets
 ; General

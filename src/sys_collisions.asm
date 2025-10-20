@@ -116,8 +116,11 @@ sys_collision_check_AABB::
 	ld [I1 + I_POS], a 
 
 	inc h 		; h = $C2
+	inc h 
+	inc h
+	inc h 		; h = $C5
 	inc l 
-	inc l 		; hl -> $C202
+	inc l 		; hl -> $C502
 	ld a, [hl] 	; A = E1.Height 
 	ld[I1 + I_SIZE], a 
 
@@ -130,8 +133,11 @@ sys_collision_check_AABB::
 	ld [I2 + I_POS], a 
 
 	inc h
+	inc h 
+	inc h
+	inc h 		; h = $C5
 	inc l
-	inc l 		; hl -> $C202
+	inc l 		; hl -> $C502
 	ld a, [hl] 	; A = E2.Height 
 	ld[I2 + I_SIZE], a 
 
@@ -155,8 +161,11 @@ sys_collision_check_AABB::
 	ld [I1 + I_POS], a 
 
 	inc h
+	inc h 
+	inc h
+	inc h 		; h = $C5
 	inc l 
-	inc l 		; hl = $C203
+	inc l 		; hl = $C503
 	ld a, [hl] 	; A = E1.Width
 	ld[I1 + I_SIZE], a 
 
@@ -170,8 +179,11 @@ sys_collision_check_AABB::
 	ld [I2 + I_POS], a 
 
 	inc h
+	inc h 
+	inc h
+	inc h 		; h = $C5
 	inc l 
-	inc l 		; hl = $C203
+	inc l 		; hl = $C503
 	ld a, [hl] 	; A = E2.Width
 	ld[I2 + I_SIZE], a 
 
@@ -392,8 +404,11 @@ sys_collision_check_entity_vs_tiles::
 	ld d, a 	; D = Entity.PosY
 
 	inc h 
+	inc h 
+	inc h
+	inc h 		; h = $C5
 	inc l 
-	inc l 		; HL = $C202
+	inc l 		; HL = $C502
 	ld a, [hl] 	
 	ld e, a 	; E = Entity.Height	
 
@@ -502,6 +517,9 @@ sys_collision_check_entity_vs_tiles::
 	ld d, a 	; D = Entity.PosX
 
 	inc h
+	inc h 
+	inc h
+	inc h 		; h = $C5
 	inc l 
 	inc l
 	ld a, [hl]

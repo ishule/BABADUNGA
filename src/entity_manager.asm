@@ -1,5 +1,6 @@
 INCLUDE "consts.inc"
 
+;; [ACTIVE] [TYPE] [FLAGS]   [----]
 SECTION "Entity Manager Data"        , WRAM0[$C000]
 component_info::      DS CMP_TOTALBYTES
 num_entities_alive::  DS 1	;; Contador de entidades activas
@@ -12,7 +13,7 @@ next_free_entity::    DS 1		;; Índice de la siguiente entidad
 SECTION "Entity Sprites"             , WRAM0[$C100]
 component_sprite::    DS CMP_TOTALBYTES
 
-;; [p_y_low]    [p_x_low]    [height]  [width]
+;; [p_y_low]    [p_x_low]    [health] 	[damage]
 SECTION "Entity Physics Position"    , WRAM0[$C200]
 component_physics_p:: DS CMP_TOTALBYTES
 
@@ -23,6 +24,10 @@ component_physics_v:: DS CMP_TOTALBYTES
 ;; [a_y_high]   [a_x_high]   [a_y_low] [a_x_low]
 SECTION "Entity Physics Acceleration", WRAM0[$C400]
 component_physics_a:: DS CMP_TOTALBYTES
+
+;; [y_collision_offset]   [x_collision_offset]   [height] [width]
+SECTION "Entity Physics Collisions", WRAM0[$C500]
+collision_values:: DS CMP_TOTALBYTES
 
 SECTION "Entity Manager Code", ROM0
 
@@ -55,6 +60,12 @@ man_entity_init::
 
 	; Limpiar física 2
 	ld hl, component_physics_a
+	ld b, CMP_TOTALBYTES
+	xor a 
+	call memset_256
+
+	; Limpiar colisiones
+	ld hl, collision_values
 	ld b, CMP_TOTALBYTES
 	xor a 
 	call memset_256
