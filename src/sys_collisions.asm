@@ -23,9 +23,9 @@ sys_collision_check_all::
 	call sys_collision_check_entity_vs_tiles
 
 	;; Check collision between boss and tiles
-	ld a, TYPE_BOSS
-	call man_entity_locate_first_type 	; Boss en HL
-	call sys_collision_check_entity_vs_tiles
+	;ld a, TYPE_BOSS
+	;call man_entity_locate_first_type 	; Boss en HL
+	;call sys_collision_check_entity_vs_tiles
 
 	;call sys_collision_check_bullets_vs_tiles
 
@@ -115,8 +115,12 @@ sys_collision_check_AABB::
 	ld a, [hl] 	; A = E1.PosY
 	ld [I1 + I_POS], a 
 
+	inc h 		; h = $C2
+	inc h 
 	inc h
-	inc h 		; h = $C3
+	inc h 		; h = $C5
+	inc l 
+	inc l 		; hl -> $C502
 	ld a, [hl] 	; A = E1.Height 
 	ld[I1 + I_SIZE], a 
 
@@ -129,7 +133,11 @@ sys_collision_check_AABB::
 	ld [I2 + I_POS], a 
 
 	inc h
-	inc h 		; h = $C3
+	inc h 
+	inc h
+	inc h 		; h = $C5
+	inc l
+	inc l 		; hl -> $C502
 	ld a, [hl] 	; A = E2.Height 
 	ld[I2 + I_SIZE], a 
 
@@ -153,7 +161,11 @@ sys_collision_check_AABB::
 	ld [I1 + I_POS], a 
 
 	inc h
-	inc h 		; h = $C3
+	inc h 
+	inc h
+	inc h 		; h = $C5
+	inc l 
+	inc l 		; hl = $C503
 	ld a, [hl] 	; A = E1.Width
 	ld[I1 + I_SIZE], a 
 
@@ -167,7 +179,11 @@ sys_collision_check_AABB::
 	ld [I2 + I_POS], a 
 
 	inc h
-	inc h 		; h = $C3
+	inc h 
+	inc h
+	inc h 		; h = $C5
+	inc l 
+	inc l 		; hl = $C503
 	ld a, [hl] 	; A = E2.Width
 	ld[I2 + I_SIZE], a 
 
@@ -207,20 +223,22 @@ sys_collision_check_player_vs_boss::
 	;; PROVISIONAL!!
 	;; El comportamiento que queremos es que el jugador pierda vida
 ;;====================================================	
-
-	;; Eliminar
-	ld a, $00 
-	ld[$C100], a 
-	ld[$C101], a 
-
-	ld [$C104], a 
-	ld [$C105], a
-
-	ld [CMP_START_ADDRESS], a  	; Marcar como inactiva cuando el jugador pierda todas las vidas
-	;call man_entity_delete 	; Activar cuando el jugador pierda todas las vidas
-
+	
 
 	;; TODO: EL JUGADOR PIERDE VIDA
+
+
+	;; SOLO PASARÁ SI EL JUGADOR HA MUERTO
+	;ld a, $00 
+	;ld [CMP_START_ADDRESS], a  	; Marcar como inactiva cuando el jugador pierda todas las vidas
+
+	;ld a, $00 
+	;call man_entity_delete 	; Activar cuando el jugador pierda todas las vidas
+
+	;ld a, $01
+	;call man_entity_delete
+
+	
 
     ; Código para hacer que el jugador parpadee + invencibilidad al jugador
     ;ld a, $00
@@ -268,14 +286,12 @@ sys_collision_bullet_boss_callback:
 	;; El comportamiento que queremos es que el boss pierda vida y la bala desaparezca
 ;;====================================================	
     ld [hl], 0  	; Marcar como inactiva
-    ;call man_entity_delete 	; Aplicar cuando funcione la función
+    ld a, [num_entities_alive] ; TODO: Usar el id de la bala. No la última
+    dec a
+    call man_entity_delete 	; Aplicar cuando funcione la función
 
 
-    ;; Eliminar
-    inc h
-    ld a, $00
-    ld [hl+], a 
-    ld [hl], a
+
 
     ;;TODO: EL BOSS PIERDE VIDA
 
@@ -325,13 +341,9 @@ sys_collision_bullet_player_callback:
 	;; El comportamiento que queremos es que el jugador pierda vida y la bala desaparezca
 ;;====================================================
     ld [hl], 0  	; Marcar como inactiva
-    ;call man_entity_delete 	; Activar cuando vaya la función
+    call man_entity_delete 	; Activar cuando vaya la función
 
-    ;; Eliminar 
-    inc h
-    ld a, $00
-    ld [hl+], a 
-    ld [hl], a
+
 
     ;;TODO: EL BOSS PIERDE VIDA
 
@@ -366,7 +378,7 @@ sys_collision_check_entity_vs_tiles::
 
 	;; Verificar colisión con el suelo
 	push hl
-	call .check_floor
+	;call .check_floor
 	pop hl
 
 	;; Verificar colisíon con pared izquierda
@@ -392,7 +404,11 @@ sys_collision_check_entity_vs_tiles::
 	ld d, a 	; D = Entity.PosY
 
 	inc h 
+	inc h 
 	inc h
+	inc h 		; h = $C5
+	inc l 
+	inc l 		; HL = $C502
 	ld a, [hl] 	
 	ld e, a 	; E = Entity.Height	
 
@@ -411,11 +427,10 @@ sys_collision_check_entity_vs_tiles::
 	;; HAY COLISIÓN CON EL SUELO
 	push hl	
 	ld h, CMP_PHYSICS_V_H
-	inc l 
-	inc l 	; HL = $C302 = VY 
+	; HL = $C300 = VY 
 	xor a 
 	ld [hl], a 
-	inc l 	; HL = $C402 = AY 
+	inc h 	; HL = $C400 = AY 
 	ld [hl], a
 
 	or a ;Para limpiar Carry (colisión)
@@ -478,12 +493,11 @@ sys_collision_check_entity_vs_tiles::
 
 	;; Detener velocidad y aceleración de X
 	ld h, CMP_PHYSICS_V_H
-	inc l 
-	inc l
-	inc l 	; HL = $C303 = VX 
+	inc l 	; HL = $C301 = VX 
 	xor a 
 	ld [hl], a 
-	inc l 	; HL = $C403 = AX 
+	inc h
+	; HL = $C401 = AX 
 	ld [hl], a
 
 	ret 
@@ -502,7 +516,12 @@ sys_collision_check_entity_vs_tiles::
 	ld a, [hl] 	 
 	ld d, a 	; D = Entity.PosX
 
+	inc h
 	inc h 
+	inc h
+	inc h 		; h = $C5
+	inc l 
+	inc l
 	ld a, [hl]
 	ld e, a 	; E = Entity.Width
 	push de
@@ -562,10 +581,9 @@ sys_collision_check_entity_vs_tiles::
 
 	;; Detener velocidad y aceleración de X
 	ld h, CMP_PHYSICS_V_H
-	inc l 	; HL = $C303 = VX 
 	xor a 
 	ld [hl], a 
-	inc h 	; HL = $C403 = AX 
+	inc h 	; HL = $C401 = AX 
 	ld [hl], a
 
 	ret 

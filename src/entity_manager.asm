@@ -1,28 +1,26 @@
 INCLUDE "consts.inc"
-
-SECTION "Entity Manager Data"        , WRAM0[$C000]
-component_info::      DS CMP_TOTALBYTES
-num_entities_alive::  DS 1	;; Contador de entidades activas
-next_free_entity::    DS 1		;; Índice de la siguiente entidad
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; =========== Entities array structure ===========
-;;
-;; [p_y_sprite] [p_x_sprite] [tile]    [ATTR]
-SECTION "Entity Sprites"             , WRAM0[$C100]
-component_sprite::    DS CMP_TOTALBYTES
-
-;; [p_y_low]    [p_x_low]    [height]  [width]
-SECTION "Entity Physics Position"    , WRAM0[$C200]
-component_physics_p:: DS CMP_TOTALBYTES
-
-;; [v_y_high]   [v_x_high]   [v_y_low] [v_x_low]
-SECTION "Entity Physics Velocity"    , WRAM0[$C300]
-component_physics_v:: DS CMP_TOTALBYTES
-
-;; [a_y_high]   [a_x_high]   [a_y_low] [a_x_low]
-SECTION "Entity Physics Acceleration", WRAM0[$C400]
-component_physics_a:: DS CMP_TOTALBYTES
+													;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+													;; =========== Entities array structure ===========
+													;;
+SECTION "Entity Manager Data"        , WRAM0[$C000] ;; [ACTIVE]     [TYPE]       [FLAGS]   [----]
+component_info::      DS CMP_TOTALBYTES             ;;
+num_entities_alive::  DS 1                          ;;
+next_free_entity::    DS 1                          ;;
+                                                    ;;
+SECTION "Entity Sprites"             , WRAM0[$C100] ;; [p_y_high]   [p_x_high]   [tile]    [ATTR]
+component_sprite::    DS CMP_TOTALBYTES             ;;
+                                                    ;;
+SECTION "Entity Physics Position"    , WRAM0[$C200] ;; [p_y_low]    [p_x_low]    [health]  [damage]
+component_physics_p:: DS CMP_TOTALBYTES             ;;
+                                                    ;;
+SECTION "Entity Physics Velocity"    , WRAM0[$C300] ;; [v_y_high]   [v_x_high]   [v_y_low] [v_x_low]
+component_physics_v:: DS CMP_TOTALBYTES             ;;
+                                                    ;;
+SECTION "Entity Physics Acceleration", WRAM0[$C400] ;; [a_y_high]   [a_x_high]   [a_y_low] [a_x_low]
+component_physics_a:: DS CMP_TOTALBYTES             ;;
+                                                    ;;
+SECTION "Entity Physics Collisions"  , WRAM0[$C500] ;; [y_collision_offset] [x_collision_offset] [height] [width]
+collision_values::    DS CMP_TOTALBYTES             ;;
 
 SECTION "Entity Manager Code", ROM0
 
@@ -55,6 +53,12 @@ man_entity_init::
 
 	; Limpiar física 2
 	ld hl, component_physics_a
+	ld b, CMP_TOTALBYTES
+	xor a 
+	call memset_256
+
+	; Limpiar colisiones
+	ld hl, collision_values
 	ld b, CMP_TOTALBYTES
 	xor a 
 	call memset_256
@@ -171,35 +175,41 @@ man_entity_delete::
 	jr .exit
 
 	.is_last_entity:
-	xor a
+	; Reduce entities alive
+	ld a, [num_entities_alive]
+	dec a
+	ld [num_entities_alive], a
 
 	; CMP_INFO
 	ld h, d
 	ld l, e
 	ld b, c; CMP_SIZE
-	call memset_256
+	call memreset_256
 
 	;CMP_SPRITE
 	call go_to_next_entity_start_HL
 	ld b, c; CMP_SIZE
-	call memset_256
+	call memreset_256
 
 	;CMP_PHYSICS_P
 	call go_to_next_entity_start_HL
 	ld b, c; CMP_SIZE
-	call memset_256
+	call memreset_256
 
 	;CMP_PHYSICS_V
 	call go_to_next_entity_start_HL
 	ld b, c; CMP_SIZE
-	call memset_256
+	call memreset_256
 
 	;CMP_PHYSICS_A
 	call go_to_next_entity_start_HL
 	ld b, c; CMP_SIZE
-	call memset_256
+	call memreset_256
 
 	.exit:
+	ld a, [next_free_entity]
+	sub CMP_SIZE
+	ld [next_free_entity], a
 
 	ret
 

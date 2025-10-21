@@ -192,7 +192,7 @@ gorilla_init_physics::
 	;; ASIGNAR WIDTH Y HEIGHT
 	ld b, GORILLA_SPRITES_SIZE
 	pop hl
-	ld h, CMP_PHYSICS_P_H
+	ld h, CMP_COLLISIONS_H
 	inc l
 	inc l
 	.loop:

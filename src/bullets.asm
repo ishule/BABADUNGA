@@ -2,12 +2,14 @@ INCLUDE "consts.inc"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Structure
-;;  [tile_h_ID], [tile_h_ID], [width], [height], [v_high], [v_low] 
+;;  [tile_h_ID], [tile_h_ID], [damage],[p_coll_y], [p_coll_x], [height], [width], [v_low], [v_high]
 SECTION "Bullet Presets", ROM0
 player_bullet_preset::
-	DB PLAYER_BULLET_TILE_HORIZONTAL, PLAYER_BULLET_TILE_VERTICAL, PLAYER_BULLET_WIDTH, PLAYER_BULLET_HEIGHT,  PLAYER_BULLET_SPEED_HIGH, PLAYER_BULLET_SPEED_LOW 
+	DB PLAYER_BULLET_TILE_H, PLAYER_BULLET_TILE_V, PLAYER_BULLET_DAMAGE, PLAYER_BULLET_COLL_Y, PLAYER_BULLET_COLL_X
+	DB PLAYER_BULLET_HEIGHT, PLAYER_BULLET_WIDTH, PLAYER_BULLET_SPEED_LOW, PLAYER_BULLET_SPEED_HIGH
 snake_bullet_preset::
-	DB SNAKE_BULLET_TILE_HORIZONTAL,  SNAKE_BULLET_TILE_VERTICAL,  SNAKE_BULLET_SPEED_HIGH,  SNAKE_BULLET_SPEED_LOW,  SNAKE_BULLET_HEIGHT,  SNAKE_BULLET_WIDTH
+	DB SNAKE_BULLET_TILE_H, SNAKE_BULLET_TILE_V, SNAKE_BULLET_DAMAGE, SNAKE_BULLET_COLL_Y, SNAKE_BULLET_COLL_X
+	DB SNAKE_BULLET_HEIGHT, SNAKE_BULLET_WIDTH, SNAKE_BULLET_SPEED_LOW, SNAKE_BULLET_SPEED_HIGH
 spider_bullet_preset::
 	DS 6
 
@@ -52,7 +54,7 @@ shot_bullet_for_preset::
 		ld a, [de]  ; Read TILE_V
 		ld [hl+], a ; Set entity Tile
 		
-		; Go to preset width
+		; Go to preset damage
 		inc de
 
 		; HL = CMP_SPTITE_ATTR ($C103)
@@ -66,7 +68,7 @@ shot_bullet_for_preset::
 			;; Set ATTR
 			ld [hl], SPRITE_ATTR_FLIP_Y
 
-			;; Set spawn pint
+			;; Set spawn point
 			ld a, b
 			sub SPRITE_WIDTH
 			ld b, a
@@ -88,7 +90,7 @@ shot_bullet_for_preset::
 		ld a, [de]  ; Read TILE_H
 		ld [hl+], a ; Set entity Tile
 		
-		; Go to preset width
+		; Go to preset damage
 		inc de
 		inc de
 
@@ -123,17 +125,13 @@ shot_bullet_for_preset::
 	.bullet_settings:
 		;; ========== Set Size ==========
 		; Set Width
-		inc h       ; Go to entity width
+		inc h       ; Go to entity damage
 		ld a, [de]
-		ld [hl-], a
+		ld [hl-], a 
+		dec l       ; Skip entity health
 
-		; HL = PHYSICS_WIDTH
+		; HL = PHYSICS_P_LOW
 
-		;Set Hight
-		inc de      ; Go to preset height
-		ld a, [de]
-		ld [hl-], a
-		; HL = PHYSICS_POS_LOW_X
 
 		;; ========== Set Pos ==========
 		; Set pos_x_high
@@ -148,30 +146,45 @@ shot_bullet_for_preset::
 
 		; HL = SPRITE_POS_Y
 
+		;; ========== Set Coll =========
+		ld h, CMP_COLLISIONS_H ; Go to entity y_coll_offset
+		inc de                 ; Go to preset p_y_coll
+		ld a, [de]
+		ld [hl+], a ; Set y_collision_offset
+		inc de
+		ld [hl+], a ; Set x_collision_offset
+		inc de
+		ld [hl+], a ; Set height
+		inc de
+		ld [hl],  a ; Set width
+		
+		; HL = PHYSICS_WIDTH
+
 		;; ========== Set Vel ==========
-		inc h
-		inc h
+		dec h
+		dec h
 
-		;HL = PHYSICS_VEL_Y
+		;HL = PHYSICS_V_X_LOW
 
-		inc de        ; Go to preset v_high
 		pop af
 		push af
 		bit 1, a      ; 0:x | 1:y
-		jr nz, .vel_y
+		jr z, .vel_x
 
-		.vel_x:
-			inc l
+		.vel_y:
+			dec l
 			jr .change_vel
-		.vel_y: 
+		.vel_x: 
 
 		.change_vel:
-			ld a, [de]
-			ld b, a
-
-			inc de
+			; HL = V_LOW (X/Y)
+			inc de      ; Go to preset v_low
 			ld a, [de]
 			ld c, a
+
+			inc de     ; Go to preset v_high
+			ld a, [de]
+			ld b, a
 			
 			pop af
 			bit 0, a ; 0:- | 1:+
@@ -179,10 +192,10 @@ shot_bullet_for_preset::
 			call positive_to_negative_BC
 			.skip_conversion:
 
-			ld [hl], b
-			inc l
-			inc l
-			ld [hl], c
+			ld [hl], c ; Set v_low
+			dec l
+			dec l
+			ld [hl], b ; Set v_high
 
 	ret
 
@@ -244,7 +257,7 @@ shot_bullet_for_snake::
 	.spawn_bullet:
 	; === Set tile ===
 	dec l
-	ld [hl], SNAKE_BULLET_TILE_HORIZONTAL
+	ld [hl], SNAKE_BULLET_TILE_H
 
 	; === Set Position ===
 	; set pos x
@@ -445,7 +458,7 @@ shot_bullet_for_player:
 	.spawn_bullet_horizontal:
 	; === Set tile ===
 	dec l
-	ld [hl], PLAYER_BULLET_TILE_HORIZONTAL
+	ld [hl], PLAYER_BULLET_TILE_H
 
 	; === Set Position ===
 	; set pos x
@@ -479,7 +492,7 @@ shot_bullet_for_player:
 	.spawn_bullet_vertical:
 	; === Set tile ===
 	dec l
-	ld [hl], PLAYER_BULLET_TILE_VERTICAL
+	ld [hl], PLAYER_BULLET_TILE_V
 
 	; === Set Position ===
 	; set pos x

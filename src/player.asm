@@ -161,7 +161,7 @@ player_init_physics::
 	;; ASIGNAR WIDTH Y HEIGHT
 	ld b, $02
 	pop hl
-	ld h, CMP_PHYSICS_P_H
+	ld h, CMP_COLLISIONS_H
 	inc l
 	inc l
 	.loop:
