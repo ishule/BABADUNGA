@@ -187,6 +187,12 @@ DEF SNAKE_BULLET_COLL_X  equ 2 ; TODO
 DEF SNAKE_BULLET_HEIGHT  equ 4 ; TODO: Cambiarlo por el bueno
 DEF SNAKE_BULLET_WIDTH   equ 4 ; TODO: Cambiarlo por el bueno
 
+; Spider
+DEF SPIDER_BULLET_COLL_Y equ 3
+DEF SPIDER_BULLET_COLL_X equ 3
+DEF SPIDER_BULLET_HEIGHT equ 4
+DEF SPIDER_BULLET_WIDTH  equ 4
+
 ; == Speeds ==
 ; Player
 DEF PLAYER_BULLET_SPEED      equ $0300 ; 3.0
@@ -198,6 +204,11 @@ DEF SNAKE_BULLET_SPEED       equ $01F0 ; 1.5
 DEF SNAKE_BULLET_SPEED_HIGH  equ $01   ; 
 DEF SNAKE_BULLET_SPEED_LOW   equ $F0   ;
 
+; Player
+DEF SPIDER_BULLET_SPEED      equ $0100 ; 1.0
+DEF SPIDER_BULLET_SPEED_HIGH equ $01   ; 
+DEF SPIDER_BULLET_SPEED_LOW  equ $00   ;
+
 ; == Tiles ==
 ; Player
 DEF PLAYER_BULLET_TILE_H equ $20
@@ -207,12 +218,20 @@ DEF PLAYER_BULLET_TILE_V equ $20 ; TODO: Cambiarlo por el real
 DEF SNAKE_BULLET_TILE_H  equ $20 ; TODO: Cambiarlo por el real
 DEF SNAKE_BULLET_TILE_V  equ $20 ; TODO: Cambiarlo por el real
 
+;Spider
+DEF SPIDER_BULLET_TILE_H equ $B2
+DEF SPIDER_BULLET_TILE_V equ $B0
+
 ; == Damage ==
 ; Player
 DEF PLAYER_BULLET_DAMAGE equ 1
 
 ; Snake
 DEF SNAKE_BULLET_DAMAGE  equ 1
+
+; Spider
+DEF SPIDER_BULLET_DAMAGE equ 1
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Player consts
@@ -224,5 +243,6 @@ def COOLDOWN_SHOT_DELAY equ 40
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Enemies consts
 DEF ENEMY_START_ENTITY_ID equ 2
+DEF ENEMY_START_TILE_ID   equ $80
 DEF GORILLA_SPRITES_SIZE  equ 8
 DEF SNAKE_SPRITES_SIZE equ 4
