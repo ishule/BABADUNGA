@@ -181,6 +181,11 @@ man_entity_delete::
 	jr .exit
 
 	.is_last_entity:
+	; Reduce entities alive
+	ld a, [num_entities_alive]
+	dec a
+	ld [num_entities_alive], a
+
 	; CMP_INFO
 	ld h, d
 	ld l, e
@@ -208,6 +213,9 @@ man_entity_delete::
 	call memreset_256
 
 	.exit:
+	ld a, [next_free_entity]
+	sub CMP_SIZE
+	ld [next_free_entity], a
 
 	ret
 
