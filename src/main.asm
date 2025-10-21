@@ -6,7 +6,7 @@ main::
    ld [hl],%11100001
 
    ;.game_loop_definitivo PROTOTIPO DE COMO SERÁ EL PROGRAMA
-   call load_title_screen
+   call load_win_screen
    ;call load_gorilla_screen
    ;call load_snake_screen
    ;call load_spider_screen
