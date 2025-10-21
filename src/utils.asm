@@ -101,7 +101,7 @@ set_palette_sprites_0::
    ret
 
 set_palette_sprites_1::
-	ld hl, rOBP0
+	ld hl, rOBP1
 	ld[hl], %11100100
 	ret
 
