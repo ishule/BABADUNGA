@@ -123,6 +123,14 @@ DEF CMP_PHYSICS_BYTE_A_X_HIGH equ 1
 DEF CMP_PHYSICS_BYTE_A_Y_LOW  equ 2
 DEF CMP_PHYSICS_BYTE_A_X_LOW  equ 3
 
+DEF CMP_COLLISIONS_H = $C5
+DEF CMP_COLLISIONS_ADDRESS = $C500
+
+DEF CMP_COLLISIONS_OFFSET_Y equ 0
+DEF CMP_COLLISIONS_OFFSET_X equ 1
+DEF CMP_COLLISIONS_HEIGHT  	equ 2
+DEF CMP_COLLISIONS_WIDTH	equ 3
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Física del jugador (Q5.3, C2)
@@ -154,52 +162,58 @@ DEF SNAKE_SPEED_NEGATIVE equ $FE00
 DEF SNAKE_HEIGHT equ 16
 DEF SNAKE_WIDTH equ 32
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Physics Component
-DEF CMP_COLLISIONS = $C5
-DEF CMP_COLLISIONS_ADDRESS = $C500
-
-DEF CMP_COLLISIONS_OFFSET_Y equ 0
-DEF CMP_COLLISIONS_OFFSET_X equ 1
-DEF CMP_COLLISIONS_HEIGHT  	equ 2
-DEF CMP_COLLISIONS_WIDTH	equ 3
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bullets
-; General
+; == General==
 DEF BULLET_PRESETS_H       equ $C1
 DEF BULLET_PRESETS_ADDRESS equ $C100
 
-; Directions
+; == Directions == 
 DEF LEFT_SHOT_DIRECTION  equ 0
 DEF RIGHT_SHOT_DIRECTION equ 1
 DEF UP_SHOT_DIRECTION    equ 2
 DEF DOWN_SHOT_DIRECTION  equ 3
 
-; Size
+; == Collision ==
+; Player
+DEF PLAYER_BULLET_COLL_Y equ 3
+DEF PLAYER_BULLET_COLL_X equ 3
 DEF PLAYER_BULLET_HEIGHT equ 4
 DEF PLAYER_BULLET_WIDTH  equ 4
 
+; Snake
+DEF SNAKE_BULLET_COLL_Y  equ 2 ; TODO
+DEF SNAKE_BULLET_COLL_X  equ 2 ; TODO
 DEF SNAKE_BULLET_HEIGHT  equ 4 ; TODO: Cambiarlo por el bueno
 DEF SNAKE_BULLET_WIDTH   equ 4 ; TODO: Cambiarlo por el bueno
 
-; Speeds
+; == Speeds ==
+; Player
 DEF PLAYER_BULLET_SPEED      equ $0300 ; 3.0
 DEF PLAYER_BULLET_SPEED_HIGH equ $03   ; 
 DEF PLAYER_BULLET_SPEED_LOW  equ $00   ;
 
+; Snake
 DEF SNAKE_BULLET_SPEED       equ $01F0 ; 1.5
 DEF SNAKE_BULLET_SPEED_HIGH  equ $01   ; 
 DEF SNAKE_BULLET_SPEED_LOW   equ $F0   ;
 
-; Tiles
-DEF PLAYER_BULLET_TILE_HORIZONTAL equ $20
-DEF PLAYER_BULLET_TILE_VERTICAL   equ $20 ; TODO: Cambiarlo por el real
+; == Tiles ==
+; Player
+DEF PLAYER_BULLET_TILE_H equ $20
+DEF PLAYER_BULLET_TILE_V equ $20 ; TODO: Cambiarlo por el real
 
-DEF SNAKE_BULLET_TILE_HORIZONTAL  equ $20 ; TODO: Cambiarlo por el real
-DEF SNAKE_BULLET_TILE_VERTICAL    equ $20 ; TODO: Cambiarlo por el real
+; Snake
+DEF SNAKE_BULLET_TILE_H  equ $20 ; TODO: Cambiarlo por el real
+DEF SNAKE_BULLET_TILE_V  equ $20 ; TODO: Cambiarlo por el real
+
+; == Damage ==
+; Player
+DEF PLAYER_BULLET_DAMAGE equ 1
+
+; Snake
+DEF SNAKE_BULLET_DAMAGE  equ 1
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Player consts
 DEF PLAYER_SPRITES_SIZE   equ 2
