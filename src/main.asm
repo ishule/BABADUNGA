@@ -39,8 +39,8 @@ main::
    call man_collision_create_all_collisions  ; Crear colisiones de arena (PROVISIONAL, SE DEBERIA CREAR UNO PARA CADA ESCENA)
 
    call init_player
-   call init_gorilla
-   ;call init_snake
+   ;call init_gorilla
+   call init_snake
    ;call open_door Esto se llama una vez el boss ha muerto
    call joypad_init
 
@@ -71,14 +71,14 @@ main::
       call joypad_read
       call process_input
       ;call sys_gorilla_movement
-      ;call sys_snake_movement
+      call sys_snake_movement
 
       
       call compute_physics
       call check_player_shot
       ;call sys_blink_update
 
-      call sys_collision_check_all
+      ;call sys_collision_check_all
       jr game_loop 
 
    di

@@ -79,7 +79,7 @@ sys_snake_movement::
     ; A la derecha, la velocidad X debe ser POSITIVA
     ld bc, SNAKE_SPEED          ; << ¡ESTA ES LA CORRECCIÓN IMPORTANTE!
     ld d, $04
-    call change_entity_group_vel_x
+    call change_entity_group_acc_x
     
     ; Comprobar colisión con borde derecho
     ld a, ENEMY_START_ENTITY_ID
@@ -98,7 +98,7 @@ sys_snake_movement::
     ; A la izquierda, la velocidad X debe ser NEGATIVA
     ld bc, SNAKE_SPEED_NEGATIVE ; << ¡ESTA ES LA CORRECCIÓN IMPORTANTE!
     ld d, $04
-    call change_entity_group_vel_x
+    call change_entity_group_acc_x
     
     ; Comprobar colisión con borde izquierdo
     ld a, ENEMY_START_ENTITY_ID
@@ -124,6 +124,7 @@ sys_snake_movement::
     ld bc, 0
     ld d, $04
     call change_entity_group_vel_x
+    call change_entity_group_acc_x
     
     ; cambiar a TURN
     ld a, [snake_flags]
@@ -141,6 +142,7 @@ sys_snake_movement::
     ld bc, 0
     ld d, $04
     call change_entity_group_vel_x
+    call change_entity_group_acc_x
     
     ; Marcar colisión y cambiar a TURN
     ld a, [snake_flags]      ; <-- DESCOMENTADO
