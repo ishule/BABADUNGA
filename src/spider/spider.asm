@@ -2,7 +2,7 @@ INCLUDE "consts.inc"
 INCLUDE "spider/spider_consts.inc"
 
 SECTION "Spider Variables", WRAM0
-spider_state:: DS 1
+spider_state::         DS 1 ; 0:roof | 1:falling | 2:stunned | 3:stand | 4:jumping | 5:going_up
 spider_shot_cooldown:: DS 1
 spider_can_shot_flag:: DS 1
 
@@ -13,6 +13,9 @@ init_spider::
 	call init_spider_roof_entity_sprites
 	call init_spider_entity_web_hook
 	
+	ld hl, spider_state
+	ld [hl], $00
+
 	ld hl, spider_shot_cooldown
 	ld [hl], SPIDER_ROOF_STATE_SHOT_COOLDOWN
 

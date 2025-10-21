@@ -4,6 +4,88 @@ INCLUDE "spider/spider_consts.inc"
 SECTION "Spider Code", ROM0
 
 spider_logic::
+	; === Check state ==
+	ld a, [spider_state]
+	
+	cp SPIDER_ROOF_STATE
+	jr z, .roof_state
+	
+	cp SPIDER_FALL_STATE
+	jr z, .fall_state
+
+	cp SPIDER_STUN_STATE
+	jr z, .stun_state
+
+	cp SPIDER_STAND_STATE
+	jr z, .stand_state
+
+	cp SPIDER_JUMP_STATE
+	jr z, .jump_state
+
+	cp SPIDER_GO_UP_STATE
+	jr z, .go_up_state	
+
+	.roof_state:
+		call spider_shot_logic
+		call move_spider_towards_player
+		
+		; Check state change
+		ld a, ENEMY_START_ENTITY_ID
+		call man_entity_locate_v2
+		inc l
+		inc l
+		ld a, FLAG_ENTITY_GOT_DAMAGE
+		and [hl]
+		ret z
+		ld a, SPIDER_FALL_STATE
+		ld [spider_state], a
+
+		call transition_roof_to_fall
+
+		ret
+
+	.fall_state:
+
+	.stun_state:
+	
+	.stand_state:
+	
+	.jump_state:
+
+	.go_up_state:
+
+
+	ret
+
+transition_roof_to_fall:
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+
+	ld bc, SPIDER_FALLING_IMPULSE
+	ld d, SPIDER_NUM_ENTITIES
+
+	call change_entity_group_vel_y
+
+
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+
+	ld bc, SPIDER_FALLING_GRAVITY
+	ld d, SPIDER_NUM_ENTITIES
+
+	call change_entity_group_acc_y
+
+
+	ld a, SPIDER_WEB_HOOK_ENTITY_ID + 1 
+	call man_entity_delete
+
+	ld a, SPIDER_WEB_HOOK_ENTITY_ID
+	call man_entity_delete
+
+	ret
+
+
+spider_shot_logic:
 	; === Check shot cooldown ===
 	ld a, [spider_shot_cooldown]
 	cp 0
@@ -11,9 +93,10 @@ spider_logic::
 	.decrease_cooldown:
 	dec a
 	ld [spider_shot_cooldown], a
-	jr .do_not_shot
+	ret
 
 	.shot:
+		; === COMPUTE BULLET POS ===
 		ld a, ENEMY_START_ENTITY_ID
 		call man_entity_locate_v2
 		inc h
@@ -29,16 +112,14 @@ spider_logic::
 		add SPRITE_WIDTH + SPRITE_WIDTH/2
 		ld c, a
 
+		; === SPAWN BULLET ===
 		ld de, spider_bullet_preset
 		ld a, DOWN_SHOT_DIRECTION
 		call shot_bullet_for_preset
 
+		; === SET COOLDOWN ===
 		ld hl, spider_shot_cooldown
 		ld [hl], SPIDER_ROOF_STATE_SHOT_COOLDOWN
-
-	.do_not_shot:
-	call move_spider_towards_player
-
 	ret
 
 
