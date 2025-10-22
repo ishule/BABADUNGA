@@ -16,6 +16,9 @@ spider_logic::
 	cp SPIDER_STUN_STATE
 	jr z, .stun_state
 
+	cp SPIDER_JUMP_TO_STAND_STATE
+	jr z, .jump_to_stand_state
+
 	cp SPIDER_STAND_STATE
 	jr z, .stand_state
 
@@ -26,28 +29,22 @@ spider_logic::
 	jr z, .go_up_state	
 
 	.roof_state:
-		call spider_shot_logic
-		call move_spider_towards_player
-		
-		; Check state change
-		ld a, ENEMY_START_ENTITY_ID
-		call man_entity_locate_v2
-		inc l
-		inc l
-		ld a, FLAG_ENTITY_GOT_DAMAGE
-		and [hl]
-		ret z
-		ld a, SPIDER_FALL_STATE
-		ld [spider_state], a
-
-		call transition_roof_to_fall
-
+		call manage_roof_state
 		ret
 
 	.fall_state:
+		call manage_fall_state
+		ret
+
 
 	.stun_state:
-	
+		call manage_stun_state
+		ret
+
+	.jump_to_stand_state:
+		call manage_jump_to_stand_state
+		ret
+
 	.stand_state:
 	
 	.jump_state:
@@ -57,14 +54,237 @@ spider_logic::
 
 	ret
 
+manage_roof_state:
+	call spider_shot_logic
+	call move_spider_towards_player
+	
+	; Check state change
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	inc l
+	inc l
+	ld a, FLAG_ENTITY_GOT_DAMAGE
+	and [hl]
+	ret z
+	ld a, SPIDER_FALL_STATE
+	ld [spider_state], a
+
+	call transition_roof_to_fall
+	call set_spider_fall_sprites
+	ret
+
+manage_fall_state:
+	; GROUND CHECK
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	ld a, [hl]
+	cp GROUND_Y + SPRITE_HEIGHT/2
+	ret c
+
+	; Reset vel and acc
+	dec h
+	ld bc, 0
+	ld d, SPIDER_NUM_ENTITIES
+	call change_entity_group_acc_y
+
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld bc, 0
+	ld d, SPIDER_NUM_ENTITIES
+	call change_entity_group_vel_y
+
+	; Change state
+	ld a, SPIDER_STUN_STATE
+	ld [spider_state], a
+
+	ld hl, spider_stunned_counter
+	ld [hl], SPIDER_STUN_TIME
+	ret
+
+manage_stun_state:
+	ld a, [spider_stunned_counter]
+	dec a
+	ld [spider_stunned_counter], a
+	ret nz
+
+	ld a, SPIDER_JUMP_TO_STAND_STATE
+	ld [spider_state], a
+
+	call change_spider_sprites_from_fall_to_ground
+
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld bc, SPIDER_JUMP_TO_STAND_IMPULSE
+	ld d, SPIDER_NUM_ENTITIES
+	call change_entity_group_vel_y
+
+ 	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld bc, SPIDER_FALLING_GRAVITY
+	ld d, SPIDER_NUM_ENTITIES
+	call change_entity_group_acc_y
+	ret
+
+manage_jump_to_stand_state:
+	; CHECK IF FALLING DOWN
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	inc h
+	inc h
+	ld a, [hl]
+	bit 7, a
+	ret nz
+
+	; GROUND CHECK
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	ld a, [hl]
+	cp GROUND_Y - SPRITE_HEIGHT
+	ret c
+
+	; Reset vel and acc
+	ld a, ENEMY_START_ENTITY_ID
+	ld bc, 0
+	ld d, SPIDER_NUM_ENTITIES
+	call change_entity_group_acc_y
+
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld bc, 0
+	ld d, SPIDER_NUM_ENTITIES
+	call change_entity_group_vel_y
+
+	; Change state
+	ld a, SPIDER_STAND_STATE
+	ld [spider_state], a
+	ret
+
+manage_stand_state:
+	
+	ret 
+
+manage_jump_state:
+	
+	ret
+
+manage_go_up_state:
+	
+	ret
+
+set_spider_fall_sprites:
+	ld c, SPIDER_JUMP_STATE_TILE_ID
+	ld b, SPIDER_NUM_ENTITIES
+
+	ld d, ENEMY_START_ENTITY_ID
+	.loop:
+		ld a, d
+		call man_entity_locate_v2
+
+		; Go to tile compoent
+		inc h
+		inc l
+		inc l
+		ld [hl], c
+
+		; Go to ATTR
+		inc l
+		ld [hl], %11000000
+		
+		; Go to next tile ID
+		inc c
+		inc c
+
+		inc d
+
+		dec b
+		jr nz, .loop
+
+	call swap_y_spider_entity
+	ret
+
+
+change_spider_sprites_from_fall_to_ground:
+	ld c, 16 ; gap between entity tiles
+	ld b, SPIDER_NUM_ENTITIES
+
+	ld d, ENEMY_START_ENTITY_ID
+	.loop:
+		ld a, d
+		call man_entity_locate_v2
+
+		; Go to tile compoent
+		inc h
+		inc l
+		inc l
+		ld a, [hl]
+		sub c
+		ld [hl+], a
+		ld [hl], %10000000
+
+		inc d
+
+		dec b
+		jr nz, .loop
+
+	call swap_y_spider_entity
+	ret
+
+
+swap_y_spider_entity:
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld d, h
+	ld e, l
+
+	ld a, ENEMY_START_ENTITY_ID + 2
+	call man_entity_locate_v2
+
+	call swap_2_entities_positions 
+
+	ld a, ENEMY_START_ENTITY_ID + 1
+	call man_entity_locate_v2
+	ld d, h
+	ld e, l
+
+	ld a, ENEMY_START_ENTITY_ID + 3
+	call man_entity_locate_v2
+
+	call swap_2_entities_positions 
+
+	ld a, ENEMY_START_ENTITY_ID + 4
+	call man_entity_locate_v2
+	ld d, h
+	ld e, l
+
+	ld a, ENEMY_START_ENTITY_ID + 6
+	call man_entity_locate_v2
+
+	call swap_2_entities_positions 
+
+	ld a, ENEMY_START_ENTITY_ID + 5
+	call man_entity_locate_v2
+	ld d, h
+	ld e, l
+
+	ld a, ENEMY_START_ENTITY_ID + 7
+	call man_entity_locate_v2
+
+	call swap_2_entities_positions 
+
+	ret
+
 transition_roof_to_fall:
 	ld a, ENEMY_START_ENTITY_ID
 	call man_entity_locate_v2
 
 	ld bc, SPIDER_FALLING_IMPULSE
-	ld d, SPIDER_NUM_ENTITIES
+	ld de, $00
+	ld a, SPIDER_NUM_ENTITIES
 
-	call change_entity_group_vel_y
+	call change_entity_group_vel
 
 
 	ld a, ENEMY_START_ENTITY_ID

@@ -236,6 +236,29 @@ position_changers:
         call change_entity_group_pos_y
         ret
 
+
+    ; INPUT
+    ;  hl -> start entity_0 address ($C0)
+    ;  de -> start entity_1 address ($C0)
+    ; MODIFIES: A, B, HL, DE
+    swap_2_entities_positions:
+        inc h
+        inc d
+        ld a, [de]
+        ld b, [hl]
+        ld [hl+], a
+        ld a, b
+        ld [de], a
+        inc de
+
+        ld a, [de]
+        ld b, [hl]
+        ld [hl], a
+        ld a, b
+        ld [de], a
+
+        ret
+
 velocity_changers:
     ; INPUT
     ;  bc -> v_y_high, v_y_low 
