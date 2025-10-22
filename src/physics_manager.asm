@@ -619,6 +619,9 @@ check_ground_collision::
         ld d, PLAYER_SPRITES_SIZE
         call change_entity_group_vel_y
 
+        ld a, e
+        call man_entity_locate_v2 
+
         ld bc, $0000
         ld d, PLAYER_SPRITES_SIZE
         call change_entity_group_acc_y
