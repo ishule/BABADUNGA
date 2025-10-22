@@ -1,6 +1,21 @@
 INCLUDE "consts.inc"
 SECTION "Utils",ROM0
 
+clean_all_tiles::
+	xor a
+	ld hl,$8000
+	ld b,0
+	call memset_256
+
+	ld b,0
+	call memset_256
+
+	ld b,0
+	call memset_256
+
+	ld b,0
+	call memset_256
+
 wait_vblank::
 	ld hl,rLY
 	ld a,VBLANK_START

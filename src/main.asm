@@ -4,7 +4,7 @@ SECTION "Entry point", ROM0[$150]
 main::
    ld hl,rBGP
    ld [hl],%11100001
-
+   ;jp .provisional_game_loop
    ;.game_loop_definitivo PROTOTIPO DE COMO SERÁ EL PROGRAMA
    ;call load_title_screen
    ;call 
@@ -39,9 +39,9 @@ main::
    call man_collision_create_all_collisions  ; Crear colisiones de arena (PROVISIONAL, SE DEBERIA CREAR UNO PARA CADA ESCENA)
 
    call init_player
-   ;call init_gorilla
+   call init_gorilla
    ;call init_snake
-   call init_spider
+   ;call init_spider
    ;call open_door Esto se llama una vez el boss ha muerto
    call joypad_init
 
@@ -73,7 +73,7 @@ main::
       call process_input
       call sys_gorilla_movement
       ;call sys_snake_movement
-      call spider_logic
+      ;call spider_logic
       
       call compute_physics
       call check_player_shot
@@ -84,3 +84,17 @@ main::
 
    di
    halt
+
+
+   provisional_game_loop:
+      call load_title_screen
+      call load_gorilla_screen
+      call load_snake_screen
+      call load_spider_screen
+      .victory
+      call load_win_screen
+      jp .end
+   .defeat
+      call load_defeat_screen
+   .end
+      jr provisional_game_loop
