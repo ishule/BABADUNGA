@@ -90,5 +90,6 @@ process_input::
     ld d, PLAYER_SPRITES_SIZE
     call change_entity_group_vel_x
 
+
 .end:
     ret

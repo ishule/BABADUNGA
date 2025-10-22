@@ -2,12 +2,14 @@ SECTION "Gorilla Screen",ROM0
 include "consts.inc"
 load_gorilla_screen::
    call wait_vblank
+
+   
+   call turn_screen_off
+   call clean_all_tiles
    ld hl,map1Tiles
    ld de,$8010
    ld b, 4 * $10
    call memcpy_256
-   call turn_screen_off
-   call clean_all_tiles
    
    call InitDmaCopy
    call sys_sound_init
@@ -42,11 +44,7 @@ load_gorilla_screen::
       ;call sys_blink_update
 
       ;call sys_collision_check_all
-      call joypad_read
-		; Comprobar si se presionó START
-	  ld a, [joypad_input]
-	  bit JOYPAD_START, a       ; Comprobar bit 7 (START)
-	  jr z, .game_loop               ; Si no está presionado, continuar loop
-
-      jp game_loop 
+      call check_screen_transition
+      jp c,.game_loop 
+     .end
     ret

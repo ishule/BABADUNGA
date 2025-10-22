@@ -2,19 +2,15 @@ INCLUDE "consts.inc"
 SECTION "Utils",ROM0
 
 clean_all_tiles::
-	xor a
-	ld hl,$8000
-	ld b,0
-	call memset_256
-
-	ld b,0
-	call memset_256
-
-	ld b,0
-	call memset_256
-
-	ld b,0
-	call memset_256
+    xor a             ; Valor a escribir (0)
+    ld hl, $8000      ; Inicio de VRAM
+    ld c, 12          ; Vamos a limpiar 32 bloques de 256 bytes (8 KB total)
+.loop:
+    ld b, 0           ; Código para limpiar 256 bytes con memset_256
+    call memset_256   ; Limpia un bloque de 256 bytes (HL se incrementa)
+    dec c             ; Un bloque menos
+    jr nz, .loop      ; Repetir hasta limpiar los 32 bloques
+    ret
 
 wait_vblank::
 	ld hl,rLY
