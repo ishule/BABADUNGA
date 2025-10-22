@@ -1,4 +1,4 @@
-; MAP1TILES.Z80
+; TILE4.Z80
 ;
 ; Tile Source File.
 ;
@@ -10,7 +10,7 @@
 ;   Compression          : None.
 ;   Counter              : None.
 ;   Tile size            : 8 x 8
-;   Tiles                : 0 to 0
+;   Tiles                : 0 to 9
 ;
 ;   Palette colors       : None.
 ;   SGB Palette          : None.
@@ -23,7 +23,6 @@
  SECTION "map1Tiles", ROM0
 
 ; Start of tile array.
-
 map1Tiles::
 DB $00,$00,$00,$00,$00,$00,$00,$00
 DB $00,$00,$00,$00,$00,$00,$00,$00
@@ -46,5 +45,4 @@ DB $10,$10,$50,$50,$30,$30,$10,$10
 DB $10,$10,$50,$50,$30,$30,$10,$10
 DB $10,$10,$14,$14,$18,$18,$10,$10
 
-
-; End of MAP1TILES.Z80
+; End of TILE4.Z80

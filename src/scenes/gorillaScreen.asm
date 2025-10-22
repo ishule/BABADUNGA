@@ -1,14 +1,12 @@
 SECTION "Gorilla Screen",ROM0
 include "consts.inc"
 load_gorilla_screen::
-   call wait_vblank
-
    
    call turn_screen_off
    call clean_all_tiles
    ld hl,map1Tiles
-   ld de,$8010
-   ld b, 4 * $10
+   ld de,$8000
+   ld b, 12 * $10
    call memcpy_256
    
    call InitDmaCopy

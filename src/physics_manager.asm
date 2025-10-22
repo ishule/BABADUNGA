@@ -764,7 +764,7 @@ choose_stand_or_walk::
 ;; MODIFICA: A, HL
 player_set_walk_sprite::
     ld hl, component_sprite + SPRITE_OFFSET_TILE
-    ld [hl], $0A  ; Tile de Player_walk ; MAGIC
+    ld [hl], $0E  ; Tile de Player_walk ; MAGIC
     ld a, 00 
     ld [player_stand_or_walk], a
     ret
@@ -776,7 +776,7 @@ player_set_walk_sprite::
 ;; MODIFICA: A, HL
 player_set_stand_sprite::
     ld hl, component_sprite + SPRITE_OFFSET_TILE
-    ld [hl], $06  ; Tile de Player_stand  ; MAGIC
+    ld [hl], $0A  ; Tile de Player_stand  ; MAGIC
     ld a, 01 ; MAGIC
     ld [player_stand_or_walk], a
     ret

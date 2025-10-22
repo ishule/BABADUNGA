@@ -6,12 +6,11 @@ main::
    ld [hl],%11100001
    ;jp provisional_game_loop
    
-   call wait_vblank
-   ld hl,map1Tiles
-   ld de,$8010
-   ld b, 4 * $10
-   call memcpy_256
    call turn_screen_off
+   ld hl,map1Tiles
+   ld de,$8000
+   ld b, 12 * $10
+   call memcpy_256
    
    call InitDmaCopy
    call sys_sound_init
@@ -26,9 +25,9 @@ main::
    call man_collision_create_all_collisions  ; Crear colisiones de arena (PROVISIONAL, SE DEBERIA CREAR UNO PARA CADA ESCENA)
 
    call init_player
-   call init_gorilla
+   ;call init_gorilla
    ;call init_snake
-   ;call init_spider
+   call init_spider
    ;call open_door Esto se llama una vez el boss ha muerto
    call joypad_init
 
@@ -58,9 +57,9 @@ main::
 
       call joypad_read
       call process_input
-      call sys_gorilla_movement
+      ;call sys_gorilla_movement
       ;call sys_snake_movement
-      ;call spider_logic
+      call spider_logic
       
       call compute_physics
       call check_player_shot

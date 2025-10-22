@@ -6,15 +6,15 @@ gorilla_orientation:: DS 1	; 0 = derecha, 1 = izquierda
 SECTION "Gorilla Code", ROM0
 
 gorilla_sprites::
-    DB $00, $00, $10, %10000000   ; Sprite 0: Columna 1, Fila 1
-    DB $00, $00, $12, %10000000   ; Sprite 1: Columna 2, Fila 1
-    DB $00, $00, $18, %10000000   ; Sprite 4: Columna 1, Fila 2
-    DB $00, $00, $1A, %10000000   ; Sprite 5: Columna 2, Fila 2
-    DB $00, $00, $14, %10000000   ; Sprite 2: Columna 3, Fila 1
-    DB $00, $00, $16, %10000000   ; Sprite 3: Columna 4, Fila 1
+    DB $00, $00, ENEMY_START_TILE_ID, %10000000   ; Sprite 0: Columna 1, Fila 1
+    DB $00, $00, ENEMY_START_TILE_ID + 2, %10000000   ; Sprite 1: Columna 2, Fila 1
+    DB $00, $00, ENEMY_START_TILE_ID + 8, %10000000   ; Sprite 4: Columna 1, Fila 2
+    DB $00, $00, ENEMY_START_TILE_ID +$0A, %10000000   ; Sprite 5: Columna 2, Fila 2
+    DB $00, $00, ENEMY_START_TILE_ID+ 4, %10000000   ; Sprite 2: Columna 3, Fila 1
+    DB $00, $00, ENEMY_START_TILE_ID + 6, %10000000   ; Sprite 3: Columna 4, Fila 1
 
-    DB $00, $00, $1C, %10000000   ; Sprite 6: Columna 3, Fila 2
-    DB $00, $00, $1E, %10000000   ; Sprite 7: Columna 4, Fila 2
+    DB $00, $00, ENEMY_START_TILE_ID + $0C, %10000000   ; Sprite 6: Columna 3, Fila 2
+    DB $00, $00, ENEMY_START_TILE_ID + $0E, %10000000   ; Sprite 7: Columna 4, Fila 2
 
 
 ;;============================================================
@@ -36,35 +36,15 @@ init_gorilla::
 ;;
 ;; MODIFICA: A, BC, DE, HL
 init_gorilla_tiles::
-	call wait_vblank
+	call turn_screen_off
 	
 	; Primer cuarto: tiles $10-$13 (4 tiles = 64 bytes)
 	ld hl, Gorilla
-	ld de, VRAM_TILE_DATA_START + ($10 * VRAM_TILE_SIZE)
-	ld b, 4 * VRAM_TILE_SIZE
-	call memcpy_256
-
-	call wait_vblank
-	; Primera mitad: tiles $14-$17 (4 tiles = 64 bytes)
-	ld hl, Gorilla + (4 * VRAM_TILE_SIZE)
-	ld de, VRAM_TILE_DATA_START + ($14 * VRAM_TILE_SIZE)
-	ld b, 4 * VRAM_TILE_SIZE
+	ld de, VRAM_TILE_DATA_START + (ENEMY_START_TILE_ID * VRAM_TILE_SIZE)
+	ld b, 0
 	call memcpy_256
 	
-	call wait_vblank
-	; Segunda mitad: tiles $18-$1B (4 tiles = 64 bytes)
-	ld hl, Gorilla + (8 * VRAM_TILE_SIZE)
-	ld de, VRAM_TILE_DATA_START + ($18 * VRAM_TILE_SIZE)
-	ld b, 4 * VRAM_TILE_SIZE
-	call memcpy_256
-
-	call wait_vblank
-	; Primera mitad: tiles $1C-$1E (4 tiles = 64 bytes)
-	ld hl, Gorilla + (12 * VRAM_TILE_SIZE)
-	ld de, VRAM_TILE_DATA_START + ($1C * VRAM_TILE_SIZE)
-	ld b, 4 * VRAM_TILE_SIZE
-	call memcpy_256
-	
+	call turn_screen_on
 	ret
 
 ;;============================================================

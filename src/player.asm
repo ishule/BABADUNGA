@@ -10,8 +10,8 @@ SECTION "Player Code", ROM0
 
 
 player_sprites:
-	DB $00, $00, $06, %10000000	;; Izquierdo, personaje
-	DB $00, $00, $08, %10000000	;; Derecho, cerbatana
+	DB $00, $00, $0A, %00000000	;; Izquierdo, personaje
+	DB $00, $00, $0C, %00000000	;; Derecho, cerbatana
 
 
 ;;============================================================
@@ -31,41 +31,41 @@ init_player::
 ;; Carga los gráficos del jugador en VRAM
 ;;
 ;; Tiles cargados:
-;;		$06-$07: Player_stand
-;;		$08-$09: Player_blowgun
-;;		$0A-$0B: Player_walk 
-;;      $0C: Player_bullet
-;;	    $0D: Player_life 
+;;		$0C-$0D: Player_stand
+;;		$0E-$0F: Player_blowgun
+;;		$10-$11: Player_walk 
+;;      $12: Player_bullet
+;;	    $13: Player_life 
 ;; MODIFICA: A, BC, DE, HL
 init_player_tiles::
 	call wait_vblank
 
-	;; Cargar Player_stand en tiles $06-$07
+	;; Cargar Player_stand en tiles $0A-$0B
 	ld hl, Player_stand
-	ld de, VRAM_TILE_DATA_START + ($06 * VRAM_TILE_SIZE)
+	ld de, VRAM_TILE_DATA_START + ($0A * VRAM_TILE_SIZE)
 	ld b, 2 * VRAM_TILE_SIZE	; 2 tiles de 16 bytes cada uno
 	call memcpy_256
 
-	;; Cargar Player_blowgun en tiles $08-$09
+	;; Cargar Player_blowgun en tiles $0C-$0D
 	ld hl, Player_blowgun
-	ld de, VRAM_TILE_DATA_START + ($08 * VRAM_TILE_SIZE)
+	ld de, VRAM_TILE_DATA_START + ($0C * VRAM_TILE_SIZE)
 	ld b, 2 * VRAM_TILE_SIZE
 	call memcpy_256
 
-	;; Cargar Player_walk en tiles $0A-$0B 
+	;; Cargar Player_walk en tiles $0E-$0F 
 	ld hl, Player_walk
-	ld de, VRAM_TILE_DATA_START + ($0A * VRAM_TILE_SIZE)
+	ld de, VRAM_TILE_DATA_START + ($0E * VRAM_TILE_SIZE)
 	ld b, 2 * VRAM_TILE_SIZE
 	call memcpy_256
-	;; Cargar Player_bullet en tile $0C
+	;; Cargar Player_bullet en tile $10
 	ld hl,Player_bullet
-	ld de,VRAM_TILE_DATA_START + ($0C*VRAM_TILE_SIZE)
+	ld de,VRAM_TILE_DATA_START + ($10*VRAM_TILE_SIZE)
 	ld b,VRAM_TILE_SIZE
 	call memcpy_256
-	;; Cargar Player_life en tile $0D
+	;; Cargar Player_life en tile $12
 	call wait_vblank
 	ld hl,Player_life
-	ld de,VRAM_TILE_DATA_START + ($0D*VRAM_TILE_SIZE)
+	ld de,VRAM_TILE_DATA_START + ($12*VRAM_TILE_SIZE)
 	ld b,2*VRAM_TILE_SIZE
 	call memcpy_256
 
