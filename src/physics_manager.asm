@@ -592,7 +592,7 @@ check_ground_collision::
         ld c, $00
         call change_entity_group_pos_y_32x32
         ld a, 1 
-        ld [gorilla_jumping_flag], a
+        ld [gorilla_on_ground_flag], a
         jr .reset_physics 
 
     .isnot32:
