@@ -4,7 +4,8 @@ INCLUDE "spider/spider_consts.inc"
 SECTION "Spider Variables", WRAM0
 spider_state::           DS 1 ; 0:roof | 1:falling | 2:stunned | 3:jump_to_stand | 4:stand | 5:jumping | 6:going_up
 spider_shot_cooldown::   DS 1
-spider_stunned_counter:: DS 1
+spider_state_counter::   DS 1
+spider_looking_dir::     DS 1 ; 0:rigth | 1:left
 
 SECTION "Spider Inicialization", ROM0
 

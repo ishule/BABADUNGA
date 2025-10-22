@@ -6,6 +6,8 @@ DEF LCD_CONTROL equ $FF40
 
 DEF rP1 equ $FF00
 
+DEF SCREEN_PIXEL_WIDTH equ 160
+
 ;; Modos de lectura del Joypad
 DEF P1_GET_BTN equ $10
 DEF P1_GET_DPAD equ $20
