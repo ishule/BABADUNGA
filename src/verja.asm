@@ -18,6 +18,7 @@ verja_sprites:
 init_verja::
 	call init_verja_tiles
 	call init_verja_entity
+	call init_verja_physics
 	ret
 
 
@@ -51,6 +52,7 @@ init_verja_entity::
 
 	; Alocar primer sprite
 	call man_entity_alloc
+	push hl
 	inc h
 	;; HL = $C100 (primera posición OAM)
 	ld d, h 
@@ -72,6 +74,72 @@ init_verja_entity::
 	call wait_vblank
 	call man_entity_draw	; Copiar sprites a OAM
 
+	pop hl
+
 	ret
 
 
+;;=================================================
+;; verja_init_physics
+;; Inicializa el componente de las físicas de a verja
+;; INPUT: HL = dirección sprite
+;;
+;; Establece:l
+;; 		- Posición inicial
+;; 		- Velocidad inicial: 0, 0 
+;; 		- Estado de animación: parado 
+;;
+;; MODIFICA: A, BC, DE
+init_verja_physics:: 
+	
+
+	;; Info Player
+	ld a, BYTE_ACTIVE
+	ld [hl+], a 		; Active = 1
+
+	ld a, TYPE_VERJA
+	ld [hl+], a 	 	; Type = 5
+
+
+	ld h, CMP_SPRITES_H
+	dec l 
+	dec l 	; HL = $C100
+
+	ld b, $78				; Y inicial
+	ld c, $08 	; X inicial
+
+	ld a, b 
+	ld [hl+], a 
+
+	ld a, c 
+	ld [hl], a
+
+
+	ld h, CMP_INFO_H
+	inc l 
+	inc l
+	inc l ;HL = $C004
+
+	;; Info Player
+	ld a, BYTE_ACTIVE
+	ld [hl+], a 		; Active = 1
+
+	ld a, TYPE_VERJA
+	ld [hl+], a 	 	; Type = 5
+
+
+	ld h, CMP_SPRITES_H
+	dec l 
+	dec l 	; HL = $C100
+
+	ld b, $78				; Y inicial
+	ld c, $A0 	; X inicial
+
+	ld a, b 
+	ld [hl+], a 
+
+	ld a, c 
+	ld [hl], a
+
+	ret 
+ 

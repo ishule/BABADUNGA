@@ -21,33 +21,28 @@ sys_collision_check_all::
     cp 0
     jr z, .next_entity           ; Si está inactiva, saltar
 
-    push bc                      ; Guardar contador
-    push hl                      ; Guardar puntero de entidad
 
     call sys_collision_check_entity_vs_tiles
+    ld h, d 
+    ld l, e
 
-    pop hl
-    pop bc
+    call sys_collision_check_entity_vs_entity
+    ld h, d 
+    ld l, e
 
 .next_entity:
     ; Avanzar HL al siguiente bloque de entidad
     inc l 
     inc l 
     inc l 	; HL = $C003 (número de sprites)
-    ld a, [hl] 	; A = número de sprites
+    inc l
 
-    dec l 
-    dec l 
-    dec l
-   
-   	ld d, 0 
-   	ld e, a
-    call multiply_DE_by_4 ; A = entidades a saltar
+    ld a, [num_entities_alive]   
+    ld b, a                      ; B = número de entidades 
 
-    add hl, de
-
-    inc c                        ; C++
-    ld a, c
+    ld a, l 
+    srl a 
+    srl a   ; A = número de entidad actual
     cp b                         ; ¿hemos revisado todas?
     jr nz, .loop_entities
 
@@ -389,59 +384,48 @@ sys_collision_bullet_player_callback:
     
     ret
 
+sys_collision_check_entity_vs_entity::
+ret
+
 ;;INPUT:
 ;; - HL: Apunta a la direcciń 0 de la entidad (C0xx)
 sys_collision_check_entity_vs_tiles::
 	; Guardar puntero base
 	ld d, h 
-	ld l, e
+	ld e, l
 
-    ld h, CMP_COLLISIONS_H 	; HL = $C5 
-    inc l 
-    inc l 	; HL = $C502
-    ld a, [hl+] 	; Height 
-    ld b, a
-    ld a, [hl] 		; Width
-    ld c, a 
-
-    push bc
-
-    dec l 
-    dec l 
-    dec l
     ld h, CMP_SPRITES_H 	; HL = $C1xx
     call get_address_of_tile_being_touched
 
-    pop bc
-
     ld a, [hl]
-
-
     
     ;; Recuperar valor HL
-    ld h, d 
-    ld l, e 	
+    ld h, d
+    ld l, e
 
     ; --- Si tile = 0 (aire) => no colisiona ---
     cp 0 	
     ret z
 
     ; --- Tile 1: pared izquierda ---
-    cp 1
-    jr z, .touching_left
+    cp 3
+    jr z, touching_left_collision
 
     ; --- Tile 2: pared derecha ---
-    cp 2
-    jr z, .touching_right
+    cp 4
+    jr z, touching_right_collision
 
     ret
 
 
-.touching_left:
+touching_left_collision:
+    inc l
+    ld a, [hl]  ; A = TYPE 
+    cp 3        ; 3 = Bullet
+    jr z, delete_bullet
 
 	;; Ajustar posición
-	inc h
-    inc l               ; HL = C001 (X)
+	inc h       ; HL = C001 (X)
     ld a, [hl]
 
     inc a
@@ -450,15 +434,61 @@ sys_collision_check_entity_vs_tiles::
     ; Bloquear movimiento horizontal
     inc h 
     inc h 	; HL = $C300
-    ld a, $00 
+    xor a 
+    ld [hl], a
+
+    dec l 
+    dec l 
+    dec l 
+    dec l
+    dec l 
+    ld h, CMP_INFO_H
+
+    ;; Ajustar posición
+    inc h
+    inc l               ; HL = C001 (X)
+    ld a, [hl]
+
+    inc a
+    ld [hl], a          ; reposicionar
+
+    ; Bloquear movimiento horizontal
+    inc h 
+    inc h   ; HL = $C300
+    xor a 
     ld [hl], a
 
     ret
 
 
-.touching_right:
-	;; Ajustar posición
-	inc h
+touching_right_collision:
+    inc l
+    ld a, [hl]  ; A = TYPE 
+    cp 3        ; 3 = Bullet
+    jr z, delete_bullet
+
+    ;; Ajustar posición
+    inc h       ; HL = C001 (X)
+    ld a, [hl]
+
+    dec a
+    ld [hl], a          ; reposicionar
+
+    ; Bloquear movimiento horizontal
+    inc h 
+    inc h   ; HL = $C300
+    xor a 
+    ld [hl], a
+
+    dec l 
+    dec l 
+    dec l 
+    dec l
+    dec l 
+    ld h, CMP_INFO_H
+
+    ;; Ajustar posición
+    inc h
     inc l               ; HL = C001 (X)
     ld a, [hl]
 
@@ -467,109 +497,116 @@ sys_collision_check_entity_vs_tiles::
 
     ; Bloquear movimiento horizontal
     inc h 
-    inc h 	; HL = $C300
-    ld a, $00 
+    inc h   ; HL = $C300
+    xor a 
     ld [hl], a
 
     ret
 
+delete_bullet::
+    dec l
+    ld [hl], 0      ; Marcar como inactiva
+    ld a, [num_entities_alive] ; TODO: Usar el id de la bala. No la última
+    dec a
+    call man_entity_delete  ; Aplicar cuando funcione la función
 
 
-sys_collision_check_bullets_vs_tiles::
-    ld a, 3
-    ld de, move_from_de_to_hl
-    call man_entity_foreach_type
-    ret
 
-move_from_de_to_hl::
-	ld h, d 
-	ld l, e
-	call sys_collision_check_entity_vs_tiles
-	ret
 
-;; Gets the Address in VRAM of the tile the entity is touching.
-;; INPUT:
-;; HL: Address of the Sprite Component
-;; OUTPUT:
-;; HL: VRAM Address of the tile the sprite is touching
 get_address_of_tile_being_touched::
-    ; Sprite en memoria: [Y][X][ID][ATTR]
+    ; Sprite: [Y][X][ID][ATTR]
+    ld a, [hl+]    ; A = Y, HL apunta a X
+    ld b, a        ; B = Y
+    ld a, [hl]     ; A = X
     
-    ; Convertir Y a TY
-    ld a, [hl+]    ; A = Y
-    push hl        ; Guardar dirección de X
-    call convert_y_to_ty
-    ld l, a        ; L = TY
+    ; Verificar límites de Y
+    ld a, b
+    cp 16
+    jr c, .out_of_bounds    ; Si Y < 16, fuera del mapa
+    
+    ; Verificar límites de X
+    ld a, [hl]
+    cp 8
+    jr c, .out_of_bounds    ; Si X < 8, fuera del mapa
     
     ; Convertir X a TX
-    pop hl         ; Recuperar dirección de X
-    ld a, [hl]     ; A = X
-    call convert_x_to_tx
-    ; A = TX, L = TY
+    sub a, 8
+    srl a
+    srl a
+    srl a          ; A = TX
+    ld c, a        ; C = TX
     
-    ; Calcular dirección en VRAM
+    ; Convertir Y a TY
+    ld a, b
+    sub a, 16
+    srl a
+    srl a
+    srl a          ; A = TY
+    ld l, a        ; L = TY
+    
+    ; Calcular dirección
+    ld a, c        ; A = TX
     call calculate_address_from_tx_and_ty
-    
+    ret
+
+.out_of_bounds:
+    ; Retornar dirección segura (tile 0 del mapa)
+    ld hl, $9800
     ret
 
 ;;-------------------------------------------------------
-;; Converts sprite X-coordinate to tilemap TX-coordinate
-;; INPUT: A = Sprite X-coordinate
-;; OUTPUT: A = TX-coordinate
 convert_x_to_tx::
     ; TX = (X - 8) / 8
-    sub a, 8       ; A = X - 8
-    srl a          ; A = A / 2
-    srl a          ; A = A / 2
-    srl a          ; A = A / 2  (total: / 8)
+    cp 8
+    jr c, .clamp_zero
+    sub a, 8
+    srl a
+    srl a
+    srl a
+    ret
+.clamp_zero:
+    xor a          ; A = 0
     ret
 
 ;;-------------------------------------------------------
-;; Converts sprite Y-coordinate to tilemap TY-coordinate
-;; INPUT: A = Sprite Y-coordinate
-;; OUTPUT: A = TY-coordinate
 convert_y_to_ty::
     ; TY = (Y - 16) / 8
-    sub a, 16      ; A = Y - 16
-    srl a          ; A = A / 2
-    srl a          ; A = A / 2
-    srl a          ; A = A / 2  (total: / 8)
+    cp 16
+    jr c, .clamp_zero
+    sub a, 16
+    srl a
+    srl a
+    srl a
+    ret
+.clamp_zero:
+    xor a          ; A = 0
     ret
 
 ;;-------------------------------------------------------
-;; Calculates VRAM Tilemap Address from tile coordinates
-;; INPUT: L = TY coordinate, A = TX coordinate
-;; OUTPUT: HL = Address where the (TX, TY) tile is stored
 calculate_address_from_tx_and_ty::
-    ; Dirección = $9800 + TY * 32 + TX
-    ; TY * 32 = TY * 2^5 = TY << 5
-    
-    push bc
-    
-    ; Guardar TX
+    ; INPUT: L = TY, A = TX
+    ; OUTPUT: HL = $9800 + TY * 32 + TX
+
     ld b, a        ; B = TX
     
     ; HL = TY * 32
-    ld h, 0        ; HL = TY (ya está en L)
-    
-    ; Multiplicar por 32 (shift left 5 veces)
+    ld h, 0        ; HL = TY
     add hl, hl     ; x2
     add hl, hl     ; x4
     add hl, hl     ; x8
     add hl, hl     ; x16
     add hl, hl     ; x32
     
-    ; Sumar TX
+    ; HL += TX
     ld a, b
     add a, l
     ld l, a
-    ld a, 0
     adc a, h
+    sub a, l
     ld h, a
     
-    ; Sumar dirección base $9800
+    ; HL += $9800
     ld bc, $9800
     add hl, bc
     
-    pop bc
     ret
