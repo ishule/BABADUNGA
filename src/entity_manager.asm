@@ -2,7 +2,7 @@ INCLUDE "consts.inc"
 													;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 													;; =========== Entities array structure ===========
 													;;
-SECTION "Entity Manager Data"        , WRAM0[$C000] ;; [ACTIVE]     [TYPE]       [FLAGS]   [----]
+SECTION "Entity Manager Data"        , WRAM0[$C000] ;; [ACTIVE]     [TYPE]       [FLAGS]   [num_sprites]
 component_info::      DS CMP_TOTALBYTES             ;;
 num_entities_alive::  DS 1                          ;;
 next_free_entity::    DS 1                          ;;

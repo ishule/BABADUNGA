@@ -73,12 +73,11 @@ main::
       ;call sys_gorilla_movement
       ;call sys_snake_movement
 
-      
+      call sys_collision_check_all
       call compute_physics
       call check_player_shot
       ;call sys_blink_update
 
-      call sys_collision_check_all
       jr game_loop 
 
    di

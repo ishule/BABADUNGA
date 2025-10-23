@@ -220,6 +220,9 @@ shot_bullet_for_snake::
     or FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT
     ld [hl+], a                     ; guarda el nuevo valor y se posiciona para actualizar ATTR
  
+ 	ld a, $02 
+ 	ld [hl], a 	; Número de sprites
+
  	ld a, d
 	cp RIGHT_SHOT_DIRECTION
 	jr z, .shot_right

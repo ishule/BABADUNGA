@@ -1,10 +1,8 @@
 INCLUDE "consts.inc"
 INCLUDE "collisions.inc"
 
-
 SECTION "Collision System Values", WRAM0
 ;; Almacenan temporalmente los intervalos a comparar
-temp_wall_x: DS 1
 intervalos:
 I1: DS 2 	; Intervalo 1: [Pos, Size]
 I2: DS 2 	; Intervalo 2: [Pos, Size]
@@ -12,25 +10,59 @@ I2: DS 2 	; Intervalo 2: [Pos, Size]
 
 SECTION "Collision System Code", ROM0 
 
-
 sys_collision_check_all::
-	call sys_collision_check_player_vs_boss
-	call sys_collision_check_player_bullets_vs_boss
-	call sys_collision_check_boss_bullets_vs_player
+    ld hl, CMP_START_ADDRESS     ; Dirección base de la primera entidad
+    ld a, [num_entities_alive]   
+    ld b, a 					 ; B = número de entidades 
+    ld c, 0                      ; C = índice actual
 
-	;; Check collision between player and tiles
-	ld hl, CMP_START_ADDRESS 	; Player
-	call sys_collision_check_entity_vs_tiles
+.loop_entities:
+    ld a, [hl]                   ; Leer estado
+    cp 0
+    jr z, .next_entity           ; Si está inactiva, saltar
 
-	;; Check collision between boss and tiles
-	;ld a, TYPE_BOSS
-	;call man_entity_locate_first_type 	; Boss en HL
-	;call sys_collision_check_entity_vs_tiles
+    push bc                      ; Guardar contador
+    push hl                      ; Guardar puntero de entidad
 
-	;call sys_collision_check_bullets_vs_tiles
+    call sys_collision_check_entity_vs_tiles
 
+    pop hl
+    pop bc
 
-	ret
+.next_entity:
+    ; Avanzar HL al siguiente bloque de entidad
+    inc l 
+    inc l 
+    inc l 	; HL = $C003 (número de sprites)
+    ld a, [hl] 	; A = número de sprites
+
+    dec l 
+    dec l 
+    dec l
+   
+   	ld d, 0 
+   	ld e, a
+    call multiply_DE_by_4 ; A = entidades a saltar
+
+    add hl, de
+
+    inc c                        ; C++
+    ld a, c
+    cp b                         ; ¿hemos revisado todas?
+    jr nz, .loop_entities
+
+    ret
+
+; INPUT: DE = entidades a saltar
+; OUTPUT: DE = número de bytes que saltamos
+multiply_DE_by_4:
+	;; x2
+    sla e 
+    rl d 
+    sla e
+    rl d 
+
+    ret
 
 
 ;; Verifica si se solapan dos intervalos 1D
@@ -357,6 +389,91 @@ sys_collision_bullet_player_callback:
     
     ret
 
+;;INPUT:
+;; - HL: Apunta a la direcciń 0 de la entidad (C0xx)
+sys_collision_check_entity_vs_tiles::
+	; Guardar puntero base
+	ld d, h 
+	ld l, e
+
+    ld h, CMP_COLLISIONS_H 	; HL = $C5 
+    inc l 
+    inc l 	; HL = $C502
+    ld a, [hl+] 	; Height 
+    ld b, a
+    ld a, [hl] 		; Width
+    ld c, a 
+
+    push bc
+
+    dec l 
+    dec l 
+    dec l
+    ld h, CMP_SPRITES_H 	; HL = $C1xx
+    call get_address_of_tile_being_touched
+
+    pop bc
+
+    ld a, [hl]
+
+
+    
+    ;; Recuperar valor HL
+    ld h, d 
+    ld l, e 	
+
+    ; --- Si tile = 0 (aire) => no colisiona ---
+    cp 0 	
+    ret z
+
+    ; --- Tile 1: pared izquierda ---
+    cp 1
+    jr z, .touching_left
+
+    ; --- Tile 2: pared derecha ---
+    cp 2
+    jr z, .touching_right
+
+    ret
+
+
+.touching_left:
+
+	;; Ajustar posición
+	inc h
+    inc l               ; HL = C001 (X)
+    ld a, [hl]
+
+    inc a
+    ld [hl], a          ; reposicionar
+
+    ; Bloquear movimiento horizontal
+    inc h 
+    inc h 	; HL = $C300
+    ld a, $00 
+    ld [hl], a
+
+    ret
+
+
+.touching_right:
+	;; Ajustar posición
+	inc h
+    inc l               ; HL = C001 (X)
+    ld a, [hl]
+
+    dec a
+    ld [hl], a          ; reposicionar
+
+    ; Bloquear movimiento horizontal
+    inc h 
+    inc h 	; HL = $C300
+    ld a, $00 
+    ld [hl], a
+
+    ret
+
+
 
 sys_collision_check_bullets_vs_tiles::
     ld a, 3
@@ -370,244 +487,89 @@ move_from_de_to_hl::
 	call sys_collision_check_entity_vs_tiles
 	ret
 
-;; INPUT: HL: direction to the player or the boss
-sys_collision_check_entity_vs_tiles::
-	ld a, [hl] 	; E_ACTIVE 
-	cp 0 
-	ret z 	; Si está inactiva, salir 
+;; Gets the Address in VRAM of the tile the entity is touching.
+;; INPUT:
+;; HL: Address of the Sprite Component
+;; OUTPUT:
+;; HL: VRAM Address of the tile the sprite is touching
+get_address_of_tile_being_touched::
+    ; Sprite en memoria: [Y][X][ID][ATTR]
+    
+    ; Convertir Y a TY
+    ld a, [hl+]    ; A = Y
+    push hl        ; Guardar dirección de X
+    call convert_y_to_ty
+    ld l, a        ; L = TY
+    
+    ; Convertir X a TX
+    pop hl         ; Recuperar dirección de X
+    ld a, [hl]     ; A = X
+    call convert_x_to_tx
+    ; A = TX, L = TY
+    
+    ; Calcular dirección en VRAM
+    call calculate_address_from_tx_and_ty
+    
+    ret
 
-	;; Verificar colisión con el suelo
-	push hl
-	;call .check_floor
-	pop hl
+;;-------------------------------------------------------
+;; Converts sprite X-coordinate to tilemap TX-coordinate
+;; INPUT: A = Sprite X-coordinate
+;; OUTPUT: A = TX-coordinate
+convert_x_to_tx::
+    ; TX = (X - 8) / 8
+    sub a, 8       ; A = X - 8
+    srl a          ; A = A / 2
+    srl a          ; A = A / 2
+    srl a          ; A = A / 2  (total: / 8)
+    ret
 
-	;; Verificar colisíon con pared izquierda
-	push hl
-	call .check_wall_left 
-	pop hl
-	ret nc 
+;;-------------------------------------------------------
+;; Converts sprite Y-coordinate to tilemap TY-coordinate
+;; INPUT: A = Sprite Y-coordinate
+;; OUTPUT: A = TY-coordinate
+convert_y_to_ty::
+    ; TY = (Y - 16) / 8
+    sub a, 16      ; A = Y - 16
+    srl a          ; A = A / 2
+    srl a          ; A = A / 2
+    srl a          ; A = A / 2  (total: / 8)
+    ret
 
-	;; Verificar colisión con pared derecha
-	push hl
-	call .check_wall_right 
-	pop hl
-	ret nc 
-
-	scf 	; Set Carry (no hay colisión)
-
-	ret 
-
-.check_floor
-	push hl
-	ld h, CMP_SPRITES_H
-	ld a, [hl] 	 
-	ld d, a 	; D = Entity.PosY
-
-	inc h 
-	inc h 
-	inc h
-	inc h 		; h = $C5
-	inc l 
-	inc l 		; HL = $C502
-	ld a, [hl] 	
-	ld e, a 	; E = Entity.Height	
-
-	ld a, d 
-	add e 
-	ld b, a 	; B = Entity.PosY + Entity.Height
-
-	ld de, collision_array 
-	ld a, [de] 	; Suelo.PosY
-	sub $08
-	cp b 
-	pop hl
-
-	jr nc, .no_floor_collision ; Si Suelo.PosY - 8 (margen) > (Entity.PosY + Entity.Height), no hay colisión
-	
-	;; HAY COLISIÓN CON EL SUELO
-	push hl	
-	ld h, CMP_PHYSICS_V_H
-	; HL = $C300 = VY 
-	xor a 
-	ld [hl], a 
-	inc h 	; HL = $C400 = AY 
-	ld [hl], a
-
-	or a ;Para limpiar Carry (colisión)
-	pop hl
-
-	ret
-
-	.no_floor_collision:
-		scf 	; Set Carry (no colisión)
-		ret
-
-
-.check_wall_left:
-	push hl
-	ld a, l
-	ld hl, CMP_SPRITES_ADDRESS
-	ld l, a 
-	inc l
-	ld a, [hl] 	 ; A = Entity.PosX
-	push af
-
-	ld de, collision_array 
-	ld h, d 
-	ld l, e 
-	ld de, SIZEOF_COLLISION 
-	add hl, de
-	ld de, C_POSX 
-	add hl, de
-	ld a, [hl+] 	
-	ld b, a 		; B = WallLeft.X
-
-	inc l
-	ld a, [hl] 		; A = WallLeft.Width
-
-	add b 			; A = WallLeft.X + WallLeft.Width 
-	ld b, a 		; B = WallLeft.X + WallLeft.Width
-	pop af  		; A = Entity.PosX
-
-	cp b
-	pop hl 
-
-	jr nc, .no_left_collision 	; Si Entity.PosX >= límite, no hay colisión
-
-	;;HAY COLISIÓN: Empujar hacia la derecha 
-	ld hl, CMP_START_ADDRESS
-	inc l
-	ld a, [hl]
-	cp 03 	
-	jr z, .delete_bullet 	; Si el tipo es 3, eliminamos la bala 
-	dec l 
-
-
-	ld a, l
-	ld hl, CMP_SPRITES_ADDRESS
-	ld l, a
-	inc l 	; HL = Entity.PosX
-	ld a, b 	; A = Límite izquierdo
-	ld [hl], a 	; Entity.X = Límite izquierdo
-	
-
-	;; Detener velocidad y aceleración de X
-	ld h, CMP_PHYSICS_V_H
-	inc l 	; HL = $C301 = VX 
-	xor a 
-	ld [hl], a 
-	inc h
-	; HL = $C401 = AX 
-	ld [hl], a
-
-	ret 
-
-.no_left_collision:
-	scf 	; Set Carry (no hay colisión)
-	ret
-
-
-.check_wall_right:
-	push hl
-	ld a, l
-	ld hl, CMP_SPRITES_ADDRESS
-	ld l, a 
-	inc l
-	ld a, [hl] 	 
-	ld d, a 	; D = Entity.PosX
-
-	inc h
-	inc h 
-	inc h
-	inc h 		; h = $C5
-	inc l 
-	inc l
-	ld a, [hl]
-	ld e, a 	; E = Entity.Width
-	push de
-
-	ld a, d 	; A = Entity.PosX 
-	add e 		; 
-	ld b, a 	; B = Entity.PosX + Entity.Width
-
-	ld de, collision_array 
-	ld h, d 
-	ld l, e 
-	ld de, SIZEOF_COLLISION 
-	add hl, de
-	add hl, de 	; Ahora si apunto al muro derecho
-	ld de, C_POSX 
-	add hl, de
-	ld a, [hl] 	; A = WallRight.X
-	push af
-
-	cp b
-
-	jr nc, .no_right_collision 	; Si límite >= Entity.PosX + Entity.Width, no hay colisión
-
-	;;HAY COLISIÓN: Empujar hacia la izquierda 
-	pop af 		; A = WallRight.X
-	pop de 		; D = Entity.PosX   E = Entity.Width
-	pop hl
-	sub e 		; A = WallRight.X - Entity.Width
-	ld [temp_wall_x], a 	;Guardo en VRAM el valor de a
-
-	inc l 
-	ld a, l 
-	cp 0
-	jr z, .assign_player
-
-
-.assign_boss 
-	ld a, TYPE_BOSS
-	jr .continue
-
-.assign_player
-	ld a, TYPE_PLAYER
-
-.continue
-	ld de, .move_left
-	call man_entity_foreach_type
-	ret
-
-.move_left:
-	ld h, CMP_SPRITES_H
-	ld l, e
-	inc l 	; HL = Entity.PosX
-
-	ld a, [temp_wall_x]
-	ld [hl], a 	; Entity.X = Límite derecho - WallRight.X
-	
-
-	;; Detener velocidad y aceleración de X
-	ld h, CMP_PHYSICS_V_H
-	xor a 
-	ld [hl], a 
-	inc h 	; HL = $C401 = AX 
-	ld [hl], a
-
-	ret 
-
-.no_right_collision:
-	pop af 
-	pop de
-	pop hl
-	scf 	; Set Carry (no hay colisión)
-	ret
-
-
-
-.delete_bullet:
-	dec l
-    ld [hl], 0  	; Marcar como inactiva
-    ;call man_entity_delete 	; Activar cuando vaya la función
-
-    ;; Eliminar 
-    inc h
-    ld a, $00
-    ld [hl+], a 
-    ld [hl], a
-    ret nc
-
-
-
+;;-------------------------------------------------------
+;; Calculates VRAM Tilemap Address from tile coordinates
+;; INPUT: L = TY coordinate, A = TX coordinate
+;; OUTPUT: HL = Address where the (TX, TY) tile is stored
+calculate_address_from_tx_and_ty::
+    ; Dirección = $9800 + TY * 32 + TX
+    ; TY * 32 = TY * 2^5 = TY << 5
+    
+    push bc
+    
+    ; Guardar TX
+    ld b, a        ; B = TX
+    
+    ; HL = TY * 32
+    ld h, 0        ; HL = TY (ya está en L)
+    
+    ; Multiplicar por 32 (shift left 5 veces)
+    add hl, hl     ; x2
+    add hl, hl     ; x4
+    add hl, hl     ; x8
+    add hl, hl     ; x16
+    add hl, hl     ; x32
+    
+    ; Sumar TX
+    ld a, b
+    add a, l
+    ld l, a
+    ld a, 0
+    adc a, h
+    ld h, a
+    
+    ; Sumar dirección base $9800
+    ld bc, $9800
+    add hl, bc
+    
+    pop bc
+    ret

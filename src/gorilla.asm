@@ -177,7 +177,10 @@ gorilla_init_physics::
 		ld a, [hl]                     ; carga el byte actual
 	    or FLAG_CAN_TAKE_DAMAGE | FLAG_CAN_DEAL_DAMAGE
 	    ld [hl+], a                     ; guarda el nuevo valor
-	    inc l 
+
+	   	ld a, $08
+	    ld [hl+], a 	; Número sprites
+
 	    dec b 
 	    jr nz, .info_loop 
 

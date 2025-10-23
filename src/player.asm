@@ -147,6 +147,9 @@ player_init_physics::
     or FLAG_CAN_TAKE_DAMAGE
     ld [hl+], a                     ; guarda el nuevo valor 
 
+    ld a, $02 
+    ld [hl], a 	; Número de sprites
+
 
 	pop hl 
 	push hl
