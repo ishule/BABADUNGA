@@ -81,13 +81,31 @@ sys_snake_movement::
     ld d, $04
     call change_entity_group_acc_x
     
-    ; Comprobar colisión con borde derecho
+    
     ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
     ld h,CMP_SPRITES_H
     inc hl
     ld a, [hl]                  ; OAM_X
     cp SNAKE_RIGHT_LIMIT
+
+    ;;Cambiamos sprite
+    inc hl
+    inc hl
+    ld c,4
+    add hl,bc
+    ld [hl],ENEMY_START_TILE_ID + 4
+    add hl,bc
+    ld [hl],ENEMY_START_TILE_ID + 6
+
+; Comprobar colisión con borde derecho
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld h,CMP_SPRITES_H
+    inc hl
+    ld a, [hl]                  ; OAM_X
+    cp SNAKE_RIGHT_LIMIT
+
     jr c, .no_collision_right   ; Si A < LIMIT, continúa
     jp .hit_right_border
 
@@ -226,18 +244,31 @@ sys_snake_movement::
 ; TURN STATE
 ; -------------------------
 .turn_state:
-    ld a, [snake_flags]
-    bit 0, a
-    jr nz, .turn_to_right
 
-.turn_to_left:
-    ; Estaba mirando derecha, ahora mira izquierda
+    
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 3
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ld a, ENEMY_START_ENTITY_ID + 1
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 2
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
     call snake_flip
     jr .finish_turn
 
-.turn_to_right:
-    ; Estaba mirando izquierda, ahora mira derecha
-    call snake_unflip
 
 .finish_turn:
     ; Toggle direction bit and set next state to SHOOT (and zero shot count)

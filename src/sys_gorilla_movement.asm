@@ -11,7 +11,7 @@ def MASK_DIRECTION equ %00000001
 def MASK_STATE equ %00001110
 def MASK_SHOT_COUNT equ %00110000
 
-DEF GORILLA_LEFT_LIMIT  equ 16     ; Límite izquierdo (posición X mínima)
+DEF GORILLA_LEFT_LIMIT  equ 35     ; Límite izquierdo (posición X mínima)
 DEF GORILLA_RIGHT_LIMIT equ 128    ; Límite derecho (160 - 32 de ancho)
 
 ; Estados del Gorila 
@@ -178,8 +178,6 @@ sys_gorilla_movement::
     or STATE_IDLE_GORILLA ; Empezar en IDLE (Cambiado de MOVE)
     ld [snake_flags], a
     
-    ; Asegurarse de que empieza sin flip (mirando derecha)
-    ;call gorilla_unflip
     ret
 
 .idle_state:
@@ -240,29 +238,93 @@ sys_gorilla_movement::
     ; No girar si está en el aire (esperar a aterrizar)
     ld a, [gorilla_on_ground_flag]
     cp 0
-    ret z 
+    ret z
 
-    ; Está en el suelo, así que gira
-    ld a, [snake_flags]
-    bit 0, a
-    jr nz, .turn_to_right
+    ;; Fila 1 
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+    
+    ld a, ENEMY_START_ENTITY_ID + 3
+    call man_entity_locate_v2
 
-.turn_to_left:
-    ; Estaba mirando derecha (0), ahora mira izquierda (1)
-    ;call gorilla_flip
-    jr .finish_turn
+    call swap_2_entities_positions 
 
-.turn_to_right:
-    ; Estaba mirando izquierda (1), ahora mira derecha (0)
-    ;call gorilla_unflip
+    ld a, ENEMY_START_ENTITY_ID + 1
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 2
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions
+
+
+    ;; Fila 2
+    ld a, ENEMY_START_ENTITY_ID + 4
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+    
+    ld a, ENEMY_START_ENTITY_ID + 7
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ld a, ENEMY_START_ENTITY_ID + 5
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 6
+    call man_entity_locate_v2
+    
+    call swap_2_entities_positions
+
+
+
+.flip_gorilla:
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc h
+    inc l
+    inc l
+    inc l
+    ld c, GORILLA_SPRITES_SIZE
+    bit SPRITE_ATTR_FLIP_X_BIT, [hl]
+    jr z, .set_flip_x
+    .reset_flip_x:
+        ld a, 0
+        jr .loop
+    .set_flip_x:
+        ld a, 1
+    
+    .loop:
+        or a
+        jr nz, .set
+        .reset:
+            res SPRITE_ATTR_FLIP_X_BIT, [hl]
+            jr .next_entity
+        .set:
+            set SPRITE_ATTR_FLIP_X_BIT, [hl]
+
+        .next_entity:
+        ld de, CMP_SIZE
+        add hl, de
+
+        dec c
+        jr nz, .loop
 
 .finish_turn:
     ; Invertir el bit de dirección
     ld a, [snake_flags]
     xor MASK_DIRECTION
-    
+
     ; Cambiar estado a IDLE
     and %11110001
-    or STATE_IDLE_GORILLA ; <-- CORREGIDO: ir a IDLE después de girar
+    or STATE_IDLE_GORILLA
     ld [snake_flags], a
     ret
+

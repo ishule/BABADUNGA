@@ -252,6 +252,6 @@ DEF ENEMY_START_ENTITY_ID equ 2
 DEF ENEMY_START_TILE_ID   equ $80
 DEF GORILLA_SPRITES_SIZE  equ 8
 DEF SNAKE_SPRITES_SIZE equ 4
-DEF SNAKE_LEFT_LIMIT  equ 16   ; Límite izquierdo: después del tile del borde
+DEF SNAKE_LEFT_LIMIT  equ 40   ; Límite izquierdo: después del tile del borde
 DEF SNAKE_RIGHT_LIMIT equ 128  ; Límite derecho: 160 - 32 (ancho) = 128
                                ; Cuando X=128, el último sprite está en X=152 (justo antes del tile derecho)
