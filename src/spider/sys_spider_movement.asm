@@ -814,6 +814,40 @@ transition_roof_to_fall:
 
 	ret
 
+anim_open_spider_mouth:
+	ld a, ENEMY_START_ENTITY_ID + 3
+	call man_entity_locate_v2
+	inc h
+	inc l
+	inc l
+	ld [hl], SPIDER_OPEN_MOUTH_TILE_ID
+
+	ld a, ENEMY_START_ENTITY_ID + 6
+	call man_entity_locate_v2
+	inc h
+	inc l
+	inc l
+	ld [hl], SPIDER_OPEN_MOUTH_TILE_ID
+
+	ret
+
+
+anim_shut_spider_mouth:
+	ld a, ENEMY_START_ENTITY_ID + 3
+	call man_entity_locate_v2
+	inc h
+	inc l
+	inc l
+	ld [hl], SPIDER_OPEN_MOUTH_TILE_ID-2
+
+	ld a, ENEMY_START_ENTITY_ID + 6
+	call man_entity_locate_v2
+	inc h
+	inc l
+	inc l
+	ld [hl], SPIDER_OPEN_MOUTH_TILE_ID-2
+
+	ret
 
 spider_shot_roof_state_logic:
 	; === Check shot cooldown ===
@@ -823,6 +857,9 @@ spider_shot_roof_state_logic:
 	.decrease_cooldown:
 	dec a
 	ld [spider_shot_cooldown], a
+	cp SPIDER_ROOF_STATE_SHOT_ANIM_TIME
+	ret nz
+	call anim_open_spider_mouth
 	ret
 
 	.shot:
@@ -850,6 +887,8 @@ spider_shot_roof_state_logic:
 		; === SET COOLDOWN ===
 		ld hl, spider_shot_cooldown
 		ld [hl], SPIDER_ROOF_STATE_SHOT_COOLDOWN
+
+		call anim_shut_spider_mouth
 	ret
 
 

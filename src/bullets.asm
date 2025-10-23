@@ -2,7 +2,7 @@ INCLUDE "consts.inc"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Structure
-;;  [tile_h_ID], [tile_h_ID], [damage],[p_coll_y], [p_coll_x], [height], [width], [v_low], [v_high]
+;;  [tile_h_ID], [tile_v_ID], [damage],[p_coll_y], [p_coll_x], [height], [width], [v_low], [v_high]
 SECTION "Bullet Presets", ROM0
 player_bullet_preset::
 	DB PLAYER_BULLET_TILE_H, PLAYER_BULLET_TILE_V, PLAYER_BULLET_DAMAGE, PLAYER_BULLET_COLL_Y, PLAYER_BULLET_COLL_X
