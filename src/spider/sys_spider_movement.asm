@@ -67,7 +67,7 @@ spider_logic::
 
 manage_roof_state:
 	call spider_shot_roof_state_logic
-	call manage_roof_animation
+	
 	call move_spider_towards_player
 	
 	; Check state change
@@ -994,33 +994,17 @@ move_spider_towards_player:
 	call man_entity_locate_v2
 	inc h
 	inc l
-	ld b, [hl]
-
-	; Read gun pos
-	ld a, PLAYER_GUN_ENTITY_ID
-	call man_entity_locate_v2
-	inc h
-	inc l
 	ld a, [hl]
-
-	; Compare to use middle
-	cp b
-	jr c, .use_player_body_pos
-
-	.use_player_gun_pos:
-		ld b, a
-
-	.use_player_body_pos:
-
+	add SPRITE_WIDTH/2
+	ld b, a
 	; B = PLAYER_POS_MID
 
 	; === READ SPIDER POS ===
-	ld a, ENEMY_START_ENTITY_ID
+	ld a, ENEMY_START_ENTITY_ID + 4
 	call man_entity_locate_v2
 	inc h
 	inc l
 	ld a, [hl]
-	add SPRITE_WIDTH*2 ; Calculate middle
 
 	; A = SPIDER_POS_MID
 
@@ -1031,6 +1015,8 @@ move_spider_towards_player:
 	ld bc, 0
 	jr .skip_conversion
 	.move:
+
+	call manage_roof_animation
 
 	; === CALCULATE DIRECTION ===
 	ld bc, SPIDER_ROOF_SPEED
