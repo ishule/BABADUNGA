@@ -66,8 +66,18 @@ spider_logic::
 	ret
 
 manage_roof_state:
+	ld a, [spider_stage]
+	or a
+	jr z, .stage_0
+	.stage_1:
+	call spider_shot_roof_state_logic_for_stage_1
+	jr .end_if
+
+	.stage_0:
 	call spider_shot_roof_state_logic
 	
+	.end_if:
+
 	call move_spider_towards_player
 	
 	; Check state change
@@ -83,6 +93,11 @@ manage_roof_state:
 
 	call transition_roof_to_fall
 	call set_spider_fall_sprites
+
+	; TODO: Hacer que vaya en función de la vida
+	ld hl, spider_stage
+	ld [hl], $01
+
 	ret
 
 manage_fall_state:
@@ -894,6 +909,56 @@ anim_shut_spider_mouth:
 	inc l
 	ld [hl], SPIDER_OPEN_MOUTH_TILE_ID-2
 
+	ret
+
+spider_shot_roof_state_logic_for_stage_1:
+	; === Check shot cooldown ===
+	ld a, [spider_shot_cooldown]
+	cp 0
+	jr z, .shot
+	.decrease_cooldown:
+	dec a
+	ld [spider_shot_cooldown], a
+	cp SPIDER_ROOF_STATE_SHOT_ANIM_TIME
+	ret nz
+	call anim_open_spider_mouth
+	ret
+
+	.shot:
+		; === COMPUTE BULLET POS ===
+		ld a, ENEMY_START_ENTITY_ID
+		call man_entity_locate_v2
+		inc h
+		ld b, [hl]
+		inc l
+		ld c, [hl]
+
+		ld a, b
+		add SPRITE_HEIGHT
+		ld b, a
+
+		ld a, c
+		add SPRITE_WIDTH + SPRITE_WIDTH/2
+		ld c, a
+
+		; === SPAWN BULLET ===
+		ld de, spider_big_bullet_0_preset
+		ld a, DOWN_SHOT_DIRECTION
+		push bc
+		call shot_bullet_for_preset
+		pop bc
+		ld a, c
+		add SPRITE_WIDTH
+		ld c, a
+		ld de, spider_big_bullet_1_preset
+		ld a, DOWN_SHOT_DIRECTION
+		call shot_bullet_for_preset
+
+		; === SET COOLDOWN ===
+		ld hl, spider_shot_cooldown
+		ld [hl], SPIDER_ROOF_STATE_SHOT_COOLDOWN
+
+		call anim_shut_spider_mouth
 	ret
 
 spider_shot_roof_state_logic:
