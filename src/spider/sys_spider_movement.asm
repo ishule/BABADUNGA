@@ -323,6 +323,8 @@ manage_wait_state:
 		push de
 		push bc
 		call change_spider_looking_dir
+		pop bc
+		pop de
 		jr .do_jump
 
 	.jump_right:
@@ -332,14 +334,14 @@ manage_wait_state:
 		push de
 		push bc
 		call change_spider_looking_dir
+		pop bc
+		pop de
 
 
 	.do_jump:
 	ld a, ENEMY_START_ENTITY_ID
 	call man_entity_locate_v2
 	ld a, SPIDER_NUM_ENTITIES
-	pop bc
-	pop de
 	call change_entity_group_vel
 
 
@@ -353,7 +355,170 @@ manage_wait_state:
 	ret
 
 manage_go_up_state:
+	; Check roof
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	ld a, [hl]
+	cp SPIDER_SPAWN_POINT_Y
+	ret nc
+
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld bc, 0
+	ld de, 0
+	ld a, SPIDER_ROOF_NUM_ENTITIES
+	call change_entity_group_vel
+
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld bc, 0
+	ld d, SPIDER_ROOF_NUM_ENTITIES
+	call change_entity_group_acc_y
+
+	call set_spider_roof_sprites
+
+	; Swap if looking left
+	ld a, [spider_looking_dir]
+	or a
+	jr z, .do_not_swap
+	.swap_x:
+		call swap_x_spider_entity
+	.do_not_swap:
+
+	ld hl, spider_state
+	ld [hl], SPIDER_ROOF_STATE
+
+	ld hl, spider_shot_cooldown
+	ld [hl], SPIDER_ROOF_STATE_SHOT_COOLDOWN
+
+	;DEBUG: reset damage
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	inc l
+	inc l
+	ld [hl], 0
+
+	call set_web_hook_entities
+
+	ret
+
+set_web_hook_entities:
+	ld a, ENEMY_START_ENTITY_ID + 1
+	call man_entity_locate_v2
+	inc h	
+	inc l
+
+	ld d, SPIDER_SPAWN_POINT_Y - SPRITE_HEIGHT
+	ld e, [hl]
+
+	ld a, SPIDER_WEB_HOOK_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	ld [hl], d
+	inc l
+	ld [hl], e
+	inc l
+	ld [hl], SPIDER_WEB_HOOK_TILE_ID
+	inc l
+	ld [hl], SPRITE_ATTR_NO_FLIP
+
+	ld a, e
+	add SPRITE_WIDTH
+	ld e, a
+
+	inc l
+	ld [hl], d
+	inc l
+	ld [hl], e
+	inc l
+	ld [hl], SPIDER_WEB_HOOK_TILE_ID + 2
+	inc l
+	ld [hl], SPRITE_ATTR_NO_FLIP
+
+	ret
+
+set_spider_roof_sprites:
+	ld de, CMP_SIZE
+	ld b, SPIDER_SPAWN_POINT_Y
+	ld c, SPIDER_SPAWN_POINT_Y + SPRITE_HEIGHT
 	
+	; upper legs
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+
+	ld [hl], b
+	inc l
+	inc l 
+	ld [hl], ENEMY_START_TILE_ID
+	inc l
+	ld [hl], SPRITE_ATTR_NO_FLIP
+
+	add hl, de
+
+	ld [hl], SPRITE_ATTR_NO_FLIP
+	dec l
+	ld [hl], ENEMY_START_TILE_ID + 2
+	dec l 
+	dec l
+	ld [hl], b
+
+	add hl, de
+
+	ld [hl], c
+	inc l
+	inc l 
+	ld [hl], ENEMY_START_TILE_ID + 4
+	inc l
+	ld [hl], SPRITE_ATTR_NO_FLIP
+
+	add hl, de
+
+	ld [hl], SPRITE_ATTR_NO_FLIP
+	dec l
+	ld [hl], ENEMY_START_TILE_ID + 6
+	dec l 
+	dec l
+	ld [hl], c
+
+	; === RIGHT PART ===
+
+	add hl, de
+
+	ld [hl], b
+	inc l
+	inc l 
+	ld [hl], ENEMY_START_TILE_ID + 2
+	inc l
+	ld [hl], SPRITE_ATTR_FLIP_X
+
+	add hl, de
+
+	ld [hl], SPRITE_ATTR_FLIP_X
+	dec l
+	ld [hl], ENEMY_START_TILE_ID
+	dec l 
+	dec l
+	ld [hl], b
+
+	add hl, de
+
+	ld [hl], c
+	inc l
+	inc l 
+	ld [hl], ENEMY_START_TILE_ID + 6
+	inc l
+	ld [hl], SPRITE_ATTR_FLIP_X
+
+	add hl, de
+
+	ld [hl], SPRITE_ATTR_FLIP_X
+	dec l
+	ld [hl], ENEMY_START_TILE_ID + 4
+	dec l 
+	dec l
+	ld [hl], c
 
 	ret
 
@@ -387,7 +552,6 @@ set_spider_fall_sprites:
 
 	call swap_y_spider_entity
 	ret
-
 
 change_spider_sprites_from_fall_to_ground:
 	ld c, 16 ; gap between entity tiles
@@ -642,11 +806,11 @@ transition_roof_to_fall:
 	call change_entity_group_acc_y
 
 
-	ld a, SPIDER_WEB_HOOK_ENTITY_ID + 1 
-	call man_entity_delete
-
-	ld a, SPIDER_WEB_HOOK_ENTITY_ID
-	call man_entity_delete
+	ld a, SPIDER_WEB_HOOK_ENTITY_ID 
+	call man_entity_locate_v2
+	inc h
+	ld b, CMP_SIZE*2
+	call memreset_256
 
 	ret
 

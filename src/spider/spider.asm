@@ -15,7 +15,7 @@ init_spider::
 	call init_spider_entity_web_hook
 	
 	ld hl, spider_state
-	ld [hl], $00
+	ld [hl], SPIDER_ROOF_STATE
 
 	ld hl, spider_shot_cooldown
 	ld [hl], SPIDER_ROOF_STATE_SHOT_COOLDOWN
