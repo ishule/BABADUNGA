@@ -3,6 +3,7 @@ include "consts.inc"
 load_title_screen::
 	
    	call turn_screen_off
+   	call clean_all_tiles
    	call sys_sound_init
    	call sys_sound_init_inicio_music
 	call init_title_screen

@@ -3,6 +3,9 @@ include "consts.inc"
 load_defeat_screen::
 	
    	call turn_screen_off
+
+   	call clean_all_tiles
+   	call init_OAM
    	call sys_sound_init
    	call sys_sound_init_defeat_music
 	
@@ -22,6 +25,9 @@ load_defeat_screen::
 
 load_win_screen::
 	call turn_screen_off
+
+   	call clean_all_tiles
+	call init_OAM
    	call sys_sound_init
    	call sys_sound_init_defeat_music
 	

@@ -40,43 +40,24 @@ init_snake::
 	ret
 
 init_snake_tiles::
-	call wait_vblank
+	call turn_screen_off
 	
-	; Primer cuarto: tiles $10-$13 (4 tiles = 64 bytes)
+	; 12 tiles en total = 192
 	ld hl, SnakeIdle
-	ld de, VRAM_TILE_DATA_START + ($10 * VRAM_TILE_SIZE)
-	ld b, 4 * VRAM_TILE_SIZE
-	call memcpy_256
-
-	call wait_vblank
-	; Primera mitad: tiles $14-$17 (4 tiles = 64 bytes)
-	ld hl, SnakeMovement
-	ld de, VRAM_TILE_DATA_START + ($14 * VRAM_TILE_SIZE)
-	ld b, 4 * VRAM_TILE_SIZE
+	ld de, VRAM_TILE_DATA_START + (ENEMY_START_TILE_ID * VRAM_TILE_SIZE)
+	ld b, 12 * VRAM_TILE_SIZE
 	call memcpy_256
 	
-	call wait_vblank
-	; Segunda mitad: tiles $18-$1B (4 tiles = 64 bytes)
-	ld hl, SnakeTail 
-	ld de, VRAM_TILE_DATA_START + ($18 * VRAM_TILE_SIZE)
-	ld b, 4 * VRAM_TILE_SIZE
-	call memcpy_256
-
-	
+	call turn_screen_on
 	ret
 
 
 snake_sprites:: ;; Cuando se mueva habrá que cambiar los 2 sprites idle a movement
-    DB $00, $00, $18, SPRITE_ATTR_NO_FLIP   ; Sprite 0: Columna 1, Fila 1
-    DB $00, $00, $1A, SPRITE_ATTR_NO_FLIP   ; Sprite 1: Columna 2, Fila 2
-    DB $00, $00, $10, SPRITE_ATTR_NO_FLIP   ; Sprite 2: Columna 1, Fila 3 
-    DB $00, $00, $12, SPRITE_ATTR_NO_FLIP   ; Sprite 3: Columna 1, Fila 4
+    DB $00, $00, ENEMY_START_TILE_ID + 8, SPRITE_ATTR_NO_FLIP   ; Sprite 0: Columna 1, Fila 1
+    DB $00, $00, ENEMY_START_TILE_ID + $0A, SPRITE_ATTR_NO_FLIP   ; Sprite 1: Columna 2, Fila 2
+    DB $00, $00, ENEMY_START_TILE_ID, SPRITE_ATTR_NO_FLIP   ; Sprite 2: Columna 1, Fila 3 
+    DB $00, $00, ENEMY_START_TILE_ID + 2, SPRITE_ATTR_NO_FLIP   ; Sprite 3: Columna 1, Fila 4
 
-snake_sprites_turned::
-    DB $00, $00, $12, SPRITE_ATTR_FLIP_X   ; Sprite 0: Columna 1, Fila 1
-    DB $00, $00, $10, SPRITE_ATTR_FLIP_X   ; Sprite 1: Columna 2, Fila 2
-    DB $00, $00, $1A, SPRITE_ATTR_FLIP_X   ; Sprite 2: Columna 1, Fila 3 
-    DB $00, $00, $18, SPRITE_ATTR_FLIP_X   ; Sprite 3: Columna 1, Fila 4
 ;;============================================================
 ;; init_snake_entity
 ;; Crea las entidades de sprites del snake en OAM
@@ -84,7 +65,7 @@ snake_sprites_turned::
 ;;
 ;; MODIFICA: A, BC, DE, HL
 init_snake_entity::
-
+	
 	; Alocar sprite 0
 	call man_entity_alloc
 	inc h
@@ -228,12 +209,12 @@ snake_update_sprites::
 ; snake_flip
 ; Actualiza los sprites para que la serpiente mire a la izquierda.
 snake_flip::
-    ld hl, snake_sprites_turned
-    jp snake_update_sprites
+    ;jp snake_update_sprites
+    ret
 
 ;============================================================
 ; snake_unflip
 ; Actualiza los sprites para que la serpiente mire a la derecha.
 snake_unflip::
-    ld hl, snake_sprites
-    jp snake_update_sprites
+    ;jp snake_update_sprites
+    ret

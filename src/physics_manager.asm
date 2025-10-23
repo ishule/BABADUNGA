@@ -236,6 +236,29 @@ position_changers:
         call change_entity_group_pos_y
         ret
 
+
+    ; INPUT
+    ;  hl -> start entity_0 address ($C0)
+    ;  de -> start entity_1 address ($C0)
+    ; MODIFIES: A, B, HL, DE
+    swap_2_entities_positions:
+        inc h
+        inc d
+        ld a, [de]
+        ld b, [hl]
+        ld [hl+], a
+        ld a, b
+        ld [de], a
+        inc de
+
+        ld a, [de]
+        ld b, [hl]
+        ld [hl], a
+        ld a, b
+        ld [de], a
+
+        ret
+
 velocity_changers:
     ; INPUT
     ;  bc -> v_y_high, v_y_low 
@@ -592,7 +615,7 @@ check_ground_collision::
         ld c, $00
         call change_entity_group_pos_y_32x32
         ld a, 1 
-        ld [gorilla_jumping_flag], a
+        ld [gorilla_on_ground_flag], a
         jr .reset_physics 
 
     .isnot32:
@@ -618,6 +641,9 @@ check_ground_collision::
         ld bc, $0000
         ld d, PLAYER_SPRITES_SIZE
         call change_entity_group_vel_y
+
+        ld a, e
+        call man_entity_locate_v2 
 
         ld bc, $0000
         ld d, PLAYER_SPRITES_SIZE
@@ -761,7 +787,7 @@ choose_stand_or_walk::
 ;; MODIFICA: A, HL
 player_set_walk_sprite::
     ld hl, component_sprite + SPRITE_OFFSET_TILE
-    ld [hl], $0A  ; Tile de Player_walk ; MAGIC
+    ld [hl], $0E  ; Tile de Player_walk ; MAGIC
     ld a, 00 
     ld [player_stand_or_walk], a
     ret
@@ -773,7 +799,7 @@ player_set_walk_sprite::
 ;; MODIFICA: A, HL
 player_set_stand_sprite::
     ld hl, component_sprite + SPRITE_OFFSET_TILE
-    ld [hl], $06  ; Tile de Player_stand  ; MAGIC
+    ld [hl], $0A  ; Tile de Player_stand  ; MAGIC
     ld a, 01 ; MAGIC
     ld [player_stand_or_walk], a
     ret

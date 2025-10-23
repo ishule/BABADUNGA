@@ -1,6 +1,17 @@
 INCLUDE "consts.inc"
 SECTION "Utils",ROM0
 
+clean_all_tiles::
+    xor a             ; Valor a escribir (0)
+    ld hl, $8000      ; Inicio de VRAM
+    ld c, 12          ; Vamos a limpiar 32 bloques de 256 bytes (8 KB total)
+.loop:
+    ld b, 0           ; Código para limpiar 256 bytes con memset_256
+    call memset_256   ; Limpia un bloque de 256 bytes (HL se incrementa)
+    dec c             ; Un bloque menos
+    jr nz, .loop      ; Repetir hasta limpiar los 32 bloques
+    ret
+
 wait_vblank::
 	ld hl,rLY
 	ld a,VBLANK_START
@@ -101,7 +112,7 @@ set_palette_sprites_0::
    ret
 
 set_palette_sprites_1::
-	ld hl, rOBP0
+	ld hl, rOBP1
 	ld[hl], %11100100
 	ret
 
