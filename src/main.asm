@@ -25,6 +25,8 @@ main::
    call man_collision_create_all_collisions  ; Crear colisiones de arena (PROVISIONAL, SE DEBERIA CREAR UNO PARA CADA ESCENA)
 
    call init_player
+   call init_verja
+
    ;call init_gorilla
    ;call init_snake
    call init_spider
@@ -59,13 +61,13 @@ main::
       call process_input
       ;call sys_gorilla_movement
       ;call sys_snake_movement
-      call spider_logic
+      ;call spider_logic
       
       call compute_physics
       call check_player_shot
       ;call sys_blink_update
 
-      ;call sys_collision_check_all
+      call sys_collision_check_all
       jr game_loop 
 
    di

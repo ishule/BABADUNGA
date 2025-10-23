@@ -48,3 +48,9 @@ DB $10,$10,$14,$14,$18,$18,$10,$10
 
 
 ; End of MAP1TILES.Z80
+
+Verja::
+DB $00,$FF,$DB,$DB,$DB,$DB,$00,$FF
+DB $DB,$DB,$DB,$DB,$00,$FF,$DB,$DB
+DB $DB,$DB,$00,$FF,$DB,$DB,$DB,$DB
+DB $00,$FF,$DB,$DB,$DB,$DB,$00,$FF
