@@ -2,10 +2,11 @@ INCLUDE "consts.inc"
 INCLUDE "spider/spider_consts.inc"
 
 SECTION "Spider Variables", WRAM0
-spider_state::           DS 1 ; 0:roof | 1:falling | 2:stunned | 3:jump_to_stand | 4:stand | 5:jumping | 6:going_up
-spider_shot_cooldown::   DS 1
-spider_state_counter::   DS 1
-spider_looking_dir::     DS 1 ; 0:rigth | 1:left
+spider_state::             DS 1 ; 0:roof | 1:falling | 2:stunned | 3:jump_to_stand | 4:stand | 5:jumping | 6:going_up
+spider_shot_cooldown::     DS 1
+spider_state_counter::     DS 1
+spider_looking_dir::       DS 1 ; 0:rigth | 1:left
+spider_animation_counter:: DS 1 
 
 SECTION "Spider Inicialization", ROM0
 
@@ -19,6 +20,9 @@ init_spider::
 
 	ld hl, spider_shot_cooldown
 	ld [hl], SPIDER_ROOF_STATE_SHOT_COOLDOWN
+
+	ld hl, spider_animation_counter
+	ld [hl], SPIDER_ROOF_STATE_WALK_ANIM_TIME
 
 	ret
 

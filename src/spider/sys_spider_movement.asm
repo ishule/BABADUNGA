@@ -67,6 +67,7 @@ spider_logic::
 
 manage_roof_state:
 	call spider_shot_roof_state_logic
+	call manage_roof_animation
 	call move_spider_towards_player
 	
 	; Check state change
@@ -400,6 +401,52 @@ manage_go_up_state:
 	ld [hl], 0
 
 	call set_web_hook_entities
+
+	ret
+
+manage_roof_animation:
+	ld a, [spider_animation_counter]
+	dec a
+	ld [spider_animation_counter], a
+	ret nz
+
+	call animate_legs_roof
+
+	ld hl, spider_animation_counter
+	ld [hl], SPIDER_ROOF_STATE_WALK_ANIM_TIME
+	ret
+
+animate_legs_roof:
+	ld bc, $08 ; offset entre patas del mismo lado
+	ld de, $0C ; offset para cambiar de lado
+
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	inc l
+	inc l
+	
+	ld a, [hl]
+	xor SPIDER_ROOF_ANIM_MASK_UPPER_LEGS
+	ld [hl], a
+
+	add hl, bc
+
+	ld a, [hl]
+	xor SPIDER_ROOF_ANIM_MASK_LOWER_LEGS
+	ld [hl], a
+
+	add hl, de
+
+	ld a, [hl]
+	xor SPIDER_ROOF_ANIM_MASK_UPPER_LEGS
+	ld [hl], a
+
+	add hl, bc
+
+	ld a, [hl]
+	xor SPIDER_ROOF_ANIM_MASK_LOWER_LEGS
+	ld [hl], a
 
 	ret
 

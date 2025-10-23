@@ -218,7 +218,7 @@ DEF SPIDER_BULLET_SPEED_LOW  equ $00   ;
 ; == Tiles ==
 ; Player
 DEF PLAYER_BULLET_TILE_H equ $20
-DEF PLAYER_BULLET_TILE_V equ $20 ; TODO: Cambiarlo por el real
+DEF PLAYER_BULLET_TILE_V equ $22 ; TODO: Cambiarlo por el real
 
 ; Snake
 DEF SNAKE_BULLET_TILE_H  equ $20 ; TODO: Cambiarlo por el real
