@@ -58,7 +58,7 @@ init_player_tiles::
 	ld b, 2 * VRAM_TILE_SIZE
 	call memcpy_256
 	;; Cargar Player_bullet en tile $10
-	ld hl,Player_bullet
+	ld hl,bullet_0_h
 	ld de,VRAM_TILE_DATA_START + ($10*VRAM_TILE_SIZE)
 	ld b,VRAM_TILE_SIZE
 	call memcpy_256
