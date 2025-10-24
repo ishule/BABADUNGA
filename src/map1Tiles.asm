@@ -47,7 +47,7 @@ DB $00,$18,$00,$18,$00,$1C,$00,$0E
 DB $00,$06,$00,$06,$00,$0E,$00,$0C
 
 
-jail_gate::
+Verja::
 DB $49,$49,$49,$49,$FF,$FF,$49,$49
 DB $49,$49,$FF,$E3,$7F,$41,$6B,$55
 DB $FF,$C1,$55,$49,$5D,$41,$FF,$FF
@@ -55,9 +55,3 @@ DB $49,$49,$49,$49,$FF,$FF,$49,$49
 
 
 ; End of MAP1TILES.Z80
-
-Verja::
-DB $00,$FF,$DB,$DB,$DB,$DB,$00,$FF
-DB $DB,$DB,$DB,$DB,$00,$FF,$DB,$DB
-DB $DB,$DB,$00,$FF,$DB,$DB,$DB,$DB
-DB $00,$FF,$DB,$DB,$DB,$DB,$00,$FF
