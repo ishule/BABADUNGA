@@ -90,8 +90,6 @@ sys_snake_movement::
     ld bc, SNAKE_SPEED          ; << ¡ESTA ES LA CORRECCIÓN IMPORTANTE!
     ld d, $04
     call change_entity_group_acc_x
-    
-    
 
 ; Comprobar colisión con borde derecho
     ld a, ENEMY_START_ENTITY_ID
