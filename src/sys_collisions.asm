@@ -21,11 +21,11 @@ sys_collision_check_all::
     cp 0
     jr z, .next_entity           ; Si está inactiva, saltar
 
-
     call sys_collision_check_entity_vs_tiles
     ld h, d 
     ld l, e
 
+.continue:
     push hl
     call sys_collision_check_entity_vs_entity
     pop hl

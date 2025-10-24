@@ -168,6 +168,7 @@ DEF GORILLA_GRAVITY     	equ $0080   ; +1
 
 DEF GORILLA_HEIGHT 		equ 32
 DEF GORILLA_WIDTH		equ 32
+DEF GORILLA_NUM_SPRITES equ $08
 
 DEF GROUND_Y equ 124	; Altura del suelo
 
@@ -178,6 +179,8 @@ DEF SNAKE_SPEED_NEGATIVE equ $FFF0
 
 DEF SNAKE_HEIGHT equ 16
 DEF SNAKE_WIDTH equ 32
+DEF SNAKE_NUM_SPRITES equ $04
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bullets

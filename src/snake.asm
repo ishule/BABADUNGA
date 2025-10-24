@@ -124,7 +124,9 @@ snake_init_physics::
 		ld a,[hl]
 		or FLAG_CAN_TAKE_DAMAGE | FLAG_CAN_DEAL_DAMAGE
 		ld [hl+], a                     ; guarda el nuevo valor
-	    inc l 
+
+		ld a, SNAKE_NUM_SPRITES
+	    ld [hl+], a 	; Número sprites
 	    dec b 
 	    jr nz, .info_loop 
 	pop hl
@@ -137,7 +139,7 @@ snake_init_physics::
 
 	;; ASIGNAR WIDTH Y HEIGHT
 	pop hl
-	ld h, CMP_PHYSICS_P_H
+	ld h, CMP_COLLISIONS_H
 	inc l
 	inc l
 

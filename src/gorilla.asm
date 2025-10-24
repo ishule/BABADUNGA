@@ -160,7 +160,7 @@ gorilla_init_physics::
 	    or FLAG_CAN_TAKE_DAMAGE | FLAG_CAN_DEAL_DAMAGE
 	    ld [hl+], a                     ; guarda el nuevo valor
 
-	   	ld a, $08
+	   	ld a, GORILLA_NUM_SPRITES
 	    ld [hl+], a 	; Número sprites
 
 	    dec b 
