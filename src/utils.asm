@@ -113,7 +113,7 @@ set_palette_sprites_0::
 
 set_palette_sprites_1::
 	ld hl, rOBP1
-	ld[hl], %11100100
+	ld[hl], %01010101
 	ret
 
 ;; Inicializa la memoria de sprites (OAM)

@@ -26,9 +26,9 @@ sys_collision_check_all::
     ld h, d 
     ld l, e
 
+    push hl
     call sys_collision_check_entity_vs_entity
-    ld h, d 
-    ld l, e
+    pop hl
 
 .next_entity:
     ; Avanzar HL al siguiente bloque de entidad
@@ -44,7 +44,7 @@ sys_collision_check_all::
     srl a 
     srl a   ; A = número de entidad actual
     cp b                         ; ¿hemos revisado todas?
-    jr nz, .loop_entities
+    jr c, .loop_entities
 
     ret
 
@@ -231,9 +231,16 @@ sys_collision_check_AABB::
 
 
 sys_collision_check_player_vs_boss::
-	ld hl, CMP_START_ADDRESS 	; Player en HL
-	push hl
+	ld h, CMP_INFO_H 	; Player en HL
+    inc l 
+    inc l   ; FLAGS
+    ld a, [hl]          ; Cargar FLAGS en A
+    bit 0, a            ; Comprobar bit 0 (FLAG_CAN_TAKE_DAMAGE)
+    ret z               ; Si bit = 0, saltar
 
+    dec l 
+    dec l
+	push hl
 
 	ld a, TYPE_BOSS
 	call man_entity_locate_first_type 	; Boss en HL
@@ -241,151 +248,127 @@ sys_collision_check_player_vs_boss::
 	ld d, h 
 	ld e, l 
 	pop hl
+    push hl
 
 	call sys_collision_check_AABB
+    pop hl
 	ret c 
 
-;;====================================================
-	;; AQUÍ YA SABEMOS QUE HAY COLISIÓN
-	;; PROVISIONAL!!
-	;; El comportamiento que queremos es que el jugador pierda vida
-;;====================================================	
-	
 
-	;; TODO: EL JUGADOR PIERDE VIDA
+    ; ===== AQUÍ HAY COLISIÓN Y PUEDE RECIBIR DAÑO =====
+    ld d , h 
+    ld e, l
+    ; 1. Quitar vida al jugador
+    ; TODO: decrementar HP
+    ; TODO: comprobar si HP = 0
+    
+    ; 2. Desactivar flag de daño
 
+    ld h, CMP_INFO_H
+    inc l 
+    inc l               ; FLAGS
+    res 0, [hl]         ; FLAG_CAN_TAKE_DAMAGE = 0
+    
+    ; 3. Iniciar timer de invencibilidad (60 frames = 1 seg, 120 = 2 seg)
+    ld a, 120           ; 2 segundos a 60 FPS
+    ld [invincibility_timer], a
+    
+    ; 4. Iniciar parpadeo
+    ld a, 5             ; Parpadear cada 5 frames
+    ld [blink_timer], a
 
-	;; SOLO PASARÁ SI EL JUGADOR HA MUERTO
-	;ld a, $00 
-	;ld [CMP_START_ADDRESS], a  	; Marcar como inactiva cuando el jugador pierda todas las vidas
-
-	;ld a, $00 
-	;call man_entity_delete 	; Activar cuando el jugador pierda todas las vidas
-
-	;ld a, $01
-	;call man_entity_delete
-
-	
-
-    ; Código para hacer que el jugador parpadee + invencibilidad al jugador
-    ;ld a, $00
-    ;ld [blink_entity], a
-    ;ld a, 30
-    ;ld [blink_counter], a
+    ld h, d 
+    ld l, e
 
 	ret
 
 
 
-sys_collision_check_player_bullets_vs_boss::
-    ld a, 3
-    ld de, sys_collision_bullet_boss_callback
-    call man_entity_foreach_type
-    ret
-
-sys_collision_bullet_boss_callback:
-    ; INPUT: A = ID de la bala, DE = dirección de la bala
-    push de
-    
-    ld h, d
-    ld l, e             ; HL = dirección de la bala
+sys_collision_check_entity_vs_verja::
     push hl
+    ld a, TYPE_VERJA
+    call man_entity_locate_first_type
 
-
-	ld a, TYPE_BOSS
-	call man_entity_locate_first_type 	; Boss en HL
-
-	ld d, h 
-	ld e, l 
-	pop hl
-
-    push hl
-    call sys_collision_check_AABB
-    
+    ld d, h 
+    ld e, l
     pop hl
-    pop de              ; Recuperar dirección bala
-    ret c               ; No colisión
-    
 
-;;====================================================
-	;; AQUÍ YA SABEMOS QUE HAY COLISIÓN
-	;; PROVISIONAL!!
-	;; El comportamiento que queremos es que el boss pierda vida y la bala desaparezca
-;;====================================================	
-    ld [hl], 0  	; Marcar como inactiva
-    ld a, [num_entities_alive] ; TODO: Usar el id de la bala. No la última
-    dec a
-    call man_entity_delete 	; Aplicar cuando funcione la función
+    inc h
+    inc l 
+    ld a, [hl]  ;A = PosX
 
+    cp $20          ; Compara con $20
+    jr c, .check_verja_izquierda    ; Salta si B < $20 (es decir, B <= $1F)
 
+.check_verja_derecha:
+    dec h
+    dec l
+    push hl 
+    inc de 
+    inc de 
+    inc de 
+    inc de ; Me paso al siguiente sprite de la verja
 
-
-    ;;TODO: EL BOSS PIERDE VIDA
-
-
-    ; Código para hacer que el boss parpadee + invencibilidad al boss
-    ;ld a, $02
-    ;ld [blink_entity], a
-    ;ld a, 30
-    ;ld [blink_counter], a
-
-    
-    ret
-
-
-sys_collision_check_boss_bullets_vs_player::
-    ld a, 3
-    ld de, sys_collision_bullet_player_callback
-    call man_entity_foreach_type
-    ret
-
-sys_collision_bullet_player_callback:
-    ; INPUT: A = ID de la bala, DE = dirección de la bala
-    push de
-    
-    ld h, d
-    ld l, e             ; HL = dirección de la bala
-    push hl
-
-
-	ld a, TYPE_PLAYER
-	call man_entity_locate_first_type 	; Boss en HL
-
-	ld d, h 
-	ld e, l 
-	pop hl
-
-    push hl
     call sys_collision_check_AABB
-    
     pop hl
-    pop de              ; Recuperar dirección bala
-    ret c               ; No colisión
-    
-;;====================================================
-	;; AQUÍ YA SABEMOS QUE HAY COLISIÓN
-	;; PROVISIONAL!!
-	;; El comportamiento que queremos es que el jugador pierda vida y la bala desaparezca
-;;====================================================
-    ld [hl], 0  	; Marcar como inactiva
-    call man_entity_delete 	; Activar cuando vaya la función
+    ret c 
 
+    ld d, h 
+    ld e, l
+    call touching_right_collision
+    ld h, d 
+    ld l, e
+    ret
 
+.check_verja_izquierda:
+    dec h
+    dec l
+    push hl
 
-    ;;TODO: EL BOSS PIERDE VIDA
+    call sys_collision_check_AABB
+    pop hl
+    ret c 
 
-
-    ; Código para hacer que el boss parpadee + invencibilidad al boss
-    ;ld a, $02
-    ;ld [blink_entity], a
-    ;ld a, 30
-    ;ld [blink_counter], a
-
-    
+    ld d, h 
+    ld e, l
+    call touching_left_collision
+    ld h, d 
+    ld l, e
     ret
 
 sys_collision_check_entity_vs_entity::
+    inc l 
+    ld a, [hl]
+    dec l
+    cp 0    ; TYPE = player
+    jr z, check_collision_player
+
+    inc l 
+    ld a, [hl] 
+    cp TYPE_BULLET
+    jr z, check_collision_bullet
+
+
 ret
+
+
+check_collision_player::
+    push hl
+    call sys_collision_check_entity_vs_verja
+    call sys_collision_check_player_vs_boss
+    pop hl
+
+    ret
+
+
+check_collision_bullet::
+    dec l 
+    call sys_collision_check_entity_vs_verja
+    call sys_collision_check_bullet_vs_boss
+
+
+    ret
+
 
 ;;INPUT:
 ;; - HL: Apunta a la direcciń 0 de la entidad (C0xx)
@@ -414,6 +397,9 @@ sys_collision_check_entity_vs_tiles::
     ; --- Tile 2: pared derecha ---
     cp 4
     jr z, touching_right_collision
+
+    cp 5 
+    jr z, touching_up_collision
 
     ret
 
@@ -503,14 +489,25 @@ touching_right_collision:
 
     ret
 
+touching_up_collision:
+    ; De momento solo puede tocar el techo las balas
+    inc l
+    call delete_bullet
+    ret
+
 delete_bullet::
+    push de
     dec l
     ld [hl], 0      ; Marcar como inactiva
-    ld a, [num_entities_alive] ; TODO: Usar el id de la bala. No la última
-    dec a
-    call man_entity_delete  ; Aplicar cuando funcione la función
+
+    ld a, l 
+    srl a 
+    srl a   ; Si dividimos l entre 4 tenemos el id de la entidad
+    call man_entity_delete  
+    pop de
 
 
+    ret
 
 
 get_address_of_tile_being_touched::

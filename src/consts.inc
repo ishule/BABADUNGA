@@ -149,7 +149,12 @@ DEF PLAYER_GRAVITY			equ $0050 	; +1
 DEF PLAYER_INITIAL_POS_X  	equ $13 ; Posición inicial del jugador en X
 
 DEF PLAYER_HEIGHT	equ 16
-DEF PLAYER_WIDTH	equ 8
+DEF PLAYER_WIDTH	equ 2
+
+
+;; Fïsica de la verja
+DEF VERJA_HEIGHT   equ 16
+DEF VERJA_WIDTH    equ 2
 
 ; Física del gorila (Q5.3, C2)
 DEF GORILLA_JUMP_SPEED 		equ $FA00   ; -10
@@ -158,9 +163,10 @@ DEF GORILLA_SPEED_NEGATIVE  equ $FE00	; -2
 DEF GORILLA_GRAVITY     	equ $0080   ; +1
 
 DEF GORILLA_HEIGHT 		equ 32
-DEF GORILLA_WIDTH		equ 16
+DEF GORILLA_WIDTH		equ 22
 
 DEF GROUND_Y equ 124	; Altura del suelo
+
 
 ; Física de la serpiente
 DEF SNAKE_SPEED equ $0040

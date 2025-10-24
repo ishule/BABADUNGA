@@ -112,13 +112,20 @@ init_verja_physics::
 	ld [hl+], a 
 
 	ld a, c 
-	ld [hl], a
+	ld [hl+], a
+
+	ld a, h 
+	add 4 
+	ld h, a 
+	ld a, VERJA_HEIGHT 
+	ld [hl+], a 
+
+	ld a, VERJA_WIDTH 
+	ld [hl+], a
 
 
 	ld h, CMP_INFO_H
-	inc l 
-	inc l
-	inc l ;HL = $C004
+	;HL = $C004
 
 	;; Info Player
 	ld a, BYTE_ACTIVE
@@ -139,6 +146,15 @@ init_verja_physics::
 	ld [hl+], a 
 
 	ld a, c 
+	ld [hl+], a
+
+	ld a, h 
+	add 4 
+	ld h, a 
+	ld a, VERJA_HEIGHT 
+	ld [hl+], a 
+
+	ld a, VERJA_WIDTH 
 	ld [hl], a
 
 	ret 
