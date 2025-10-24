@@ -271,17 +271,81 @@ sys_collision_check_player_vs_boss::
     
     ; 3. Iniciar timer de invencibilidad (60 frames = 1 seg, 120 = 2 seg)
     ld a, 120           ; 2 segundos a 60 FPS
-    ld [invincibility_timer], a
+    ld [player_invincibility_timer], a
     
     ; 4. Iniciar parpadeo
     ld a, 5             ; Parpadear cada 5 frames
-    ld [blink_timer], a
+    ld [player_blink_timer], a
 
     ld h, d 
     ld l, e
 
 	ret
 
+
+sys_collision_check_bullet_vs_boss::
+    ; HL ya apunta a la bala
+    inc l
+    ld a, [hl]
+    cp TYPE_BULLET      ; Verificar que sea bala
+    ret nz
+    dec l
+    
+    push hl
+    
+    ; Buscar boss
+    ld a, TYPE_BOSS
+    call man_entity_locate_first_type
+    
+    ; Verificar si boss puede recibir daño
+    push hl
+    inc l
+    inc l               ; FLAGS
+    bit 0, [hl]
+    pop hl
+    jr z, .boss_invincible
+    
+    ld d, h
+    ld e, l
+    pop hl
+    push hl
+    
+    ; Comprobar AABB
+    call sys_collision_check_AABB
+    jr c, .no_collision
+    
+    ; ===== HAY COLISIÓN Y BOSS PUEDE RECIBIR DAÑO =====
+    
+    ; 1. Quitar vida al boss
+    ; TODO: decrementar boss HP
+    
+    ; 2. Desactivar flag del boss
+    ld h, d
+    ld l, e
+    inc l
+    inc l               ; FLAGS
+    res 0, [hl]
+    
+    ; 3. Iniciar invencibilidad del boss
+    ld a, 60            ; 1 segundo
+    ld [boss_invincibility_timer], a
+    ld a, 5
+    ld [boss_blink_timer], a
+    
+    ; 4. Eliminar bala
+    pop hl
+    inc l
+    call delete_bullet
+    
+    ret
+    
+.boss_invincible:
+    pop hl
+    ret
+    
+.no_collision:
+    pop hl
+    ret
 
 
 sys_collision_check_entity_vs_verja::
@@ -365,8 +429,6 @@ check_collision_bullet::
     dec l 
     call sys_collision_check_entity_vs_verja
     call sys_collision_check_bullet_vs_boss
-
-
     ret
 
 
