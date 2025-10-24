@@ -80,7 +80,7 @@ main::
       call load_loot_screen
       call load_spider_screen
       .victory
-      call load_win_screen
+      call load_defeat_screen
       jp .end
    .defeat
       call load_defeat_screen
