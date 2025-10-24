@@ -926,7 +926,7 @@ spider_shot_roof_state_logic_for_stage_1:
 
 	.shot:
 		; === COMPUTE BULLET POS ===
-		ld a, ENEMY_START_ENTITY_ID
+		ld a, ENEMY_START_ENTITY_ID + 1
 		call man_entity_locate_v2
 		inc h
 		ld b, [hl]
@@ -936,10 +936,6 @@ spider_shot_roof_state_logic_for_stage_1:
 		ld a, b
 		add SPRITE_HEIGHT
 		ld b, a
-
-		ld a, c
-		add SPRITE_WIDTH + SPRITE_WIDTH/2
-		ld c, a
 
 		; === SPAWN BULLET ===
 		ld de, spider_big_bullet_0_preset
@@ -995,6 +991,10 @@ spider_shot_roof_state_logic:
 		ld de, spider_bullet_preset
 		ld a, DOWN_SHOT_DIRECTION
 		call shot_bullet_for_preset
+		inc h
+		inc l
+		inc l
+		ld [hl], SPIDER_GROUND_STATE_BULLET_GRAVITY
 
 		; === SET COOLDOWN ===
 		ld hl, spider_shot_cooldown
@@ -1047,6 +1047,10 @@ spider_shot_ground_state_logic:
 		ld [hl], SPIDER_GROUND_STATE_SHOT_COOLDOWN
 
 		call shot_bullet_for_preset
+		inc h
+		inc l
+		ld [hl], SPIDER_GROUND_STATE_BULLET_GRAVITY
+
 		call change_spider_sprites_from_jump_to_ground
 
 	ret
