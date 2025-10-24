@@ -42,7 +42,10 @@ init_gorilla_tiles::
 	ld de, VRAM_TILE_DATA_START + (ENEMY_START_TILE_ID * VRAM_TILE_SIZE)
 	ld b, 0
 	call memcpy_256
-	
+	;; Animación
+	ld b,0
+	call memcpy_256
+
 	call turn_screen_on
 	ret
 
@@ -186,3 +189,4 @@ gorilla_init_physics::
 	jr nz, .loop
 	
 	ret
+

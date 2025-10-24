@@ -13,6 +13,7 @@ def MASK_SHOT_COUNT equ %00110000
 
 DEF GORILLA_LEFT_LIMIT  equ 35     ; Límite izquierdo (posición X mínima)
 DEF GORILLA_RIGHT_LIMIT equ 128    ; Límite derecho (160 - 32 de ancho)
+def MASK_ANIM_FRAME equ %01000000
 
 ; Estados del Gorila 
 def STATE_INIT_GORILLA equ 0
@@ -68,6 +69,7 @@ sys_gorilla_movement::
 
     ; Si PosY >= GROUND_Y, ha aterrizado.
 .landed:
+    call change_gorilla_animation
     ; ¡Acaba de aterrizar!
     ld a, 1
     ld [gorilla_on_ground_flag], a ; Marcar como "en el suelo"
@@ -216,6 +218,7 @@ sys_gorilla_movement::
     call man_entity_locate_v2
     
     ld bc, GORILLA_JUMP_SPEED ; Velocidad Y (negativa)
+
     
     ; Comprobar dirección para velocidad X
     ld a, [snake_flags]
@@ -231,6 +234,7 @@ sys_gorilla_movement::
 .apply_jump:
     ld a, GORILLA_SPRITES_SIZE  ; 
     call change_entity_group_vel ; Aplica Vel-Y (bc) y Vel-X (de)
+    call change_gorilla_animation
     ret
 
 
@@ -327,4 +331,112 @@ sys_gorilla_movement::
     or STATE_IDLE_GORILLA
     ld [snake_flags], a
     ret
+
+; ==========================================================
+; change_gorilla_animation
+; Handles TIMER and TOGGLING the animation frame (Bit 6).
+; Calls update_gorilla_animation_tiles to display the correct frame.
+; MODIFICA: AF, HL
+; ==========================================================
+change_gorilla_animation::
+    
+    ; --- Toggle Frame Logic (using Bit 6) ---
+    ld hl, snake_flags
+    ld a, [hl]
+    xor MASK_ANIM_FRAME        ; Toggle Bit 6
+    ld [hl], a                 ; Save the toggled flag back
+
+    ; --- Now update the tiles based on the new flag ---
+    jp update_gorilla_animation_tiles
+
+; ==========================================================
+; update_gorilla_animation_tiles
+; Reads snake_flags Bit 6 and sets ALL 8 gorilla sprite tiles accordingly.
+; MODIFICA: AF, BC, DE, HL
+; ==========================================================
+update_gorilla_animation_tiles::
+    ; Get base address for Sprite 0's Tile ID
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld h, CMP_SPRITES_H
+    inc l                         ; Skip Y
+    inc l                         ; Point to Tile ID
+
+    
+
+    push hl                       ; Save pointer to Tile ID destination
+    ld hl, snake_flags
+    ld a, [hl]                    ; Load flags
+    pop hl                        ; Restore pointer to Tile ID destination
+    bit 6, a                      ; Check Bit 6 (MASK_ANIM_FRAME)
+    ld bc,CMP_SIZE
+    jr z, .set_frame_A_tiles      ; If Bit 6 is 0, show Frame A (Idle/Base)
+
+.set_frame_B_tiles:
+    ld a, ENEMY_START_TILE_ID + $10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+2+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+8+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0A+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+4+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+6+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0C+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0E+$10
+    ld [hl],a
+    ret
+
+.set_frame_A_tiles:
+    ld a, ENEMY_START_TILE_ID
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+2
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+8
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0A
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+4
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+6
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0C
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0E
+    ld [hl],a
+    
+    ret
+
 
