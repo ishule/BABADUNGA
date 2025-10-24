@@ -74,8 +74,10 @@ main::
 
    provisional_game_loop:
       call load_title_screen
+      call load_tutorial_screen
       call load_gorilla_screen
       call load_snake_screen
+      call load_loot_screen
       call load_spider_screen
       .victory
       call load_win_screen
@@ -89,26 +91,99 @@ main::
    ;; ESTA FUNCIÓN SE LLAMA DESDE CADA ESCENA
    check_screen_transition::
     ; 1. Get player's X position
-    ld a, PLAYER_BODY_ENTITY_ID ; Player's main sprite ID
+    ld a, PLAYER_BODY_ENTITY_ID ; 's main sprite ID
     call man_entity_locate_v2   ; HL points to player's $C0xx
     ld h, CMP_SPRITES_H         ; Switch HL to point to $C1xx
     inc l                       ; Point to PosX
     ld a, [hl]                  ; A = Player's current X position
 
     ; 2. Compare with the gorilla's right turning point
-    cp 120
+    cp 150
     jr c, .no_transition        ; If PlayerX < Limit, continue loop
 
     ; 3. Player has reached or passed the limit, end this screen's loop
-    jp .end_gorilla_screen      ; Jump out of the game loop
+    jp .end_screen      ; Jump out of the game loop
 
    .no_transition:
       scf
       ret                         ; Continue game loop
 
-   .end_gorilla_screen:  ;; AÑADIR SCREEN FADE
-    or a ;;Limpamos carry
-    ; (Optional: Add screen fade out or other transition effects here)
-    ret                         ; Return from load_gorilla_screen
+   .end_screen:  ;; AÑADIR SCREEN FADE
+    call wipe_out_right
+    ; Esperar unos frames extra para asegurar
+    ld b, 10
+.extra_wait:
+    call wait_vblank
+    dec b
+    jr nz, .extra_wait
+    
+    ; Ahora sí, señalizar que se debe cambiar de pantalla
+    or a                        ; Limpiar carry (salir del game loop)
+    ret
 
+SECTION "Screen Effects", ROM0
 
+DEF WIPE_DELAY_FRAMES equ 1 ; Cuántos frames esperar entre pasos
+
+; =============================================
+; wipe_out_right
+; Cubre la pantalla columna por columna de izq -> der
+; escribiendo tiles negros en el tilemap
+; MODIFIES: AF, BC, DE, HL
+; =============================================
+wipe_out_right::
+    ld b, 0             ; Columna inicial (0-19)
+    
+.next_column:
+    push bc
+    
+    ; Esperar 2-3 VBlanks por columna para hacerlo más lento
+    ld a, 2             ; Número de frames a esperar
+.wait_frames:
+    push af
+    call wait_vblank
+    pop af
+    dec a
+    jr nz, .wait_frames
+    
+    ; Ahora dibujamos TODA la columna
+    ld c, 0
+    
+.draw_tile:
+    ; Calcular dirección en tilemap: $9800 + (fila * 32) + columna
+    ld a, c             ; A = fila
+    ld h, 0
+    ld l, a
+    ; Multiplicar fila por 32
+    add hl, hl          ; * 2
+    add hl, hl          ; * 4
+    add hl, hl          ; * 8
+    add hl, hl          ; * 16
+    add hl, hl          ; * 32
+    
+    ; Añadir columna
+    ld a, b             ; A = columna
+    ld e, a
+    ld d, 0
+    add hl, de
+    
+    ; Añadir base del tilemap
+    ld de, $9800
+    add hl, de          ; HL = dirección final en tilemap
+    
+    ; Escribir tile negro (tile 2) - SIN wait_vblank aquí
+    ld a, 2
+    ld [hl], a
+    
+    inc c               ; Siguiente fila
+    ld a, c
+    cp 18               ; ¿Hemos dibujado toda la columna?
+    jr c, .draw_tile
+    
+    pop bc
+    inc b               ; Siguiente columna
+    ld a, b
+    cp 20               ; ¿Hemos cubierto toda la pantalla? (20 columnas)
+    jr c, .next_column
+    
+    ret

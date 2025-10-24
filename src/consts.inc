@@ -6,6 +6,10 @@ DEF LCD_CONTROL equ $FF40
 
 DEF rP1 equ $FF00
 
+DEF rWY equ $FF4A
+
+DEF rWX equ $FF4B
+
 DEF SCREEN_PIXEL_WIDTH equ 160
 
 ;; Modos de lectura del Joypad
@@ -162,8 +166,8 @@ DEF GORILLA_WIDTH		equ 16
 DEF GROUND_Y equ 124	; Altura del suelo
 
 ; Física de la serpiente
-DEF SNAKE_SPEED equ $0040
-DEF SNAKE_SPEED_NEGATIVE equ $FFC0
+DEF SNAKE_SPEED equ $0010
+DEF SNAKE_SPEED_NEGATIVE equ $FFF0
 
 DEF SNAKE_HEIGHT equ 16
 DEF SNAKE_WIDTH equ 32

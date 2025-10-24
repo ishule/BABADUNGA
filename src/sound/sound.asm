@@ -265,6 +265,12 @@ sys_sound_init_defeat_music::
     call sys_sound_init_music
     ret
 
+sys_sound_init_rest_music::
+    ld hl,RestMusic
+    ld bc, EndRestMusic-RestMusic
+    call sys_sound_init_music
+    ret
+
 SECTION "Sonido", WRAM0
 
 relojMusica:
