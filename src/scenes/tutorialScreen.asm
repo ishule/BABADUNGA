@@ -1,6 +1,7 @@
-SECTION "Gorilla Screen",ROM0
+SECTION "Tutorial Screen",ROM0
 include "consts.inc"
-load_gorilla_screen::
+
+load_tutorial_screen::
    
    call turn_screen_off
    call clean_all_tiles
@@ -11,7 +12,7 @@ load_gorilla_screen::
    
    call InitDmaCopy
    call sys_sound_init
-   call sys_sound_init_gorilla_music
+   call sys_sound_init_rest_music
    ld hl,map1
    call draw_map
    call turn_screen_on
@@ -22,7 +23,6 @@ load_gorilla_screen::
    call man_collision_create_all_collisions  ; Crear colisiones de arena (PROVISIONAL, SE DEBERIA CREAR UNO PARA CADA ESCENA)
 
    call init_player
-   call init_gorilla
    call joypad_init
 
    call init_bullets
@@ -34,7 +34,6 @@ load_gorilla_screen::
 
       call joypad_read
       call process_input
-      call sys_gorilla_movement
       
       call compute_physics
       call check_player_shot

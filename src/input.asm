@@ -25,6 +25,17 @@ process_input::
     ld a, [joypad_input]
     ld b, a
 
+    ; ======= DEBUG ========
+    bit JOYPAD_DOWN, a
+    jr z, .skip_debug
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc l
+    inc l
+    ld [hl], $08
+    ret
+    .skip_debug:
+
     ; ==== SALTO PRIMERO ====
     bit JOYPAD_B, a
     jr z, .check_horizontal
@@ -35,6 +46,7 @@ process_input::
     jr z, .check_horizontal   ; Si está en el aire, no puede saltar
 
 .do_jump:
+    call sys_sound_jump_effect
     ld a, PLAYER_BODY_ENTITY_ID
 
     call man_entity_locate_v2

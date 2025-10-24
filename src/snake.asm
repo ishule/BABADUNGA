@@ -101,6 +101,7 @@ init_snake_entity::
 	ld hl, snake_sprites + 12
 	ld b, SPRITE_SIZE
 	call memcpy_256
+
 	
 	call wait_vblank
 	call man_entity_draw
@@ -209,12 +210,36 @@ snake_update_sprites::
 ; snake_flip
 ; Actualiza los sprites para que la serpiente mire a la izquierda.
 snake_flip::
-    ;jp snake_update_sprites
-    ret
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	inc l
+	inc l
+	inc l
 
-;============================================================
-; snake_unflip
-; Actualiza los sprites para que la serpiente mire a la derecha.
-snake_unflip::
-    ;jp snake_update_sprites
-    ret
+	ld c,4 ;; Sprites a procesar
+	bit SPRITE_ATTR_FLIP_X_BIT, [hl]
+	jr z, .set_flip_x
+	.reset_flip_x:
+		ld a, 0
+		jr .loop
+	.set_flip_x:
+		ld a, 1
+	
+	.loop:
+		or a
+		jr nz, .set
+		.reset:
+			res SPRITE_ATTR_FLIP_X_BIT, [hl]
+			jr .next_entity
+		.set:
+			set SPRITE_ATTR_FLIP_X_BIT, [hl]
+
+		.next_entity:
+		ld de, CMP_SIZE
+		add hl, de
+
+		dec c
+		jr nz, .loop
+
+	ret

@@ -2,7 +2,7 @@ INCLUDE "consts.inc"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Structure
-;;  [tile_h_ID], [tile_h_ID], [damage],[p_coll_y], [p_coll_x], [height], [width], [v_low], [v_high]
+;;  [tile_h_ID], [tile_v_ID], [damage],[p_coll_y], [p_coll_x], [height], [width], [v_low], [v_high]
 SECTION "Bullet Presets", ROM0
 player_bullet_preset::
 	DB PLAYER_BULLET_TILE_H, PLAYER_BULLET_TILE_V, PLAYER_BULLET_DAMAGE, PLAYER_BULLET_COLL_Y, PLAYER_BULLET_COLL_X
@@ -13,6 +13,12 @@ snake_bullet_preset::
 spider_bullet_preset::
 	DB SPIDER_BULLET_TILE_H, SPIDER_BULLET_TILE_V, SPIDER_BULLET_DAMAGE, SPIDER_BULLET_COLL_Y, SPIDER_BULLET_COLL_X
 	DB SPIDER_BULLET_HEIGHT, SPIDER_BULLET_WIDTH, SPIDER_BULLET_SPEED_LOW, SPIDER_BULLET_SPEED_HIGH
+spider_big_bullet_0_preset::
+	DB SPIDER_BIG_BULLET_0_TILE_H, SPIDER_BIG_BULLET_0_TILE_V, SPIDER_BIG_BULLET_0_DAMAGE, SPIDER_BIG_BULLET_0_COLL_Y, SPIDER_BIG_BULLET_0_COLL_X
+	DB SPIDER_BIG_BULLET_0_HEIGHT, SPIDER_BIG_BULLET_0_WIDTH, SPIDER_BIG_BULLET_0_SPEED_LOW, SPIDER_BIG_BULLET_0_SPEED_HIGH
+spider_big_bullet_1_preset::
+	DB SPIDER_BIG_BULLET_1_TILE_H, SPIDER_BIG_BULLET_1_TILE_V, SPIDER_BIG_BULLET_1_DAMAGE, SPIDER_BIG_BULLET_1_COLL_Y, SPIDER_BIG_BULLET_1_COLL_X
+	DB SPIDER_BIG_BULLET_1_HEIGHT, SPIDER_BIG_BULLET_1_WIDTH, SPIDER_BIG_BULLET_1_SPEED_LOW, SPIDER_BIG_BULLET_1_SPEED_HIGH
 
 SECTION "Bullets Code" , ROM0
 
@@ -371,10 +377,17 @@ check_player_shot::
 ; Init bullets sprites and variables
 init_bullets::
 	call wait_vblank
-	ld hl, Player_bullet
+	ld hl, bullet_0_h
 	ld de, $8200 ; MAGIC
 	ld b, 16     ; MAGIC
 	call memcpy_256
+
+	call wait_vblank
+	ld hl, bullet_0_v
+	ld de, $8220 ; MAGIC
+	ld b, 16     ; MAGIC
+	call memcpy_256
+
 	xor a
 	ld [shot_cooldown], a
 	inc a

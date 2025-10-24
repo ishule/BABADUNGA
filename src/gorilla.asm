@@ -38,12 +38,14 @@ init_gorilla::
 init_gorilla_tiles::
 	call turn_screen_off
 	
-	; Primer cuarto: tiles $10-$13 (4 tiles = 64 bytes)
 	ld hl, Gorilla
 	ld de, VRAM_TILE_DATA_START + (ENEMY_START_TILE_ID * VRAM_TILE_SIZE)
 	ld b, 0
 	call memcpy_256
-	
+	;; Animación
+	ld b,0
+	call memcpy_256
+
 	call turn_screen_on
 	ret
 
@@ -169,7 +171,7 @@ gorilla_init_physics::
 	push hl
 
 	ld b, GROUND_Y - 16	; Y = suelo menos altura del gorila (32 píxeles)
-	ld c, $40				
+	ld c, $50				
 	call change_entity_group_pos_32x32
 
 	;; ASIGNAR WIDTH Y HEIGHT
@@ -190,3 +192,4 @@ gorilla_init_physics::
 	jr nz, .loop
 	
 	ret
+

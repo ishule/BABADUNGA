@@ -25,12 +25,12 @@ main::
    call man_collision_create_all_collisions  ; Crear colisiones de arena (PROVISIONAL, SE DEBERIA CREAR UNO PARA CADA ESCENA)
 
    call init_player
-
    call init_gorilla
    ;call init_snake
    ;call init_spider
    call init_verja
    call init_invincibility
+
    ;call open_door Esto se llama una vez el boss ha muerto
    call joypad_init
 
@@ -65,6 +65,7 @@ main::
       call sys_collision_check_all
       ;call sys_gorilla_movement
       ;call sys_snake_movement
+
       ;call spider_logic
       
       call compute_physics
@@ -78,11 +79,13 @@ main::
 
    provisional_game_loop:
       call load_title_screen
+      call load_tutorial_screen
       call load_gorilla_screen
       call load_snake_screen
+      call load_loot_screen
       call load_spider_screen
       .victory
-      call load_win_screen
+      call load_defeat_screen
       jp .end
    .defeat
       call load_defeat_screen
@@ -93,24 +96,33 @@ main::
    ;; ESTA FUNCIÓN SE LLAMA DESDE CADA ESCENA
    check_screen_transition::
     ; 1. Get player's X position
-    ld a, PLAYER_BODY_ENTITY_ID ; Player's main sprite ID
+    ld a, PLAYER_BODY_ENTITY_ID ; 's main sprite ID
     call man_entity_locate_v2   ; HL points to player's $C0xx
     ld h, CMP_SPRITES_H         ; Switch HL to point to $C1xx
     inc l                       ; Point to PosX
     ld a, [hl]                  ; A = Player's current X position
 
     ; 2. Compare with the gorilla's right turning point
-    cp 120
+    cp 150
     jr c, .no_transition        ; If PlayerX < Limit, continue loop
 
     ; 3. Player has reached or passed the limit, end this screen's loop
-    jp .end_gorilla_screen      ; Jump out of the game loop
+    jp .end_screen      ; Jump out of the game loop
 
    .no_transition:
       scf
       ret                         ; Continue game loop
 
-   .end_gorilla_screen:  ;; AÑADIR SCREEN FADE
-    or a ;;Limpamos carry
-    ; (Optional: Add screen fade out or other transition effects here)
-    ret                         ; Return from load_gorilla_screen
+   .end_screen:  ;; AÑADIR SCREEN FADE
+    call wipe_out_right
+    ; Esperar unos frames extra para asegurar
+    ld b, 10
+.extra_wait:
+    call wait_vblank
+    dec b
+    jr nz, .extra_wait
+    
+    ; Ahora sí, señalizar que se debe cambiar de pantalla
+    or a                        ; Limpiar carry (salir del game loop)
+    ret
+

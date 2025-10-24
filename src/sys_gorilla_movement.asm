@@ -11,8 +11,9 @@ def MASK_DIRECTION equ %00000001
 def MASK_STATE equ %00001110
 def MASK_SHOT_COUNT equ %00110000
 
-DEF GORILLA_LEFT_LIMIT  equ 16     ; Límite izquierdo (posición X mínima)
+DEF GORILLA_LEFT_LIMIT  equ 35     ; Límite izquierdo (posición X mínima)
 DEF GORILLA_RIGHT_LIMIT equ 128    ; Límite derecho (160 - 32 de ancho)
+def MASK_ANIM_FRAME equ %01000000
 
 ; Estados del Gorila 
 def STATE_INIT_GORILLA equ 0
@@ -68,6 +69,7 @@ sys_gorilla_movement::
 
     ; Si PosY >= GROUND_Y, ha aterrizado.
 .landed:
+    call change_gorilla_animation
     ; ¡Acaba de aterrizar!
     ld a, 1
     ld [gorilla_on_ground_flag], a ; Marcar como "en el suelo"
@@ -178,8 +180,6 @@ sys_gorilla_movement::
     or STATE_IDLE_GORILLA ; Empezar en IDLE (Cambiado de MOVE)
     ld [snake_flags], a
     
-    ; Asegurarse de que empieza sin flip (mirando derecha)
-    ;call gorilla_unflip
     ret
 
 .idle_state:
@@ -218,6 +218,7 @@ sys_gorilla_movement::
     call man_entity_locate_v2
     
     ld bc, GORILLA_JUMP_SPEED ; Velocidad Y (negativa)
+
     
     ; Comprobar dirección para velocidad X
     ld a, [snake_flags]
@@ -233,6 +234,7 @@ sys_gorilla_movement::
 .apply_jump:
     ld a, GORILLA_SPRITES_SIZE  ; 
     call change_entity_group_vel ; Aplica Vel-Y (bc) y Vel-X (de)
+    call change_gorilla_animation
     ret
 
 
@@ -240,29 +242,201 @@ sys_gorilla_movement::
     ; No girar si está en el aire (esperar a aterrizar)
     ld a, [gorilla_on_ground_flag]
     cp 0
-    ret z 
+    ret z
 
-    ; Está en el suelo, así que gira
-    ld a, [snake_flags]
-    bit 0, a
-    jr nz, .turn_to_right
+    ;; Fila 1 
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+    
+    ld a, ENEMY_START_ENTITY_ID + 3
+    call man_entity_locate_v2
 
-.turn_to_left:
-    ; Estaba mirando derecha (0), ahora mira izquierda (1)
-    ;call gorilla_flip
-    jr .finish_turn
+    call swap_2_entities_positions 
 
-.turn_to_right:
-    ; Estaba mirando izquierda (1), ahora mira derecha (0)
-    ;call gorilla_unflip
+    ld a, ENEMY_START_ENTITY_ID + 1
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 2
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions
+
+
+    ;; Fila 2
+    ld a, ENEMY_START_ENTITY_ID + 4
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+    
+    ld a, ENEMY_START_ENTITY_ID + 7
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ld a, ENEMY_START_ENTITY_ID + 5
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 6
+    call man_entity_locate_v2
+    
+    call swap_2_entities_positions
+
+
+
+.flip_gorilla:
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc h
+    inc l
+    inc l
+    inc l
+    ld c, GORILLA_SPRITES_SIZE
+    bit SPRITE_ATTR_FLIP_X_BIT, [hl]
+    jr z, .set_flip_x
+    .reset_flip_x:
+        ld a, 0
+        jr .loop
+    .set_flip_x:
+        ld a, 1
+    
+    .loop:
+        or a
+        jr nz, .set
+        .reset:
+            res SPRITE_ATTR_FLIP_X_BIT, [hl]
+            jr .next_entity
+        .set:
+            set SPRITE_ATTR_FLIP_X_BIT, [hl]
+
+        .next_entity:
+        ld de, CMP_SIZE
+        add hl, de
+
+        dec c
+        jr nz, .loop
 
 .finish_turn:
     ; Invertir el bit de dirección
     ld a, [snake_flags]
     xor MASK_DIRECTION
-    
+
     ; Cambiar estado a IDLE
     and %11110001
-    or STATE_IDLE_GORILLA ; <-- CORREGIDO: ir a IDLE después de girar
+    or STATE_IDLE_GORILLA
     ld [snake_flags], a
     ret
+
+; ==========================================================
+; change_gorilla_animation
+; Handles TIMER and TOGGLING the animation frame (Bit 6).
+; Calls update_gorilla_animation_tiles to display the correct frame.
+; MODIFICA: AF, HL
+; ==========================================================
+change_gorilla_animation::
+    
+    ; --- Toggle Frame Logic (using Bit 6) ---
+    ld hl, snake_flags
+    ld a, [hl]
+    xor MASK_ANIM_FRAME        ; Toggle Bit 6
+    ld [hl], a                 ; Save the toggled flag back
+
+    ; --- Now update the tiles based on the new flag ---
+    jp update_gorilla_animation_tiles
+
+; ==========================================================
+; update_gorilla_animation_tiles
+; Reads snake_flags Bit 6 and sets ALL 8 gorilla sprite tiles accordingly.
+; MODIFICA: AF, BC, DE, HL
+; ==========================================================
+update_gorilla_animation_tiles::
+    ; Get base address for Sprite 0's Tile ID
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld h, CMP_SPRITES_H
+    inc l                         ; Skip Y
+    inc l                         ; Point to Tile ID
+
+    
+
+    push hl                       ; Save pointer to Tile ID destination
+    ld hl, snake_flags
+    ld a, [hl]                    ; Load flags
+    pop hl                        ; Restore pointer to Tile ID destination
+    bit 6, a                      ; Check Bit 6 (MASK_ANIM_FRAME)
+    ld bc,CMP_SIZE
+    jr z, .set_frame_A_tiles      ; If Bit 6 is 0, show Frame A (Idle/Base)
+
+.set_frame_B_tiles:
+    ld a, ENEMY_START_TILE_ID + $10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+2+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+8+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0A+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+4+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+6+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0C+$10
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0E+$10
+    ld [hl],a
+    ret
+
+.set_frame_A_tiles:
+    ld a, ENEMY_START_TILE_ID
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+2
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+8
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0A
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+4
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+6
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0C
+    ld [hl],a
+    add hl,bc
+
+    ld a, ENEMY_START_TILE_ID+$0E
+    ld [hl],a
+    
+    ret
+
+

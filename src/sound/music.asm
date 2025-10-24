@@ -227,6 +227,29 @@ DefeatMusic::
     DB RE5, DO5, SI5, LA5, SH, SH, SH, SH ; Nota La grave final
 EndDefeatMusic::
 
+RestMusic::
+;; CALM OASIS
+
+    ; Phrase 1 (Simple ascending/descending)
+    DB DO5, SH, SH, MI5, SH, SH, SOL5, SH
+    DB FA5, SH, SH, MI5, SH, SH, RE5, SH
+    DB DO5, SH, SH, SH, SH, SH, SH, SH
+    DB SH, SH, SH, SH, SH, SH, SH, SH ; Extra pause
+
+    ; Phrase 2 (Slight variation)
+    DB MI5, SH, SH, SOL5, SH, SH, LA5, SH
+    DB SOL5, SH, SH, FA5, SH, SH, MI5, SH
+    DB RE5, SH, DO5, SH, SH, SH, SH, SH
+    DB SH, SH, SH, SH, SH, SH, SH, SH ; Extra pause
+
+    ; Phrase 3 (Gentle ending, leading back to start)
+    DB SOL5, SH, MI5, SH, FA5, SH, RE5, SH
+    DB DO5, SH, RE5, SH, MI5, SH, SH, SH
+    DB DO5, SH, SH, SH, SH, SH, SH, SH
+    DB SH, SH, SH, SH, SH, SH, SH, SH ; Loop back
+
+EndRestMusic::
+
 SECTION "Mi Nota", WRAM0
 miNota:
 ds 1

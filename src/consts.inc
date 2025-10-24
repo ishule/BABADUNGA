@@ -6,6 +6,10 @@ DEF LCD_CONTROL equ $FF40
 
 DEF rP1 equ $FF00
 
+DEF rWY equ $FF4A
+
+DEF rWX equ $FF4B
+
 DEF SCREEN_PIXEL_WIDTH equ 160
 
 ;; Modos de lectura del Joypad
@@ -169,8 +173,8 @@ DEF GROUND_Y equ 124	; Altura del suelo
 
 
 ; Física de la serpiente
-DEF SNAKE_SPEED equ $0040
-DEF SNAKE_SPEED_NEGATIVE equ $FFC0
+DEF SNAKE_SPEED equ $0010
+DEF SNAKE_SPEED_NEGATIVE equ $FFF0
 
 DEF SNAKE_HEIGHT equ 16
 DEF SNAKE_WIDTH equ 32
@@ -206,6 +210,16 @@ DEF SPIDER_BULLET_COLL_X equ 3
 DEF SPIDER_BULLET_HEIGHT equ 4
 DEF SPIDER_BULLET_WIDTH  equ 4
 
+DEF SPIDER_BIG_BULLET_0_COLL_Y equ 3
+DEF SPIDER_BIG_BULLET_0_COLL_X equ 3
+DEF SPIDER_BIG_BULLET_0_HEIGHT equ 4
+DEF SPIDER_BIG_BULLET_0_WIDTH  equ 4
+
+DEF SPIDER_BIG_BULLET_1_COLL_Y equ 3
+DEF SPIDER_BIG_BULLET_1_COLL_X equ 3
+DEF SPIDER_BIG_BULLET_1_HEIGHT equ 4
+DEF SPIDER_BIG_BULLET_1_WIDTH  equ 4
+
 ; == Speeds ==
 ; Player
 DEF PLAYER_BULLET_SPEED      equ $0300 ; 3.0
@@ -217,15 +231,23 @@ DEF SNAKE_BULLET_SPEED       equ $01F0 ; 1.5
 DEF SNAKE_BULLET_SPEED_HIGH  equ $01   ; 
 DEF SNAKE_BULLET_SPEED_LOW   equ $F0   ;
 
-; Player
+; Spider
 DEF SPIDER_BULLET_SPEED      equ $0100 ; 1.0
 DEF SPIDER_BULLET_SPEED_HIGH equ $01   ; 
 DEF SPIDER_BULLET_SPEED_LOW  equ $00   ;
 
+DEF SPIDER_BIG_BULLET_0_SPEED      equ $0100 ; 1.0
+DEF SPIDER_BIG_BULLET_0_SPEED_HIGH equ $01   ; 
+DEF SPIDER_BIG_BULLET_0_SPEED_LOW  equ $00   ;
+
+DEF SPIDER_BIG_BULLET_1_SPEED      equ $0100 ; 1.0
+DEF SPIDER_BIG_BULLET_1_SPEED_HIGH equ $01   ; 
+DEF SPIDER_BIG_BULLET_1_SPEED_LOW  equ $00   ;
+
 ; == Tiles ==
 ; Player
 DEF PLAYER_BULLET_TILE_H equ $20
-DEF PLAYER_BULLET_TILE_V equ $20 ; TODO: Cambiarlo por el real
+DEF PLAYER_BULLET_TILE_V equ $22 
 
 ; Snake
 DEF SNAKE_BULLET_TILE_H  equ $20 ; TODO: Cambiarlo por el real
@@ -234,6 +256,12 @@ DEF SNAKE_BULLET_TILE_V  equ $20 ; TODO: Cambiarlo por el real
 ;Spider
 DEF SPIDER_BULLET_TILE_H equ $B2
 DEF SPIDER_BULLET_TILE_V equ $B0
+
+DEF SPIDER_BIG_BULLET_0_TILE_H equ $B8
+DEF SPIDER_BIG_BULLET_0_TILE_V equ $B8
+
+DEF SPIDER_BIG_BULLET_1_TILE_H equ $BA
+DEF SPIDER_BIG_BULLET_1_TILE_V equ $BA
 
 ; == Damage ==
 ; Player
@@ -244,6 +272,8 @@ DEF SNAKE_BULLET_DAMAGE  equ 1
 
 ; Spider
 DEF SPIDER_BULLET_DAMAGE equ 1
+DEF SPIDER_BIG_BULLET_0_DAMAGE equ 1
+DEF SPIDER_BIG_BULLET_1_DAMAGE equ 1
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -259,6 +289,6 @@ DEF ENEMY_START_ENTITY_ID equ 2
 DEF ENEMY_START_TILE_ID   equ $80
 DEF GORILLA_SPRITES_SIZE  equ 8
 DEF SNAKE_SPRITES_SIZE equ 4
-DEF SNAKE_LEFT_LIMIT  equ 16   ; Límite izquierdo: después del tile del borde
+DEF SNAKE_LEFT_LIMIT  equ 40   ; Límite izquierdo: después del tile del borde
 DEF SNAKE_RIGHT_LIMIT equ 128  ; Límite derecho: 160 - 32 (ancho) = 128
                                ; Cuando X=128, el último sprite está en X=152 (justo antes del tile derecho)

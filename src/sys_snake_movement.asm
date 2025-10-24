@@ -3,11 +3,15 @@ SECTION "Snake Movement Vars",WRAM0
 snake_flags:: DS 1 ;; Bit 0, 0=Derecha, 1=Izquierda (Flip y disparo)
                    ;; Bit 1,2,3, 00=INIT, 01=SHOOT, 10=MOVE, 11==TURN
                    ;; Bit 4 y 5, 00=2 disparos, 01=1 disparo, 00=0 disparos
+                   ;; Bit 6 - Animación
+
 snake_counter:: DS 1
+snake_animation_counter:: DS 1
 ;; Constantes de máscara
 def MASK_DIRECTION equ %00000001
 def MASK_STATE equ %00001110
 def MASK_SHOT_COUNT equ %00110000
+def MASK_ANIM_FRAME equ %01000000
 ;; Valores de estado
 def STATE_INIT equ 0
 def STATE_SHOOT equ 2
@@ -22,6 +26,7 @@ SECTION "Snake Logic",ROM0
 ; Máquina de estados: INIT → MOVE → (al tocar borde) → TURN -> IDLE → SHOOT → MOVE
 ; -----------------------
 sys_snake_movement::
+
     ld a, [snake_flags]
     and MASK_STATE
     cp STATE_INIT
@@ -36,6 +41,8 @@ sys_snake_movement::
     jp z, .turn_state
     ret
 .idle_state:
+    
+    call change_snake_animation.force_idle
     ld a,[snake_counter]
     add %00000100
     jr c,.fin_idle
@@ -53,6 +60,7 @@ sys_snake_movement::
 .init_state:
     xor a
     ld [snake_counter],a
+    ld [snake_animation_counter],a
     ; Inicializar: empezar mirando a la derecha (sin flip), ir a MOVE
     ld a, [snake_flags]
     and %11110000          ; Limpiar dirección y estado
@@ -66,6 +74,8 @@ sys_snake_movement::
 ; MOVE STATE: Mover serpiente y detectar colisiones con bordes
 ; -------------------------
 .move_state:
+    
+    call change_snake_animation
     ; Localizar entidad
     ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
@@ -80,18 +90,20 @@ sys_snake_movement::
     ld bc, SNAKE_SPEED          ; << ¡ESTA ES LA CORRECCIÓN IMPORTANTE!
     ld d, $04
     call change_entity_group_acc_x
-    
-    ; Comprobar colisión con borde derecho
+
+; Comprobar colisión con borde derecho
     ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
     ld h,CMP_SPRITES_H
     inc hl
     ld a, [hl]                  ; OAM_X
     cp SNAKE_RIGHT_LIMIT
+
     jr c, .no_collision_right   ; Si A < LIMIT, continúa
     jp .hit_right_border
 
 .no_collision_right:
+
     ret
 
 .move_left:
@@ -99,6 +111,8 @@ sys_snake_movement::
     ld bc, SNAKE_SPEED_NEGATIVE ; << ¡ESTA ES LA CORRECCIÓN IMPORTANTE!
     ld d, $04
     call change_entity_group_acc_x
+
+
     
     ; Comprobar colisión con borde izquierdo
     ld a, ENEMY_START_ENTITY_ID
@@ -111,6 +125,7 @@ sys_snake_movement::
     jp .hit_left_border
 
 .no_collision_left:
+    
     ret
 ; ----------------------------
 ; Colisión detectada: clamp posición, parar, ir a TURN
@@ -131,6 +146,7 @@ sys_snake_movement::
     and %11110001      ; Limpiar estado (Bits 1,2,3)
     or STATE_TURN      ; <-- IR A TURN
     ld [snake_flags], a
+
     ret
 
 .hit_right_border:
@@ -149,6 +165,7 @@ sys_snake_movement::
     and %11110001            ; <-- MÁSCARA CORREGIDA
     or STATE_TURN            ; <-- IR A TURN
     ld [snake_flags], a      ; <-- DESCOMENTADO
+
     ret
 ; -------------------------
 ; SHOOT STATE: Dispara hasta 2 veces
@@ -226,18 +243,31 @@ sys_snake_movement::
 ; TURN STATE
 ; -------------------------
 .turn_state:
-    ld a, [snake_flags]
-    bit 0, a
-    jr nz, .turn_to_right
 
-.turn_to_left:
-    ; Estaba mirando derecha, ahora mira izquierda
+    
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 3
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ld a, ENEMY_START_ENTITY_ID + 1
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 2
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
     call snake_flip
     jr .finish_turn
 
-.turn_to_right:
-    ; Estaba mirando izquierda, ahora mira derecha
-    call snake_unflip
 
 .finish_turn:
     ; Toggle direction bit and set next state to SHOOT (and zero shot count)
@@ -248,3 +278,74 @@ sys_snake_movement::
     or STATE_IDLE           ; Ir a SHOOT después de girar
     ld [snake_flags], a
     ret
+
+; ==========================================================
+; change_snake_animation
+; Alternates snake animation tiles based on snake_counter and Bit 6.
+; Includes a function to force the idle animation.
+; MODIFICA: AF, BC, DE, HL
+; ==========================================================
+change_snake_animation::
+    ; --- Timer Logic ---
+    ld hl, snake_animation_counter
+    inc [hl]
+    ld a, [hl]
+    cp 8                     ; Change frame every 8 calls (adjust for speed)
+    jr c, .update_tiles      ; If timer < 8, just update tiles, DON'T toggle frame
+
+    ; Timer reached threshold, reset it
+    xor a
+    ld [hl], a
+
+    ; --- Toggle Frame Logic (using Bit 6) ---
+    ld hl, snake_flags
+    ld a, [hl]
+    xor MASK_ANIM_FRAME        ; Toggle Bit 6
+    ld [hl], a                 ; Save the toggled flag back
+    ; Fall through to update tiles based on the NEW Bit 6 value
+
+.update_tiles:
+    ; --- Set Tiles Based on Current Frame (Bit 6) ---
+    ; Find address for Tile ID of Sprite Index 2 (3rd sprite)
+    ld a, ENEMY_START_ENTITY_ID + 2 ; Get ID of the third sprite
+    call man_entity_locate_v2     ; HL = C0xx + offset(2)
+    ld h, CMP_SPRITES_H           ; HL = C1xx + offset(2)
+    inc l                         ; Skip Y
+    inc l                         ; Point to Tile ID (at offset +2)
+
+    ; Check which frame to display (using the potentially updated flags)
+    
+    ld bc, snake_flags
+    ld a, [bc]                    ; Load flags
+    
+    bit 6, a                      ; Check Bit 6 (MASK_ANIM_FRAME)
+    jr z, .set_idle_tiles         ; If Bit 6 is 0, show idle
+
+.set_walk_tiles:
+    ld de,CMP_SIZE
+    ; Set tiles for WALK animation (Sprites 2 and 3)
+    ld [hl], ENEMY_START_TILE_ID + 5 ; Set Tile ID for Sprite 2 (Walk Frame)
+    ; Advance HL to Tile ID of Sprite Index 3 (4th sprite)
+    ld de, CMP_SIZE             ; DE = 4 (Size of component)
+    add hl, de
+    ld [hl], ENEMY_START_TILE_ID + 7 ; Set Tile ID for Sprite 3 (Walk Frame)
+    ret
+
+.set_idle_tiles:
+    ld de,CMP_SIZE
+    ; Set tiles for IDLE animation (Sprites 2 and 3)
+    ld [hl], ENEMY_START_TILE_ID + 0 ; Set Tile ID for Sprite 2 (Idle Frame)
+    ; Advance HL to Tile ID of Sprite Index 3 (4th sprite)
+    add hl, de
+    ld [hl], ENEMY_START_TILE_ID + 2 ; Set Tile ID for Sprite 3 (Idle Frame)
+    ret
+
+; --- Force Idle Animation ---
+; Call this when the snake stops moving or finishes idle timer
+.force_idle:
+    ; Reset the timer
+    ld hl, snake_animation_counter
+    xor a
+    ld [hl], a
+    ; Update tiles to idle frame immediately
+    jp .set_idle_tiles         ; Jump directly to the tile setting code

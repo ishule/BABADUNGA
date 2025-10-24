@@ -54,51 +54,146 @@ sys_sound_init::
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sound Effects
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-sys_sound_shoot_effect::
-    ld a, $1E     
+sys_sound_jump_effect::
+    ; Disparo: "Pew!" agudo, corto, descendente
+    ld a, %00011010  ; NR10: Sweep Time=1, Direction=Decrease(1), Shift=2 (Descenso rápido y sutil)
     ld [NR10], a
-    ld a, $82     
+    ld a, %01000100  ; NR11: Duty 25% (fino), Longitud MUY corta (4)
     ld [NR11], a
-    ld a, $47     
+    ld a, %11110001  ; NR12: Volumen MAX (15), Decay rápido (step=1)
     ld [NR12], a
-    ld a, $C3     
+    ld a, $00        ; NR13: Frecuencia baja (no importa mucho, NR14 la sobreescribe casi toda)
     ld [NR13], a
-    ld a, $C6 
+    ld a, %11000111  ; NR14: Trigger + Length Enable + Frecuencia ALTA ($07) - ¡La más alta posible!
     ld [NR14], a
     ret
+sys_sound_shoot_effect::
+    ; Salto: Tono ascendente limpio y corto
+    ld a, %00100011  ; NR10: Sweep Time=2, Direction=Increase(0), Shift=3 (Ascenso moderado)
+    ld [NR10], a
+    ld a, %10010000  ; NR11: Duty 50%, Longitud media-corta (16)
+    ld [NR11], a
+    ld a, %11110000  ; NR12: Volumen MAX (15), Sin Decay
+    ld [NR12], a
+    ld a, $00        ; NR13: Frecuencia baja inicial
+    ld [NR13], a
+    ld a, %11000110  ; NR14: Trigger + Length Enable + Frecuencia media-alta ($06)
+    ld [NR14], a
     
-sys_sound_death_effect::
-    ; Canal 4 (Ruido) para una muerte
-    ld a, %00111111   ; Longitud
+    ret
+    
+sys_sound_boss_death_effect::
+    ; Muerte del boss: Explosión grande con múltiples componentes
+    ; Canal 1: Tono bajo que baja
+    ld a, %01110101   ; Sweep descendente pronunciado
+    ld [NR10], a
+    ld a, %10111111   ; Duty 50%, longitud larga
+    ld [NR11], a
+    ld a, %11110010   ; Volumen 15, decay
+    ld [NR12], a
+    ld a, $00
+    ld [NR13], a
+    ld a, %10000010   ; Trigger + tono bajo
+    ld [NR14], a
+    
+    ; Canal 4: Explosión ruidosa intensa
+    ld a, %00111111   ; Longitud larga
     ld [NR41], a
-    ld a, %11110010   ; Volumen 15 (¡FUERTE!), DECAY, Período 2
+    ld a, %11110011   ; Volumen MÁXIMO (15), decay lento
     ld [NR42], a
-    ld a, %01010101   ; Ruido "crujiente"
+    ld a, %00110111   ; Ruido explosivo (7-bit, muy caótico)
     ld [NR43], a
     ld a, %10000000   ; Trigger
     ld [NR44], a
     ret
+
 sys_sound_hit_effect::
-    ld a, %00000101   ; NR41: Longitud MUY corta (5)
+    ; Golpe/Hit: Impacto seco y corto
+    ld a, %00000011   ; NR41: Longitud muy corta (3) - más seco
     ld [NR41], a
-    ld a, %10000010   ; NR42: Volumen 8 (¡FLOJO!), DECAY, Período 2 (muy rápido)
+    ld a, %11110001   ; NR42: Volumen 15 (FUERTE), decay muy rápido
     ld [NR42], a
-    ld a, %01010101   ; NR43: Ruido "crujiente" (buen pop)
+    ld a, %01100011   ; NR43: Ruido más grave y seco (mejor impacto)
     ld [NR43], a
-    ld a, %11000000   ; NR44: Trigger Y 'length enable' (se apaga por longitud)
+    ld a, %11000000   ; NR44: Trigger + length enable
     ld [NR44], a
     ret
+
 sys_sound_spit_effect::
-    ; Canal 4 (Ruido) para un "spit" (escupitajo) Para la serpiente
-    ld a, %00000101   ; NR41: Longitud MUY corta (5)
+    ; Escupitajo: "Ptui!" húmedo y rápido
+    ; Canal 1: Tono descendente rápido
+    ld a, %00010111   ; Sweep descendente muy rápido
+    ld [NR10], a
+    ld a, %00000100   ; Duty 0% (más áspero), longitud muy corta (4)
+    ld [NR11], a
+    ld a, %11000010   ; Volumen 12, decay
+    ld [NR12], a
+    ld a, $50         ; Frecuencia media-alta
+    ld [NR13], a
+    ld a, %11000101   ; Trigger + length enable
+    ld [NR14], a
+    
+    ; Canal 4: Ruido húmedo/siseante simultáneo
+    ld a, %00000011   ; Longitud muy corta
     ld [NR41], a
-    ld a, %11110010   ; NR42: Volumen 15 (Fuerte), DECAY, Período 2 (muy rápido)
+    ld a, %10100001   ; Volumen 10, decay rápido
     ld [NR42], a
-    ld a, %01010001   ; NR43: Ruido "hissy" agudo (Clock 5, 15-bit, Div 1)
+    ld a, %01100001   ; Ruido "hissy" agudo
     ld [NR43], a
-    ld a, %11000000   ; NR44: Trigger Y 'length enable' (se apaga por longitud)
+    ld a, %11000000   ; Trigger + length enable
     ld [NR44], a
     ret
+
+sys_sound_player_dies::
+    ; Muerte del jugador: Grito dramático descendente largo
+    ; Canal 1: Grito principal
+    ld a, %01110111   ; Sweep descendente pronunciado
+    ld [NR10], a
+    ld a, %10111111   ; Duty 50%, longitud larga
+    ld [NR11], a
+    ld a, %11110010   ; Volumen inicial 15, decay
+    ld [NR12], a
+    ld a, $00         ; Frecuencia baja
+    ld [NR13], a
+    ld a, %10000111   ; Trigger + tono muy agudo (grito)
+    ld [NR14], a
+    
+    ; Canal 2: Armonía baja para dar cuerpo
+    ld a, %10011111   ; Duty 50%, longitud larga
+    ld [NR21], a
+    ld a, %11010011   ; Volumen 13, decay
+    ld [NR22], a
+    ld a, $80         ; Frecuencia más baja que canal 1
+    ld [NR23], a
+    ld a, %10000100   ; Trigger + tono medio
+    ld [NR24], a
+    
+    ; Canal 4: Textura dramática
+    ld a, %00111111   ; Longitud media-larga
+    ld [NR41], a
+    ld a, %10110010   ; Volumen 11, decay
+    ld [NR42], a
+    ld a, %01010011   ; Ruido medio
+    ld [NR43], a
+    ld a, %10000000   ; Trigger
+    ld [NR44], a
+    
+    ; Esperar para que el sonido se complete
+    ld b, 60          ; ~1 segundo
+.wait:
+    call wait_vblank
+    dec b
+    jr nz, .wait
+    
+    ; Silenciar canales
+    xor a
+    ld [NR12], a
+    ld [NR22], a
+    ld a, %10000000
+    ld [NR14], a
+    ld [NR24], a
+    
+    ret 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inicializa el sistema de música (Tu versión)
 ;; ENTRADA: 
@@ -262,6 +357,12 @@ sys_sound_init_victory_music::
 sys_sound_init_defeat_music::
     ld hl, DefeatMusic
     ld bc,EndDefeatMusic-DefeatMusic
+    call sys_sound_init_music
+    ret
+
+sys_sound_init_rest_music::
+    ld hl,RestMusic
+    ld bc, EndRestMusic-RestMusic
     call sys_sound_init_music
     ret
 
