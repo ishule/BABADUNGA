@@ -26,6 +26,7 @@ SECTION "Snake Logic",ROM0
 ; Máquina de estados: INIT → MOVE → (al tocar borde) → TURN -> IDLE → SHOOT → MOVE
 ; -----------------------
 sys_snake_movement::
+
     ld a, [snake_flags]
     and MASK_STATE
     cp STATE_INIT
@@ -40,7 +41,7 @@ sys_snake_movement::
     jp z, .turn_state
     ret
 .idle_state:
-
+    
     call change_snake_animation.force_idle
     ld a,[snake_counter]
     add %00000100
@@ -73,6 +74,8 @@ sys_snake_movement::
 ; MOVE STATE: Mover serpiente y detectar colisiones con bordes
 ; -------------------------
 .move_state:
+    
+    call change_snake_animation
     ; Localizar entidad
     ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
@@ -88,7 +91,6 @@ sys_snake_movement::
     ld d, $04
     call change_entity_group_acc_x
     
-    call change_snake_animation
     
 
 ; Comprobar colisión con borde derecho
@@ -113,7 +115,6 @@ sys_snake_movement::
     call change_entity_group_acc_x
 
 
-    call change_snake_animation
     
     ; Comprobar colisión con borde izquierdo
     ld a, ENEMY_START_ENTITY_ID
@@ -315,10 +316,10 @@ change_snake_animation::
     inc l                         ; Point to Tile ID (at offset +2)
 
     ; Check which frame to display (using the potentially updated flags)
-    push hl                       ; Save pointer to Sprite 2's Tile ID
-    ld hl, snake_flags
-    ld a, [hl]                    ; Load flags
-    pop hl                        ; Restore pointer
+    
+    ld bc, snake_flags
+    ld a, [bc]                    ; Load flags
+    
     bit 6, a                      ; Check Bit 6 (MASK_ANIM_FRAME)
     jr z, .set_idle_tiles         ; If Bit 6 is 0, show idle
 
@@ -347,11 +348,6 @@ change_snake_animation::
     ; Reset the timer
     ld hl, snake_animation_counter
     xor a
-    ld [hl], a
-    ; Force animation state to Idle (Bit 6 = 0)
-    ld hl, snake_flags
-    ld a, [hl]
-    res 6, a                   ; Use RES to set Bit 6 to 0
     ld [hl], a
     ; Update tiles to idle frame immediately
     jp .set_idle_tiles         ; Jump directly to the tile setting code

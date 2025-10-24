@@ -46,6 +46,7 @@ process_input::
     jr z, .check_horizontal   ; Si está en el aire, no puede saltar
 
 .do_jump:
+    call sys_sound_jump_effect
     ld a, PLAYER_BODY_ENTITY_ID
 
     call man_entity_locate_v2
