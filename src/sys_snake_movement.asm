@@ -188,7 +188,7 @@ sys_snake_movement::
     
     ld a, 1                    ; A = Dirección: derecha
     ld de, snake_bullet_preset
-    ;call shot_bullet_for_preset
+    call shot_bullet_for_preset
     jr .post_shoot
 
 .shoot_left:
@@ -203,7 +203,7 @@ sys_snake_movement::
 
     ld a, 0                    ; A = Dirección: izquierda
     ld de, snake_bullet_preset
-    ;call shot_bullet_for_preset
+    call shot_bullet_for_preset
     ; (cae a .post_shoot)
 .post_shoot:
     ; Incrementar contador de disparos (bits 4 y 5)

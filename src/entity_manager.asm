@@ -249,7 +249,7 @@ man_entity_locate_first_type::
     ld b, a                   ; contador = número de entidades
     xor a                     ; ID = 0
 
-.loop:
+	.loop:
     push af                   ; guardar ID actual
     call man_entity_locate_v2 ; HL = dirección entidad(ID)
     inc hl                    ; HL = dirección del campo TYPE
@@ -262,12 +262,12 @@ man_entity_locate_first_type::
     dec b
     jr nz, .loop              ; mientras queden entidades
 
-.not_found:
+	.not_found:
     ld hl, $0000
     scf                       ; Carry = 1 → no encontrado
     ret
 
-.found:
+	.found:
     pop af                    ; limpiar pila
     call man_entity_locate_v2 ; HL = dirección exacta entidad
     or a                      ; clear carry (carry=0 → éxito)
@@ -288,7 +288,7 @@ man_entity_foreach_type::
     ret z
     ld b, a             ; B = contador
     xor a               ; A = ID inicial
-.loop:
+	.loop:
     push bc             ; [1] guarda contador
     push de             ; [2] guarda callback
     push af             ; [3] guarda ID
@@ -329,12 +329,12 @@ man_entity_foreach_type::
     pop bc              ; [1] recupera contador
     jr .continue
     
-.skip:
+	.skip:
     pop af              ; [3] limpiar ID
     pop de              ; [2] restaurar callback
     pop bc              ; [1] restaurar contador
     
-.continue:
+	.continue:
     inc a               ; Siguiente ID
     dec b
     jr nz, .loop
@@ -343,3 +343,33 @@ man_entity_foreach_type::
 man_entity_foreach_call:
     jp hl
 
+
+
+
+; INPUT
+;  HL -> preset address
+;  c  -> Entity size
+spawn_group_entity:
+	push hl
+	call man_entity_alloc
+	ld d, h
+	ld e, l
+
+	; Sprite
+	inc d
+	pop hl
+	ld b, CMP_SIZE
+	call memcpy_256
+
+	; Collisions
+	ld d, CMP_COLLISIONS_H
+	ld a, e
+	sub CMP_SIZE
+	ld e, a
+	ld b, CMP_SIZE
+	call memcpy_256
+
+	dec c
+	jr nz, spawn_group_entity
+	
+	ret

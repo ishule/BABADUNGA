@@ -4,7 +4,7 @@ SECTION "Entry point", ROM0[$150]
 main::
    ld hl,rBGP
    ld [hl],%11100001
-   jp provisional_game_loop
+   ;jp provisional_game_loop
    
    call turn_screen_off
    ld hl,map1Tiles
@@ -21,14 +21,12 @@ main::
    call init_all_sprites
 
    call man_entity_init ; Inicializar gestor de entidades
-   call man_collision_init ; Inicializar array de colisiones
-   call man_collision_create_all_collisions  ; Crear colisiones de arena (PROVISIONAL, SE DEBERIA CREAR UNO PARA CADA ESCENA)
-
+   
    call init_player
    call init_gorilla
    ;call init_snake
    ;call init_spider
-   call init_verja
+   ;call init_verja
    call init_invincibility
 
    ;call open_door Esto se llama una vez el boss ha muerto
@@ -62,10 +60,10 @@ main::
       call process_input
 
       call update_invincibility
-      call sys_collision_check_all
+
+      ;call sys_collision_check_all
       call sys_gorilla_movement
       ;call sys_snake_movement
-
       ;call spider_logic
       
       call compute_physics
