@@ -19,8 +19,6 @@ load_loot_screen::
    call init_all_sprites
 
    call man_entity_init ; Inicializar gestor de entidades
-   call man_collision_init ; Inicializar array de colisiones
-   call man_collision_create_all_collisions  ; Crear colisiones de arena (PROVISIONAL, SE DEBERIA CREAR UNO PARA CADA ESCENA)
 
    call init_player
 

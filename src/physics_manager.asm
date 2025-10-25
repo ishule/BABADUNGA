@@ -594,44 +594,20 @@ check_ground_collision::
     call man_entity_locate_v2
 
     ld b, GROUND_Y
-    ld a, d 
-    cp $08 
-    jr z, .is32
-    jr nz, .isnot32
 
-    .is32:
-        ; Leer posición Y
-        ld a, e
-        call man_entity_locate_v2 
-        inc h
-        ld a, [hl]  ; PosY sprite 0
-        add 16  ; Al ser un sprite de 32x32, tengo que compararlo con el sprite de abajo (+16)
-        
-        ; Comparar con suelo
-        cp GROUND_Y
-        jr c, .not_on_ground
+    ; Leer posición Y
+    ld a, e
+    call man_entity_locate_v2 
+    inc h
+    ld a, [hl]  ; PosY sprite 0
+    
+    ; Comparar con suelo
+    cp GROUND_Y
+    jr c, .not_on_ground
 
-        ld b, GROUND_Y
-        ld c, $00
-        call change_entity_group_pos_y_32x32
-        ld a, 1 
-        ld [gorilla_on_ground_flag], a
-        jr .reset_physics 
-
-    .isnot32:
-        ; Leer posición Y
-        ld a, e
-        call man_entity_locate_v2 
-        inc h
-        ld a, [hl]  ; PosY sprite 0
-        
-        ; Comparar con suelo
-        cp GROUND_Y
-        jr c, .not_on_ground
-
-        ld b, GROUND_Y
-        ld c, $00
-        call change_entity_group_pos_y
+    ld b, GROUND_Y
+    ld c, $00
+    call change_entity_group_pos_y
 
     .reset_physics:
         ; Resetear física Y
