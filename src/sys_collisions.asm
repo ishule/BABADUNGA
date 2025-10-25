@@ -7,6 +7,9 @@ intervalos:
 I1: DS 2 	; Intervalo 1: [Pos, Size]
 I2: DS 2 	; Intervalo 2: [Pos, Size]
 
+SECTION "Bullet Collision Vars", WRAM0
+current_bullet_offset: DS 1
+
 
 SECTION "Collision System Code", ROM0 
 
@@ -21,6 +24,17 @@ sys_collision_check_all::
     cp 0
     jr z, .next_entity           ; Si está inactiva, saltar
 
+    inc l 
+    ld a, [hl]
+    cp TYPE_BOSS
+    jr nz, .skip_flag
+
+    inc l 
+    res 3, [hl]     ; Desactivar flag GOT_DAMAGE
+    dec l
+
+.skip_flag:
+    dec l
     call sys_collision_check_entity_vs_tiles
     ld h, d 
     ld l, e
@@ -324,6 +338,7 @@ sys_collision_check_bullet_vs_boss::
     ld l, e
     inc l
     inc l               ; FLAGS
+    set 3, [hl]         ; Activar flag GOT_DAMAGE
     res 0, [hl]
     
     ; 3. Iniciar invencibilidad del boss
@@ -345,6 +360,161 @@ sys_collision_check_bullet_vs_boss::
     
 .no_collision:
     pop hl
+    ret
+
+
+
+sys_collision_check_bullet_vs_player::
+    ; HL ya apunta a la bala
+    inc l
+    ld a, [hl]
+    cp TYPE_BULLET      ; Verificar que sea bala
+    ret nz
+    dec l
+    
+    push hl
+    
+    ; Buscar player
+    ld a, TYPE_PLAYER
+    call man_entity_locate_first_type
+    
+    ; Verificar si player puede recibir daño
+    push hl
+    inc l
+    inc l               ; FLAGS
+    bit 0, [hl]
+    pop hl
+    jr z, .player_invincible
+    
+    ld d, h
+    ld e, l
+    pop hl
+    push hl
+    
+    ; Comprobar AABB
+    call sys_collision_check_AABB
+    jr c, .no_collision
+    
+    ; ===== HAY COLISIÓN Y PLAYER PUEDE RECIBIR DAÑO =====
+    
+    ; 1. Quitar vida al player
+    ; TODO: decrementar player HP
+    
+    ; 2. Desactivar flag del player
+    ld h, d
+    ld l, e
+    inc l
+    inc l               ; FLAGS
+    res 0, [hl]
+    
+    ; 3. Iniciar invencibilidad del boss
+    ld a, 60            ; 1 segundo
+    ld [player_invincibility_timer], a
+    ld a, 5
+    ld [player_blink_timer], a
+    
+    ; 4. Eliminar bala
+    pop hl
+    inc l
+    call delete_bullet
+    
+    ret
+    
+.player_invincible:
+    pop hl
+    ret
+    
+.no_collision:
+    pop hl
+    ret
+
+
+
+sys_collision_check_bullet_vs_bullet::
+    ; HL apunta a la bala actual
+    inc l
+    ld a, [hl]
+    cp TYPE_BULLET
+    ret nz
+    dec l
+    
+    ; Guardar offset de bala actual
+    ld a, l
+    ld [current_bullet_offset], a
+    
+    ; Obtener número de entidades
+    ld a, [num_entities_alive]
+    ld b, a             ; B = contador
+    xor a               ; A = ID = 0
+    
+.loop:
+    push bc
+    push af
+    
+    ; Calcular offset de la entidad a comparar
+    add a
+    add a               ; A = ID * 4
+    
+    ; Verificar que no sea la misma bala
+    ld c, a
+    ld a, [current_bullet_offset]
+    cp c
+    jr z, .skip         ; Es la misma, saltar
+    
+    ; Verificar que esté activa y sea bala
+    ld h, CMP_INFO_H
+    ld l, c
+    ld a, [hl]          ; Active?
+    or a
+    jr z, .skip
+    
+    inc l
+    ld a, [hl]          ; Type
+    cp TYPE_BULLET
+    jr nz, .skip
+    dec l
+    
+    ; Tenemos dos balas diferentes, comprobar AABB
+    ld d, h
+    ld e, l             ; DE = otra bala
+    
+    ld a, [current_bullet_offset]
+    ld h, CMP_INFO_H
+    ld l, a             ; HL = bala actual
+    
+    push hl
+    push de
+    call sys_collision_check_AABB
+    pop de
+    pop hl
+    jr c, .skip         ; No colisionan
+
+    
+    ; ===== COLISIÓN DETECTADA =====
+    ; Eliminar ambas balas
+    push hl
+    ld [hl], 0          ; Bala actual inactiva
+    inc l 
+
+    call delete_bullet
+
+    pop hl
+    ld [hl], 0          ; Otra bala inactiva
+    inc l 
+    call delete_bullet
+    
+    
+    pop af
+    pop bc
+    ret                 ; Salir (bala actual eliminada)
+    
+.skip:
+    pop af
+    pop bc
+    inc a               ; Siguiente ID
+    dec b
+    jr nz, .loop
+    
     ret
 
 
@@ -401,34 +571,30 @@ sys_collision_check_entity_vs_verja::
     ret
 
 sys_collision_check_entity_vs_entity::
+    push hl             ; [1] Guardar HL original
     inc l 
     ld a, [hl]
-    dec l
-    cp 0    ; TYPE = player
+    cp TYPE_PLAYER    
     jr z, check_collision_player
-
-    inc l 
-    ld a, [hl] 
     cp TYPE_BULLET
     jr z, check_collision_bullet
-
-
-ret
-
-
-check_collision_player::
-    push hl
-    call sys_collision_check_entity_vs_verja
-    call sys_collision_check_player_vs_boss
-    pop hl
-
+    pop hl              ; [1] Restaurar
     ret
 
+check_collision_player:
+    dec l               ; HL = inicio entidad
+    call sys_collision_check_entity_vs_verja
+    call sys_collision_check_player_vs_boss
+    pop hl              ; [1] ← Recuperar el push inicial
+    ret
 
-check_collision_bullet::
-    dec l 
+check_collision_bullet:
+    dec l               ; HL = inicio entidad
     call sys_collision_check_entity_vs_verja
     call sys_collision_check_bullet_vs_boss
+    call sys_collision_check_bullet_vs_player
+    call sys_collision_check_bullet_vs_bullet
+    pop hl              ; [1] ← Recuperar el push inicial
     ret
 
 
@@ -558,7 +724,6 @@ touching_up_collision:
     ret
 
 delete_bullet::
-    push de
     dec l
     ld [hl], 0      ; Marcar como inactiva
 
@@ -566,7 +731,6 @@ delete_bullet::
     srl a 
     srl a   ; Si dividimos l entre 4 tenemos el id de la entidad
     call man_entity_delete  
-    pop de
 
 
     ret

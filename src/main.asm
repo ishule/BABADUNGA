@@ -28,7 +28,7 @@ main::
    call init_gorilla
    ;call init_snake
    ;call init_spider
-   call init_verja
+   ;call init_verja
    call init_invincibility
 
    ;call open_door Esto se llama una vez el boss ha muerto
@@ -63,7 +63,7 @@ main::
 
       call update_invincibility
       call sys_collision_check_all
-      call sys_gorilla_movement
+      ;call sys_gorilla_movement
       ;call sys_snake_movement
 
       ;call spider_logic
