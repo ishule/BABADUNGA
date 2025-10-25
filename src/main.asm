@@ -60,7 +60,7 @@ main::
       call process_input
 
       call update_invincibility
-      call sys_collision_check_all
+      ;call sys_collision_check_all
       call sys_gorilla_movement
       ;call sys_snake_movement
 

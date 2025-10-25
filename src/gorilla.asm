@@ -44,12 +44,18 @@ init_gorilla::
 	ld hl, gorilla_state
 	ld [hl], 0
 
+	ld hl, gorilla_stage
+	ld [hl], 0
+
+
 	ld hl, gorilla_state_counter
 	ld [hl], STAND_TIME
 
 	; Looking left
 	ld hl, gorilla_looking_dir
 	ld [hl], 1
+
+	call rotate_gorilla_x
 
 	ret
 
