@@ -1,10 +1,8 @@
 INCLUDE "consts.inc"
 INCLUDE "collisions.inc"
 
-
 SECTION "Collision System Values", WRAM0
 ;; Almacenan temporalmente los intervalos a comparar
-temp_wall_x: DS 1
 intervalos:
 I1: DS 2 	; Intervalo 1: [Pos, Size]
 I2: DS 2 	; Intervalo 2: [Pos, Size]
@@ -12,25 +10,54 @@ I2: DS 2 	; Intervalo 2: [Pos, Size]
 
 SECTION "Collision System Code", ROM0 
 
-
 sys_collision_check_all::
-	call sys_collision_check_player_vs_boss
-	call sys_collision_check_player_bullets_vs_boss
-	call sys_collision_check_boss_bullets_vs_player
+    ld hl, CMP_START_ADDRESS     ; Dirección base de la primera entidad
+    ld a, [num_entities_alive]   
+    ld b, a 					 ; B = número de entidades 
+    ld c, 0                      ; C = índice actual
 
-	;; Check collision between player and tiles
-	ld hl, CMP_START_ADDRESS 	; Player
-	call sys_collision_check_entity_vs_tiles
+.loop_entities:
+    ld a, [hl]                   ; Leer estado
+    cp 0
+    jr z, .next_entity           ; Si está inactiva, saltar
 
-	;; Check collision between boss and tiles
-	;ld a, TYPE_BOSS
-	;call man_entity_locate_first_type 	; Boss en HL
-	;call sys_collision_check_entity_vs_tiles
+    call sys_collision_check_entity_vs_tiles
+    ld h, d 
+    ld l, e
 
-	;call sys_collision_check_bullets_vs_tiles
+.continue:
+    push hl
+    call sys_collision_check_entity_vs_entity
+    pop hl
 
+.next_entity:
+    ; Avanzar HL al siguiente bloque de entidad
+    inc l 
+    inc l 
+    inc l 	; HL = $C003 (número de sprites)
+    inc l
 
-	ret
+    ld a, [num_entities_alive]   
+    ld b, a                      ; B = número de entidades 
+
+    ld a, l 
+    srl a 
+    srl a   ; A = número de entidad actual
+    cp b                         ; ¿hemos revisado todas?
+    jr c, .loop_entities
+
+    ret
+
+; INPUT: DE = entidades a saltar
+; OUTPUT: DE = número de bytes que saltamos
+multiply_DE_by_4:
+	;; x2
+    sla e 
+    rl d 
+    sla e
+    rl d 
+
+    ret
 
 
 ;; Verifica si se solapan dos intervalos 1D
@@ -204,9 +231,16 @@ sys_collision_check_AABB::
 
 
 sys_collision_check_player_vs_boss::
-	ld hl, CMP_START_ADDRESS 	; Player en HL
-	push hl
+	ld h, CMP_INFO_H 	; Player en HL
+    inc l 
+    inc l   ; FLAGS
+    ld a, [hl]          ; Cargar FLAGS en A
+    bit 0, a            ; Comprobar bit 0 (FLAG_CAN_TAKE_DAMAGE)
+    ret z               ; Si bit = 0, saltar
 
+    dec l 
+    dec l
+	push hl
 
 	ld a, TYPE_BOSS
 	call man_entity_locate_first_type 	; Boss en HL
@@ -214,400 +248,424 @@ sys_collision_check_player_vs_boss::
 	ld d, h 
 	ld e, l 
 	pop hl
+    push hl
 
 	call sys_collision_check_AABB
+    pop hl
 	ret c 
 
-;;====================================================
-	;; AQUÍ YA SABEMOS QUE HAY COLISIÓN
-	;; PROVISIONAL!!
-	;; El comportamiento que queremos es que el jugador pierda vida
-;;====================================================	
-	
 
-	;; TODO: EL JUGADOR PIERDE VIDA
+    ; ===== AQUÍ HAY COLISIÓN Y PUEDE RECIBIR DAÑO =====
+    ld d , h 
+    ld e, l
+    ; 1. Quitar vida al jugador
+    ; TODO: decrementar HP
+    ; TODO: comprobar si HP = 0
+    
+    ; 2. Desactivar flag de daño
 
+    ld h, CMP_INFO_H
+    inc l 
+    inc l               ; FLAGS
+    res 0, [hl]         ; FLAG_CAN_TAKE_DAMAGE = 0
+    
+    ; 3. Iniciar timer de invencibilidad (60 frames = 1 seg, 120 = 2 seg)
+    ld a, 120           ; 2 segundos a 60 FPS
+    ld [player_invincibility_timer], a
+    
+    ; 4. Iniciar parpadeo
+    ld a, 5             ; Parpadear cada 5 frames
+    ld [player_blink_timer], a
 
-	;; SOLO PASARÁ SI EL JUGADOR HA MUERTO
-	;ld a, $00 
-	;ld [CMP_START_ADDRESS], a  	; Marcar como inactiva cuando el jugador pierda todas las vidas
-
-	;ld a, $00 
-	;call man_entity_delete 	; Activar cuando el jugador pierda todas las vidas
-
-	;ld a, $01
-	;call man_entity_delete
-
-	
-
-    ; Código para hacer que el jugador parpadee + invencibilidad al jugador
-    ;ld a, $00
-    ;ld [blink_entity], a
-    ;ld a, 30
-    ;ld [blink_counter], a
+    ld h, d 
+    ld l, e
 
 	ret
 
 
-
-sys_collision_check_player_bullets_vs_boss::
-    ld a, 3
-    ld de, sys_collision_bullet_boss_callback
-    call man_entity_foreach_type
-    ret
-
-sys_collision_bullet_boss_callback:
-    ; INPUT: A = ID de la bala, DE = dirección de la bala
-    push de
+sys_collision_check_bullet_vs_boss::
+    ; HL ya apunta a la bala
+    inc l
+    ld a, [hl]
+    cp TYPE_BULLET      ; Verificar que sea bala
+    ret nz
+    dec l
     
-    ld h, d
-    ld l, e             ; HL = dirección de la bala
     push hl
-
-
-	ld a, TYPE_BOSS
-	call man_entity_locate_first_type 	; Boss en HL
-
-	ld d, h 
-	ld e, l 
-	pop hl
-
-    push hl
-    call sys_collision_check_AABB
     
+    ; Buscar boss
+    ld a, TYPE_BOSS
+    call man_entity_locate_first_type
+    
+    ; Verificar si boss puede recibir daño
+    push hl
+    inc l
+    inc l               ; FLAGS
+    bit 0, [hl]
     pop hl
-    pop de              ; Recuperar dirección bala
-    ret c               ; No colisión
+    jr z, .boss_invincible
     
-
-;;====================================================
-	;; AQUÍ YA SABEMOS QUE HAY COLISIÓN
-	;; PROVISIONAL!!
-	;; El comportamiento que queremos es que el boss pierda vida y la bala desaparezca
-;;====================================================	
-    ld [hl], 0  	; Marcar como inactiva
-    ld a, [num_entities_alive] ; TODO: Usar el id de la bala. No la última
-    dec a
-    call man_entity_delete 	; Aplicar cuando funcione la función
-
-
-
-
-    ;;TODO: EL BOSS PIERDE VIDA
-
-
-    ; Código para hacer que el boss parpadee + invencibilidad al boss
-    ;ld a, $02
-    ;ld [blink_entity], a
-    ;ld a, 30
-    ;ld [blink_counter], a
-
-    
-    ret
-
-
-sys_collision_check_boss_bullets_vs_player::
-    ld a, 3
-    ld de, sys_collision_bullet_player_callback
-    call man_entity_foreach_type
-    ret
-
-sys_collision_bullet_player_callback:
-    ; INPUT: A = ID de la bala, DE = dirección de la bala
-    push de
-    
-    ld h, d
-    ld l, e             ; HL = dirección de la bala
-    push hl
-
-
-	ld a, TYPE_PLAYER
-	call man_entity_locate_first_type 	; Boss en HL
-
-	ld d, h 
-	ld e, l 
-	pop hl
-
-    push hl
-    call sys_collision_check_AABB
-    
+    ld d, h
+    ld e, l
     pop hl
-    pop de              ; Recuperar dirección bala
-    ret c               ; No colisión
+    push hl
     
-;;====================================================
-	;; AQUÍ YA SABEMOS QUE HAY COLISIÓN
-	;; PROVISIONAL!!
-	;; El comportamiento que queremos es que el jugador pierda vida y la bala desaparezca
-;;====================================================
-    ld [hl], 0  	; Marcar como inactiva
-    call man_entity_delete 	; Activar cuando vaya la función
-
-
-
-    ;;TODO: EL BOSS PIERDE VIDA
-
-
-    ; Código para hacer que el boss parpadee + invencibilidad al boss
-    ;ld a, $02
-    ;ld [blink_entity], a
-    ;ld a, 30
-    ;ld [blink_counter], a
-
+    ; Comprobar AABB
+    call sys_collision_check_AABB
+    jr c, .no_collision
     
+    ; ===== HAY COLISIÓN Y BOSS PUEDE RECIBIR DAÑO =====
+    
+    ; 1. Quitar vida al boss
+    ; TODO: decrementar boss HP
+    
+    ; 2. Desactivar flag del boss
+    ld h, d
+    ld l, e
+    inc l
+    inc l               ; FLAGS
+    res 0, [hl]
+    
+    ; 3. Iniciar invencibilidad del boss
+    ld a, 60            ; 1 segundo
+    ld [boss_invincibility_timer], a
+    ld a, 5
+    ld [boss_blink_timer], a
+    
+    ; 4. Eliminar bala
+    pop hl
+    inc l
+    call delete_bullet
+    
+    ret
+    
+.boss_invincible:
+    pop hl
+    ret
+    
+.no_collision:
+    pop hl
     ret
 
 
-sys_collision_check_bullets_vs_tiles::
-    ld a, 3
-    ld de, move_from_de_to_hl
-    call man_entity_foreach_type
-    ret
+sys_collision_check_entity_vs_verja::
+    push hl
+    ld a, TYPE_VERJA
+    call man_entity_locate_first_type
 
-move_from_de_to_hl::
-	ld h, d 
-	ld l, e
-	call sys_collision_check_entity_vs_tiles
-	ret
+    ld d, h 
+    ld e, l
+    pop hl
 
-;; INPUT: HL: direction to the player or the boss
-sys_collision_check_entity_vs_tiles::
-	ld a, [hl] 	; E_ACTIVE 
-	cp 0 
-	ret z 	; Si está inactiva, salir 
-
-	;; Verificar colisión con el suelo
-	push hl
-	;call .check_floor
-	pop hl
-
-	;; Verificar colisíon con pared izquierda
-	push hl
-	call .check_wall_left 
-	pop hl
-	ret nc 
-
-	;; Verificar colisión con pared derecha
-	push hl
-	call .check_wall_right 
-	pop hl
-	ret nc 
-
-	scf 	; Set Carry (no hay colisión)
-
-	ret 
-
-.check_floor
-	push hl
-	ld h, CMP_SPRITES_H
-	ld a, [hl] 	 
-	ld d, a 	; D = Entity.PosY
-
-	inc h 
-	inc h 
-	inc h
-	inc h 		; h = $C5
-	inc l 
-	inc l 		; HL = $C502
-	ld a, [hl] 	
-	ld e, a 	; E = Entity.Height	
-
-	ld a, d 
-	add e 
-	ld b, a 	; B = Entity.PosY + Entity.Height
-
-	ld de, collision_array 
-	ld a, [de] 	; Suelo.PosY
-	sub $08
-	cp b 
-	pop hl
-
-	jr nc, .no_floor_collision ; Si Suelo.PosY - 8 (margen) > (Entity.PosY + Entity.Height), no hay colisión
-	
-	;; HAY COLISIÓN CON EL SUELO
-	push hl	
-	ld h, CMP_PHYSICS_V_H
-	; HL = $C300 = VY 
-	xor a 
-	ld [hl], a 
-	inc h 	; HL = $C400 = AY 
-	ld [hl], a
-
-	or a ;Para limpiar Carry (colisión)
-	pop hl
-
-	ret
-
-	.no_floor_collision:
-		scf 	; Set Carry (no colisión)
-		ret
-
-
-.check_wall_left:
-	push hl
-	ld a, l
-	ld hl, CMP_SPRITES_ADDRESS
-	ld l, a 
-	inc l
-	ld a, [hl] 	 ; A = Entity.PosX
-	push af
-
-	ld de, collision_array 
-	ld h, d 
-	ld l, e 
-	ld de, SIZEOF_COLLISION 
-	add hl, de
-	ld de, C_POSX 
-	add hl, de
-	ld a, [hl+] 	
-	ld b, a 		; B = WallLeft.X
-
-	inc l
-	ld a, [hl] 		; A = WallLeft.Width
-
-	add b 			; A = WallLeft.X + WallLeft.Width 
-	ld b, a 		; B = WallLeft.X + WallLeft.Width
-	pop af  		; A = Entity.PosX
-
-	cp b
-	pop hl 
-
-	jr nc, .no_left_collision 	; Si Entity.PosX >= límite, no hay colisión
-
-	;;HAY COLISIÓN: Empujar hacia la derecha 
-	ld hl, CMP_START_ADDRESS
-	inc l
-	ld a, [hl]
-	cp 03 	
-	jr z, .delete_bullet 	; Si el tipo es 3, eliminamos la bala 
-	dec l 
-
-
-	ld a, l
-	ld hl, CMP_SPRITES_ADDRESS
-	ld l, a
-	inc l 	; HL = Entity.PosX
-	ld a, b 	; A = Límite izquierdo
-	ld [hl], a 	; Entity.X = Límite izquierdo
-	
-
-	;; Detener velocidad y aceleración de X
-	ld h, CMP_PHYSICS_V_H
-	inc l 	; HL = $C301 = VX 
-	xor a 
-	ld [hl], a 
-	inc h
-	; HL = $C401 = AX 
-	ld [hl], a
-
-	ret 
-
-.no_left_collision:
-	scf 	; Set Carry (no hay colisión)
-	ret
-
-
-.check_wall_right:
-	push hl
-	ld a, l
-	ld hl, CMP_SPRITES_ADDRESS
-	ld l, a 
-	inc l
-	ld a, [hl] 	 
-	ld d, a 	; D = Entity.PosX
-
-	inc h
-	inc h 
-	inc h
-	inc h 		; h = $C5
-	inc l 
-	inc l
-	ld a, [hl]
-	ld e, a 	; E = Entity.Width
-	push de
-
-	ld a, d 	; A = Entity.PosX 
-	add e 		; 
-	ld b, a 	; B = Entity.PosX + Entity.Width
-
-	ld de, collision_array 
-	ld h, d 
-	ld l, e 
-	ld de, SIZEOF_COLLISION 
-	add hl, de
-	add hl, de 	; Ahora si apunto al muro derecho
-	ld de, C_POSX 
-	add hl, de
-	ld a, [hl] 	; A = WallRight.X
-	push af
-
-	cp b
-
-	jr nc, .no_right_collision 	; Si límite >= Entity.PosX + Entity.Width, no hay colisión
-
-	;;HAY COLISIÓN: Empujar hacia la izquierda 
-	pop af 		; A = WallRight.X
-	pop de 		; D = Entity.PosX   E = Entity.Width
-	pop hl
-	sub e 		; A = WallRight.X - Entity.Width
-	ld [temp_wall_x], a 	;Guardo en VRAM el valor de a
-
-	inc l 
-	ld a, l 
-	cp 0
-	jr z, .assign_player
-
-
-.assign_boss 
-	ld a, TYPE_BOSS
-	jr .continue
-
-.assign_player
-	ld a, TYPE_PLAYER
-
-.continue
-	ld de, .move_left
-	call man_entity_foreach_type
-	ret
-
-.move_left:
-	ld h, CMP_SPRITES_H
-	ld l, e
-	inc l 	; HL = Entity.PosX
-
-	ld a, [temp_wall_x]
-	ld [hl], a 	; Entity.X = Límite derecho - WallRight.X
-	
-
-	;; Detener velocidad y aceleración de X
-	ld h, CMP_PHYSICS_V_H
-	xor a 
-	ld [hl], a 
-	inc h 	; HL = $C401 = AX 
-	ld [hl], a
-
-	ret 
-
-.no_right_collision:
-	pop af 
-	pop de
-	pop hl
-	scf 	; Set Carry (no hay colisión)
-	ret
-
-
-
-.delete_bullet:
-	dec l
-    ld [hl], 0  	; Marcar como inactiva
-    ;call man_entity_delete 	; Activar cuando vaya la función
-
-    ;; Eliminar 
     inc h
-    ld a, $00
-    ld [hl+], a 
+    inc l 
+    ld a, [hl]  ;A = PosX
+
+    cp $20          ; Compara con $20
+    jr c, .check_verja_izquierda    ; Salta si B < $20 (es decir, B <= $1F)
+
+.check_verja_derecha:
+    dec h
+    dec l
+    push hl 
+    inc de 
+    inc de 
+    inc de 
+    inc de ; Me paso al siguiente sprite de la verja
+
+    call sys_collision_check_AABB
+    pop hl
+    ret c 
+
+    ld d, h 
+    ld e, l
+    call touching_right_collision
+    ld h, d 
+    ld l, e
+    ret
+
+.check_verja_izquierda:
+    dec h
+    dec l
+    push hl
+
+    call sys_collision_check_AABB
+    pop hl
+    ret c 
+
+    ld d, h 
+    ld e, l
+    call touching_left_collision
+    ld h, d 
+    ld l, e
+    ret
+
+sys_collision_check_entity_vs_entity::
+    inc l 
+    ld a, [hl]
+    dec l
+    cp 0    ; TYPE = player
+    jr z, check_collision_player
+
+    inc l 
+    ld a, [hl] 
+    cp TYPE_BULLET
+    jr z, check_collision_bullet
+
+
+ret
+
+
+check_collision_player::
+    push hl
+    call sys_collision_check_entity_vs_verja
+    call sys_collision_check_player_vs_boss
+    pop hl
+
+    ret
+
+
+check_collision_bullet::
+    dec l 
+    call sys_collision_check_entity_vs_verja
+    call sys_collision_check_bullet_vs_boss
+    ret
+
+
+;;INPUT:
+;; - HL: Apunta a la direcciń 0 de la entidad (C0xx)
+sys_collision_check_entity_vs_tiles::
+	; Guardar puntero base
+	ld d, h 
+	ld e, l
+
+    ld h, CMP_SPRITES_H 	; HL = $C1xx
+    call get_address_of_tile_being_touched
+
+    ld a, [hl]
+    
+    ;; Recuperar valor HL
+    ld h, d
+    ld l, e
+
+    ; --- Si tile = 0 (aire) => no colisiona ---
+    cp 0 	
+    ret z
+
+    ; --- Tile 1: pared izquierda ---
+    cp 3
+    jr z, touching_left_collision
+
+    ; --- Tile 2: pared derecha ---
+    cp 4
+    jr z, touching_right_collision
+
+    cp 5 
+    jr z, touching_up_collision
+
+    ret
+
+
+touching_left_collision:
+    inc l
+    ld a, [hl]  ; A = TYPE 
+    cp 3        ; 3 = Bullet
+    jr z, delete_bullet
+
+	;; Ajustar posición
+	inc h       ; HL = C001 (X)
+    ld a, [hl]
+
+    inc a
+    ld [hl], a          ; reposicionar
+
+    ; Bloquear movimiento horizontal
+    inc h 
+    inc h 	; HL = $C300
+    xor a 
     ld [hl], a
-    ret nc
+
+    dec l 
+    dec l 
+    dec l 
+    dec l
+    dec l 
+    ld h, CMP_INFO_H
+
+    ;; Ajustar posición
+    inc h
+    inc l               ; HL = C001 (X)
+    ld a, [hl]
+
+    inc a
+    ld [hl], a          ; reposicionar
+
+    ; Bloquear movimiento horizontal
+    inc h 
+    inc h   ; HL = $C300
+    xor a 
+    ld [hl], a
+
+    ret
 
 
+touching_right_collision:
+    inc l
+    ld a, [hl]  ; A = TYPE 
+    cp 3        ; 3 = Bullet
+    jr z, delete_bullet
 
+    ;; Ajustar posición
+    inc h       ; HL = C001 (X)
+    ld a, [hl]
+
+    dec a
+    ld [hl], a          ; reposicionar
+
+    ; Bloquear movimiento horizontal
+    inc h 
+    inc h   ; HL = $C300
+    xor a 
+    ld [hl], a
+
+    dec l 
+    dec l 
+    dec l 
+    dec l
+    dec l 
+    ld h, CMP_INFO_H
+
+    ;; Ajustar posición
+    inc h
+    inc l               ; HL = C001 (X)
+    ld a, [hl]
+
+    dec a
+    ld [hl], a          ; reposicionar
+
+    ; Bloquear movimiento horizontal
+    inc h 
+    inc h   ; HL = $C300
+    xor a 
+    ld [hl], a
+
+    ret
+
+touching_up_collision:
+    ; De momento solo puede tocar el techo las balas
+    inc l
+    call delete_bullet
+    ret
+
+delete_bullet::
+    push de
+    dec l
+    ld [hl], 0      ; Marcar como inactiva
+
+    ld a, l 
+    srl a 
+    srl a   ; Si dividimos l entre 4 tenemos el id de la entidad
+    call man_entity_delete  
+    pop de
+
+
+    ret
+
+
+get_address_of_tile_being_touched::
+    ; Sprite: [Y][X][ID][ATTR]
+    ld a, [hl+]    ; A = Y, HL apunta a X
+    ld b, a        ; B = Y
+    ld a, [hl]     ; A = X
+    
+    ; Verificar límites de Y
+    ld a, b
+    cp 16
+    jr c, .out_of_bounds    ; Si Y < 16, fuera del mapa
+    
+    ; Verificar límites de X
+    ld a, [hl]
+    cp 8
+    jr c, .out_of_bounds    ; Si X < 8, fuera del mapa
+    
+    ; Convertir X a TX
+    sub a, 8
+    srl a
+    srl a
+    srl a          ; A = TX
+    ld c, a        ; C = TX
+    
+    ; Convertir Y a TY
+    ld a, b
+    sub a, 16
+    srl a
+    srl a
+    srl a          ; A = TY
+    ld l, a        ; L = TY
+    
+    ; Calcular dirección
+    ld a, c        ; A = TX
+    call calculate_address_from_tx_and_ty
+    ret
+
+.out_of_bounds:
+    ; Retornar dirección segura (tile 0 del mapa)
+    ld hl, $9800
+    ret
+
+;;-------------------------------------------------------
+convert_x_to_tx::
+    ; TX = (X - 8) / 8
+    cp 8
+    jr c, .clamp_zero
+    sub a, 8
+    srl a
+    srl a
+    srl a
+    ret
+.clamp_zero:
+    xor a          ; A = 0
+    ret
+
+;;-------------------------------------------------------
+convert_y_to_ty::
+    ; TY = (Y - 16) / 8
+    cp 16
+    jr c, .clamp_zero
+    sub a, 16
+    srl a
+    srl a
+    srl a
+    ret
+.clamp_zero:
+    xor a          ; A = 0
+    ret
+
+;;-------------------------------------------------------
+calculate_address_from_tx_and_ty::
+    ; INPUT: L = TY, A = TX
+    ; OUTPUT: HL = $9800 + TY * 32 + TX
+
+    ld b, a        ; B = TX
+    
+    ; HL = TY * 32
+    ld h, 0        ; HL = TY
+    add hl, hl     ; x2
+    add hl, hl     ; x4
+    add hl, hl     ; x8
+    add hl, hl     ; x16
+    add hl, hl     ; x32
+    
+    ; HL += TX
+    ld a, b
+    add a, l
+    ld l, a
+    adc a, h
+    sub a, l
+    ld h, a
+    
+    ; HL += $9800
+    ld bc, $9800
+    add hl, bc
+    
+    ret

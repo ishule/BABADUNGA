@@ -136,7 +136,9 @@ player_init_physics::
     or FLAG_CAN_TAKE_DAMAGE
     ld [hl+], a                     ; guarda el nuevo valor 
 
-    inc l 
+    ld a, $02 
+    ld [hl+], a 	; Número de sprites
+
     ld a, BYTE_ACTIVE
 	ld [hl+], a 		; Active = 1
 
@@ -146,6 +148,9 @@ player_init_physics::
 	ld a, [hl]                     ; carga el byte actual
     or FLAG_CAN_TAKE_DAMAGE
     ld [hl+], a                     ; guarda el nuevo valor 
+
+    ld a, $02 
+    ld [hl], a 	; Número de sprites
 
 
 	pop hl 

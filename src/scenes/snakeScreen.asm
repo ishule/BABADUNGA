@@ -24,6 +24,8 @@ load_snake_screen::
 
    call init_player
    call init_snake
+   call init_verja
+   call init_invincibility
    call joypad_init
 
    call init_bullets
@@ -36,6 +38,10 @@ load_snake_screen::
 
       call joypad_read
       call process_input
+
+      call update_invincibility
+      call sys_collision_check_all
+
       call sys_snake_movement
       
       call compute_physics

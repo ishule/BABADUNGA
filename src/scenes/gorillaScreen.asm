@@ -23,6 +23,8 @@ load_gorilla_screen::
 
    call init_player
    call init_gorilla
+   call init_verja
+   call init_invincibility
    call joypad_init
 
    call init_bullets
@@ -34,6 +36,10 @@ load_gorilla_screen::
 
       call joypad_read
       call process_input
+      
+      call update_invincibility
+      call sys_collision_check_all
+
       call sys_gorilla_movement
       
       call compute_physics
