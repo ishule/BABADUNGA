@@ -27,19 +27,29 @@ sys_collision_check_all::
     inc l 
     ld a, [hl]
     cp TYPE_BOSS
-    jr nz, .skip_flag
+    jr z, .loop_boss
 
+    cp TYPE_VERJA
+    jr z, .check_entity_entity
+
+    dec l
+    jr .check_all
+
+
+.loop_boss:
     inc l 
     res 3, [hl]     ; Desactivar flag GOT_DAMAGE
     dec l
-
-.skip_flag:
     dec l
+    jr .check_entity_entity
+
+
+.check_all:
     call sys_collision_check_entity_vs_tiles
     ld h, d 
     ld l, e
 
-.continue:
+.check_entity_entity:
     push hl
     call sys_collision_check_entity_vs_entity
     pop hl
@@ -601,11 +611,22 @@ check_collision_bullet:
 ;;INPUT:
 ;; - HL: Apunta a la direcciń 0 de la entidad (C0xx)
 sys_collision_check_entity_vs_tiles::
-	; Guardar puntero base
-	ld d, h 
-	ld e, l
+    ; Guardar puntero base
+    ld d, h 
+    ld e, l
 
-    ld h, CMP_SPRITES_H 	; HL = $C1xx
+    ; Verificar límites ANTES de llamar a get_address
+    ld h, CMP_SPRITES_H
+    inc l                        ; X del sprite
+    ld a, [hl]
+    cp 8
+    jr c, .out_of_bounds         ; X < 8, no hay colisión
+    dec l                        ; Volver a Y
+    
+    ld a, [hl]
+    cp 16
+    jr c, .out_of_bounds         ; Y < 16, no hay colisión
+
     call get_address_of_tile_being_touched
 
     ld a, [hl]
@@ -631,15 +652,20 @@ sys_collision_check_entity_vs_tiles::
 
     ret
 
+.out_of_bounds:
+    ; Recuperar HL y salir (no hay colisión)
+    ld h, d
+    ld l, e
+    ret
 
 touching_left_collision:
     inc l
     ld a, [hl]  ; A = TYPE 
-    cp 3        ; 3 = Bullet
+    cp TYPE_BULLET        ; 3 = Bullet
     jr z, delete_bullet
 
 	;; Ajustar posición
-	inc h       ; HL = C001 (X)
+	inc h       ; HL = C101 (X)
     ld a, [hl]
 
     inc a
@@ -678,11 +704,11 @@ touching_left_collision:
 touching_right_collision:
     inc l
     ld a, [hl]  ; A = TYPE 
-    cp 3        ; 3 = Bullet
+    cp TYPE_BULLET        ; 3 = Bullet
     jr z, delete_bullet
 
     ;; Ajustar posición
-    inc h       ; HL = C001 (X)
+    inc h       ; HL = C101 (X)
     ld a, [hl]
 
     dec a
