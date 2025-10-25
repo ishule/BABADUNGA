@@ -19,6 +19,7 @@ wait_vblank::
 		cp [hl]
 	jr nz,.loop
 	ret
+
 ;; memcpy_256: Subrutina para copiar bytes a memoria(Ejemplo tiles a VRAM)
 ;; INPUT
 ;; hl: Source

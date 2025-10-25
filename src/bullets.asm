@@ -355,8 +355,9 @@ check_player_shot::
 		ld d, UP_SHOT_DIRECTION
 
 	call_shot:
-
+	push af
 	call sys_sound_shoot_effect ;; Se llama aquí por tema de argumentos del preset
+	pop af
 	ld a, d
 	ld de, player_bullet_preset
 	call shot_bullet_for_preset

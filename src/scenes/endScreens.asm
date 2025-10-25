@@ -29,7 +29,7 @@ load_win_screen::
    	call clean_all_tiles
 	call init_OAM
    	call sys_sound_init
-   	call sys_sound_init_defeat_music
+   	call sys_sound_init_victory_music
 	
 	call init_win_screen
 	call joypad_init
