@@ -23,6 +23,10 @@ load_loot_screen::
    call man_collision_create_all_collisions  ; Crear colisiones de arena (PROVISIONAL, SE DEBERIA CREAR UNO PARA CADA ESCENA)
 
    call init_player
+
+   call init_verja
+   call init_invincibility
+
    call joypad_init
 
    call init_bullets
@@ -34,6 +38,9 @@ load_loot_screen::
 
       call joypad_read
       call process_input
+
+      call update_invincibility
+      call sys_collision_check_all
       
       call compute_physics
       call check_player_shot
