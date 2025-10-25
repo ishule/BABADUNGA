@@ -36,6 +36,8 @@ load_tutorial_screen::
       call joypad_read
       call process_input
 
+      call sys_collision_check_all
+      
       call update_invincibility
       call sys_collision_check_all
       call draw_hearts

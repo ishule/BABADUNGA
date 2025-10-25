@@ -54,6 +54,19 @@ sys_sound_init::
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sound Effects
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+sys_sound_pickup_effect::
+    ; Pickup: Short, bright ascending tone
+    ld a, %00100011  ; NR10: Sweep Time=2, Direction=Increase(0), Shift=3 (Nice quick rise)
+    ld [NR10], a
+    ld a, %10001100  ; NR11: Duty 50% (clean tone), Length=12 (short but noticeable)
+    ld [NR11], a
+    ld a, %11000000  ; NR12: Volume=12, No decay (clear tone)
+    ld [NR12], a
+    ld a, $00        ; NR13: Frequency LSB (Start relatively low for the sweep)
+    ld [NR13], a
+    ld a, %11000110  ; NR14: Trigger=1, Length Enable=1, Freq MSB=$06 (Ends on a mid-high note)
+    ld [NR14], a
+    ret
 sys_sound_jump_effect::
     ; Disparo: "Pew!" agudo, corto, descendente
     ld a, %00011010  ; NR10: Sweep Time=1, Direction=Decrease(1), Shift=2 (Descenso rápido y sutil)
