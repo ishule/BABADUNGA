@@ -1,7 +1,7 @@
 SECTION "Gorilla Screen",ROM0
 include "consts.inc"
 load_gorilla_screen::
-   
+
    call turn_screen_off
    call clean_all_tiles
    ld hl,map1Tiles
@@ -28,7 +28,8 @@ load_gorilla_screen::
    call joypad_init
 
    call init_bullets
-
+   ld a,2
+   ld [boss_health],a
    .game_loop:
       call wait_vblank
       call man_entity_draw
@@ -45,8 +46,10 @@ load_gorilla_screen::
       call compute_physics
       call check_player_shot
       ;call sys_blink_update
-
-      ;call sys_collision_check_all
+      call draw_hearts
+      call player_is_dead
+      ld b,8
+      call boss_is_dead
       call check_screen_transition
       jp c,.game_loop 
      .end

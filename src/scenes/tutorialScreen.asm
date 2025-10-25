@@ -2,7 +2,8 @@ SECTION "Tutorial Screen",ROM0
 include "consts.inc"
 
 load_tutorial_screen::
-   
+   ld a,2
+   ld [player_health],a
    call turn_screen_off
    call clean_all_tiles
    ld hl,map1Tiles
@@ -39,7 +40,8 @@ load_tutorial_screen::
 
       call update_invincibility
       call sys_collision_check_all
-      
+      call draw_hearts
+
       call compute_physics
       call check_player_shot
       ;call sys_blink_update

@@ -72,6 +72,7 @@ DEF TYPE_MINI_BOSS		= 2
 DEF TYPE_BULLET			= 3
 DEF TYPE_POWERUP		= 4
 DEF TYPE_VERJA          = 5
+DEF TYPE_HEART          = 6
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

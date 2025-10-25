@@ -5,8 +5,8 @@ SECTION "Verja Code", ROM0
 
 
 verja_sprites:
-	DB $78, $08, $14, %00000000
-	DB $78, $A0, $14, %00100000	; Volteo  vertical
+	DB $78, $08, $16, %10000000
+	DB $78, $A0, $16, %10100000	; Volteo  vertical
 
 
 
@@ -32,7 +32,7 @@ init_verja_tiles::
 
 	;; Cargar Verja en tiles $0A-$0B
 	ld hl, Verja
-	ld de, VRAM_TILE_DATA_START + ($14 * VRAM_TILE_SIZE)
+	ld de, VRAM_TILE_DATA_START + ($16 * VRAM_TILE_SIZE)
 	ld b, 2 * VRAM_TILE_SIZE	; 2 tiles de 16 bytes cada uno
 	call memcpy_256
 

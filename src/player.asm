@@ -66,7 +66,7 @@ init_player_tiles::
 	call wait_vblank
 	ld hl,Player_life
 	ld de,VRAM_TILE_DATA_START + ($12*VRAM_TILE_SIZE)
-	ld b,2*VRAM_TILE_SIZE
+	ld b,4*VRAM_TILE_SIZE
 	call memcpy_256
 
 	ret

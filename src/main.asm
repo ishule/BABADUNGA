@@ -78,9 +78,11 @@ main::
 
 
    provisional_game_loop:
+      call init_player_stats
       call load_title_screen
       call load_tutorial_screen
       call load_gorilla_screen
+      call load_loot_screen
       call load_snake_screen
       call load_loot_screen
       call load_spider_screen
@@ -91,6 +93,45 @@ main::
       call load_defeat_screen
    .end
       jr provisional_game_loop
+
+
+   init_player_stats::
+      ret
+   ;; b = boss size
+   ;;al borrar la verja se borra todo, y bueno al borrar el boss también xd
+   boss_is_dead::
+
+      ld a,[boss_health]
+      cp 0
+      ret nz
+      bit 7,a
+      ret nz
+      ;;Buscamos entidad del boss y la borramos
+      jp .deleteVerja
+      ld a,ENEMY_START_ENTITY_ID
+      .deleteBoss:
+         push af
+         push bc
+         ;call man_entity_delete
+         pop bc
+         pop af
+         dec b
+         inc a
+         jr nz,.deleteBoss
+      .deleteVerja:
+      ld a,TYPE_VERJA
+      call man_entity_locate_first_type
+      ld a,l
+      srl a ;; ID de Verja de la derecha
+      srl a
+      inc a
+      call man_entity_delete 
+      ret
+
+   player_is_dead::
+      ret
+
+      ;;Borramos verja
 
    ;; SI EL JUGADOR LLEGA A LA DERECHA (HAY QUE AJUSTARLO MÁS ADELANTE) SE PASA A LA SIGUIENTE PANTALLA
    ;; ESTA FUNCIÓN SE LLAMA DESDE CADA ESCENA
@@ -125,4 +166,3 @@ main::
     ; Ahora sí, señalizar que se debe cambiar de pantalla
     or a                        ; Limpiar carry (salir del game loop)
     ret
-
