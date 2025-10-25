@@ -29,10 +29,10 @@ sys_collision_check_all::
     cp TYPE_BOSS
     jr z, .loop_boss
 
+    dec l
     cp TYPE_VERJA
     jr z, .check_entity_entity
 
-    dec l
     jr .check_all
 
 
@@ -653,9 +653,20 @@ sys_collision_check_entity_vs_tiles::
     ret
 
 .out_of_bounds:
-    ; Recuperar HL y salir (no hay colisión)
     ld h, d
     ld l, e
+    
+    ; Si es bala, eliminarla
+    inc l
+    ld a, [hl]
+    cp TYPE_BULLET
+    jr nz, .not_bullet
+    
+    call delete_bullet
+    ret
+
+.not_bullet:
+    dec l
     ret
 
 touching_left_collision:
