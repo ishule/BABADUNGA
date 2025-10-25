@@ -1,16 +1,16 @@
-; GORILLA.INC
+; ROCKS.INC
 ;
 ; Include File.
 ;
 ; Info:
-;   Section              : Gorilla
+;   Section              : Tiles
 ;   Bank                 : 0
-;   Form                 : All tiles as one unit.
+;   Form                 : Each tile separate.
 ;   Format               : Gameboy 4 color.
 ;   Compression          : None.
 ;   Counter              : None.
-;   Tile size            : 32 x 32
-;   Tiles                : 0 to 1
+;   Tile size            : 8 x 16
+;   Tiles                : 48 to 55
 ;
 ;   Palette colors       : None.
 ;   SGB Palette          : None.
@@ -22,9 +22,17 @@
 
 
 ; Bank of tiles.
-GorillaBank EQU 0
+rocksBank EQU 0
 
 ; Start of tile array.
- GLOBAL Gorilla
+ GLOBAL rocks
+ GLOBAL rocksTLE48
+ GLOBAL rocksTLE49
+ GLOBAL rocksTLE50
+ GLOBAL rocksTLE51
+ GLOBAL rocksTLE52
+ GLOBAL rocksTLE53
+ GLOBAL rocksTLE54
+ GLOBAL rocksTLE55
 
-; End of GORILLA.INC
+; End of ROCKS.INC

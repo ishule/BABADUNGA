@@ -1,21 +1,31 @@
-INCLUDE "consts.inc"
+INCLUDE "gorilla_consts.inc"
 
-SECTION "Gorilla Variables", WRAM0 
-gorilla_orientation:: DS 1	; 0 = derecha, 1 = izquierda
+SECTION "Gorilla Initialization", ROM0
 
-SECTION "Gorilla Code", ROM0
+gorilla_entity_data::
+    DB GORILLA_SPAWN_POINT_Y                , GORILLA_SPAWN_POINT_X                 , ENEMY_START_TILE_ID     , SPRITE_ATTR_PRIORITY   ; Sprite 0: Columna 1, Fila 1
+    DB 11, 3, 5, 5
 
-gorilla_sprites::
-    DB $00, $00, ENEMY_START_TILE_ID, %10000000   ; Sprite 0: Columna 1, Fila 1
-    DB $00, $00, ENEMY_START_TILE_ID + 2, %10000000   ; Sprite 1: Columna 2, Fila 1
-    DB $00, $00, ENEMY_START_TILE_ID + 8, %10000000   ; Sprite 4: Columna 1, Fila 2
-    DB $00, $00, ENEMY_START_TILE_ID +$0A, %10000000   ; Sprite 5: Columna 2, Fila 2
-    DB $00, $00, ENEMY_START_TILE_ID+ 4, %10000000   ; Sprite 2: Columna 3, Fila 1
-    DB $00, $00, ENEMY_START_TILE_ID + 6, %10000000   ; Sprite 3: Columna 4, Fila 1
+    DB GORILLA_SPAWN_POINT_Y                , GORILLA_SPAWN_POINT_X + SPRITE_WIDTH  , ENEMY_START_TILE_ID + 2 , SPRITE_ATTR_PRIORITY   ; Sprite 1: Columna 2, Fila 1
+    DB 4, 0, 12, 8
 
-    DB $00, $00, ENEMY_START_TILE_ID + $0C, %10000000   ; Sprite 6: Columna 3, Fila 2
-    DB $00, $00, ENEMY_START_TILE_ID + $0E, %10000000   ; Sprite 7: Columna 4, Fila 2
+    DB GORILLA_SPAWN_POINT_Y + SPRITE_HEIGHT, GORILLA_SPAWN_POINT_X                 , ENEMY_START_TILE_ID + 4 , SPRITE_ATTR_PRIORITY   ; Sprite 2: Columna 1, Fila 2
+    DB 0, 2, 16, 6
 
+    DB GORILLA_SPAWN_POINT_Y + SPRITE_HEIGHT, GORILLA_SPAWN_POINT_X + SPRITE_WIDTH  , ENEMY_START_TILE_ID + 6 , SPRITE_ATTR_PRIORITY   ; Sprite 3: Columna 2, Fila 2
+    DB 0, 0, 16, 8
+
+    DB GORILLA_SPAWN_POINT_Y                , GORILLA_SPAWN_POINT_X + SPRITE_WIDTH*2, ENEMY_START_TILE_ID + 8 , SPRITE_ATTR_PRIORITY   ; Sprite 4: Columna 3, Fila 1
+    DB 3, 0, 13, 8
+
+    DB GORILLA_SPAWN_POINT_Y                , GORILLA_SPAWN_POINT_X + SPRITE_WIDTH*3, ENEMY_START_TILE_ID + 10, SPRITE_ATTR_PRIORITY   ; Sprite 5: Columna 4, Fila 1
+    DB 11, 0, 3, 1
+
+    DB GORILLA_SPAWN_POINT_Y + SPRITE_HEIGHT, GORILLA_SPAWN_POINT_X + SPRITE_WIDTH*2, ENEMY_START_TILE_ID + 12, SPRITE_ATTR_PRIORITY   ; Sprite 6: Columna 3, Fila 2
+    DB 0, 0, 16, 6
+
+    DB GORILLA_SPAWN_POINT_Y + SPRITE_HEIGHT, GORILLA_SPAWN_POINT_X + SPRITE_WIDTH*3, ENEMY_START_TILE_ID + 14, SPRITE_ATTR_PRIORITY   ; Sprite 7: Columna 4, Fila 2
+    DB 0, 0, 0, 0
 
 ;;============================================================
 ;; init_gorilla 
@@ -24,8 +34,23 @@ gorilla_sprites::
 ;; MODIFICA: A, BC, DE, HL
 init_gorilla::
 	call init_gorilla_tiles
-	call init_gorilla_entity
-	call gorilla_init_physics
+
+	ld hl, gorilla_entity_data
+	ld c, GORILLA_NUM_ENTITIES
+	call spawn_group_entity
+	
+	call gorilla_init_info
+
+	ld hl, gorilla_state
+	ld [hl], 0
+
+	ld hl, gorilla_state_counter
+	ld [hl], STAND_TIME
+
+	; Looking left
+	ld hl, gorilla_looking_dir
+	ld [hl], 1
+
 	ret
 
 ;;============================================================
@@ -38,103 +63,29 @@ init_gorilla::
 init_gorilla_tiles::
 	call turn_screen_off
 	
-	ld hl, Gorilla
+	ld hl, gorilla
 	ld de, VRAM_TILE_DATA_START + (ENEMY_START_TILE_ID * VRAM_TILE_SIZE)
 	ld b, 0
 	call memcpy_256
+	
 	;; Animación
-	ld b,0
+	ld b, 0
+	call memcpy_256
+
+	;; Golpe
+	ld b, 0
+	call memcpy_256
+
+	;; Piedras
+	ld b, 208
 	call memcpy_256
 
 	call turn_screen_on
 	ret
 
-;;============================================================
-;; init_gorilla_entity
-;; Crea las entidades de sprites del gorila en OAM
-;;
-;; Reserva 8 sprites para formar 32x32 con sprites 8x16
-;;
-;; MODIFICA: A, BC, DE, HL
-init_gorilla_entity::
-	; Alocar sprite 0
-	call man_entity_alloc
-	inc h
-	ld d, h 
-	ld e, l 
-	ld hl, gorilla_sprites
-	ld b, SPRITE_SIZE
-	call memcpy_256
-	
-	; Alocar sprite 1
-	call man_entity_alloc
-	inc h
-	ld d, h 
-	ld e, l 
-	ld hl, gorilla_sprites + 4
-	ld b, SPRITE_SIZE
-	call memcpy_256
-	
-	; Alocar sprite 2
-	call man_entity_alloc
-	inc h
-	ld d, h 
-	ld e, l 
-	ld hl, gorilla_sprites + 8
-	ld b, SPRITE_SIZE
-	call memcpy_256
-	
-	; Alocar sprite 3
-	call man_entity_alloc
-	inc h
-	ld d, h 
-	ld e, l 
-	ld hl, gorilla_sprites + 12
-	ld b, SPRITE_SIZE
-	call memcpy_256
-	
-	; Alocar sprite 4
-	call man_entity_alloc
-	inc h
-	ld d, h 
-	ld e, l 
-	ld hl, gorilla_sprites + 16
-	ld b, SPRITE_SIZE
-	call memcpy_256
-	
-	; Alocar sprite 5
-	call man_entity_alloc
-	inc h
-	ld d, h 
-	ld e, l 
-	ld hl, gorilla_sprites + 20
-	ld b, SPRITE_SIZE
-	call memcpy_256
-	
-	; Alocar sprite 6
-	call man_entity_alloc
-	inc h
-	ld d, h 
-	ld e, l 
-	ld hl, gorilla_sprites + 24
-	ld b, SPRITE_SIZE
-	call memcpy_256
-	
-	; Alocar sprite 7
-	call man_entity_alloc
-	inc h
-	ld d, h 
-	ld e, l 
-	ld hl, gorilla_sprites + 28
-	ld b, SPRITE_SIZE
-	call memcpy_256
-	
-	call wait_vblank
-	call man_entity_draw
-	ret
 
 ;;=================================================
-;; gorilla_init_physics
+;; gorilla_init_info
 ;; Inicializa el componente de las físicas del gorila
 ;;
 ;; Establece:
@@ -142,13 +93,12 @@ init_gorilla_entity::
 ;; 		- Velocidad inicial: 0, 0 
 ;;
 ;; MODIFICA: A, BC, DE
-gorilla_init_physics:: 
+gorilla_init_info:: 
 	ld a, ENEMY_START_ENTITY_ID
 	call man_entity_locate_v2
-	push hl
 	
 	;; Gorilla INFO 
-	ld b, GORILLA_SPRITES_SIZE 
+	ld b, GORILLA_NUM_ENTITIES
 	.info_loop:
 		ld a, BYTE_ACTIVE
 		ld [hl+], a 		; Active = 1
@@ -160,36 +110,11 @@ gorilla_init_physics::
 	    or FLAG_CAN_TAKE_DAMAGE | FLAG_CAN_DEAL_DAMAGE
 	    ld [hl+], a                     ; guarda el nuevo valor
 
-	   	ld a, GORILLA_NUM_SPRITES
+	   	ld a, GORILLA_NUM_ENTITIES
 	    ld [hl+], a 	; Número sprites
 
 	    dec b 
 	    jr nz, .info_loop 
-
-
-	pop hl 
-	push hl
-
-	ld b, GROUND_Y - 16	; Y = suelo menos altura del gorila (32 píxeles)
-	ld c, $50				
-	call change_entity_group_pos_32x32
-
-	;; ASIGNAR WIDTH Y HEIGHT
-	ld b, GORILLA_SPRITES_SIZE
-	pop hl
-	ld h, CMP_COLLISIONS_H
-	inc l
-	inc l
-	.loop:
-   	ld a, GORILLA_HEIGHT 
-	ld [hl+], a 
-
-	ld a, GORILLA_WIDTH 
-	ld [hl+], a
-	inc l
-	inc l
-	dec b 
-	jr nz, .loop
 	
 	ret
 

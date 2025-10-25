@@ -1,25 +1,11 @@
-INCLUDE "consts.inc"
+INCLUDE "gorilla_consts.inc"
 
-SECTION "Gorilla Movement Vars", WRAM0
-gorilla_on_ground_flag: DS 1 ; 1 = está en el suelo  0 = en el aire
+SECTION "Gorilla Variables", WRAM0 
+gorilla_on_ground_flag:: DS 1 ; 1 = está en el suelo  0 = en el aire
+gorilla_looking_dir::    DS 1  ; 0 = derecha, 1 = izquierda
+gorilla_state::          DS 1
+gorilla_state_counter::  DS 1
 
-;boss_flags:  Información;; Bit 0, 0=Derecha, 1=Izquierda (Flip)
-                   ;; Bit 1,2 00=INIT,, 10=MOVE, 11==TURN, 01=IDLE
-
-;; Constantes de máscara
-def MASK_DIRECTION equ %00000001
-def MASK_STATE equ %00001110
-def MASK_SHOT_COUNT equ %00110000
-
-DEF GORILLA_LEFT_LIMIT  equ 35     ; Límite izquierdo (posición X mínima)
-DEF GORILLA_RIGHT_LIMIT equ 128    ; Límite derecho (160 - 32 de ancho)
-def MASK_ANIM_FRAME equ %01000000
-
-; Estados del Gorila 
-def STATE_INIT_GORILLA equ 0
-def STATE_IDLE_GORILLA equ 2
-def STATE_MOVE_GORILLA equ 4  ; Este estado cubre el salto y el movimiento en el aire
-def STATE_TURN_GORILLA equ 6
 SECTION "Gorilla Movement Code", ROM0
 ;; En check_collision_ground se usa el gorilla_on_ground_flag en tener colisiones hay que eliminar eso
 ;;NOTAS: SNAKE_FLAGS Y SNAKE_COUNTER SE DEBEN DE INICIALIZAR EN BOSS.ASM PARA REUTILIZARLO PARA CADA BOSS
@@ -29,414 +15,146 @@ SECTION "Gorilla Movement Code", ROM0
 ; Máquina de estados principal del gorila.
 ; -----------------------
 sys_gorilla_movement::
-    ; --- 1. FÍSICA VERTICAL Y ATERRIZAJE ---
-    ld a, [snake_flags]
-    and MASK_STATE
-    cp STATE_INIT_GORILLA
-    jp z, .run_fsm ; Si estamos en INIT, saltamos la física
+    ld a, [gorilla_state]
 
-    ld a, [gorilla_on_ground_flag]
-    cp 1
-    jr z, .check_wall_collisions ; Si está en el suelo, saltar gravedad
+    cp GORILLA_STAND_0_STATE
+    jr z, .stand_0_state
 
-.in_air:
-    ; Está en el aire, aplicar gravedad
+    cp GORILLA_JUMP_0_STATE
+    jr z, .jump_0_state
+
+    cp GORILLA_STRIKE_STATE
+    jr z, .strike_state
+
+    cp GORILLA_STAND_0_STATE
+    jr z, .stand_0_state
+
+    cp GORILLA_JUMP_0_STATE
+    jr z, .jump_0_state
+
+    .stand_0_state:
+        call manage_stand_0_state
+        ret
+
+    .jump_0_state:
+        call manage_jump_0_state
+        ret
+
+    .strike_state:
+        call manage_strike_state
+        ret
+
+    .stand_1_state:
+        call manage_stand_1_state
+        ret
+
+    .jump_1_state:
+        call manage_jump_1_state
+
+    ret
+
+
+manage_stand_0_state:
+    ld a, [gorilla_state_counter]
+    dec a
+    ld [gorilla_state_counter], a
+    ret nz
+
+    ; Do jump
+    ld hl, gorilla_state
+    ld [hl], GORILLA_JUMP_0_STATE
+
     ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
-    ld bc, GORILLA_GRAVITY
-    ld d, GORILLA_SPRITES_SIZE
+    ld bc, JUMP_GRAVITY
+    ld d, GORILLA_NUM_ENTITIES
     call change_entity_group_acc_y
 
-    ; =================================================================
-    ; --- INICIO DE LA COMPROBACIÓN DE SUELO (EN LÍNEA) ---
-    ; =================================================================
-    ;
-    ; 1. Obtener la PosY del primer sprite de la FILA INFERIOR
-    ;    (El grupo empieza en ID 1, la fila inferior empieza en 1 + 4 = 5)
-    ld a, ENEMY_START_ENTITY_ID
-    add 4 ; Apuntar al 5º sprite (índice 4), que es el inicio de la fila inferior
-    call man_entity_locate_v2 ; HL = $C0xx + offset
-    ld h, CMP_SPRITES_H       ; HL = $C1xx + offset
-    ld a, [hl]                ; A = PosY del sprite (fila inferior)
-    
-    ; 2. Comparar con la posición del suelo
-    cp GROUND_Y
-    jr c, .no_ground_collision ; Si PosY < GROUND_Y, sigue en el aire
-
-    ; =================================================================
-    ; --- FIN DE LA COMPROBACIÓN DE SUELO (EN LÍNEA) ---
-    ; =================================================================
-
-    ; Si PosY >= GROUND_Y, ha aterrizado.
-.landed:
-    call change_gorilla_animation
-    ; ¡Acaba de aterrizar!
-    ld a, 1
-    ld [gorilla_on_ground_flag], a ; Marcar como "en el suelo"
-
-    ; Forzar la PosY a GROUND_Y para que no se hunda
     ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
-    ld b, GROUND_Y - 16 ; PosY de la fila SUPERIOR (asumiendo 16px de altura)
-    ld c, $00 ; No cambiar X
-    call change_entity_group_pos_y_32x32 ; <-- Función de 32x32
+    ld bc, JUMP_SPEED_Y
+    ld de, JUMP_SPEED_X
+    ld a, GORILLA_NUM_ENTITIES
+    call change_entity_group_vel
 
-    ; Parar todo el movimiento (X e Y)
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld bc, $0000 ; Vel Y = 0
-    ld de,$0000
-    ld a, GORILLA_SPRITES_SIZE
-    call change_entity_group_vel ; <-- CORRECCIÓN: Usar vel, no vel_x
-    
-    ; Parar también la aceleración
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld d, GORILLA_SPRITES_SIZE
-    call change_entity_group_acc_y
+    call swap_sprite_stand_jump
 
-    ; Forzar estado a "TURN"
-    ld a,[snake_flags]
-    and MASK_STATE
-    cp STATE_TURN_GORILLA
-    jp z,.run_fsm
-
-    ld a, [snake_flags]
-    and %11110001
-    or STATE_IDLE_GORILLA
-    ld [snake_flags], a
-    jp .run_fsm ; Saltar a la FSM (que ejecutará TURN)
-
-.no_ground_collision:
-    ; Aún está en el aire, comprobar colisiones con paredes
-    ; (cae a la siguiente sección)
-
-
-    ; --- 2. COLISIONES CON PAREDES (sólo en el aire) ---
-.check_wall_collisions:
-    ld a, [gorilla_on_ground_flag]
-    cp 1
-    jp z, .run_fsm ; Si está en el suelo, no choca con paredes (está en IDLE o TURN)
-    
-    ; Comprobar posición X de la entidad principal
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld h, CMP_SPRITES_H
-    inc hl
-    ld a, [hl] ; OAM_X
-
-    ; Determinar qué borde comprobar
-    ld hl, snake_flags
-    bit 0, [hl]
-    jr nz, .check_left_border
-
-.check_right_border:
-    cp GORILLA_RIGHT_LIMIT
-    jr c, .run_fsm ; No hay colisión
-    jp .hit_wall
-.check_left_border:
-    cp GORILLA_LEFT_LIMIT
-    jr nc, .run_fsm ; No hay colisión
-
-.hit_wall:
-    ; Chocó con una pared en el aire. Parar movimiento X.
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld bc, $0000
-    ld d, GORILLA_SPRITES_SIZE
-    call change_entity_group_vel_x
-
-    ; No cambiamos de estado, dejamos que aterrice.
-    ; La lógica de .landed se encargará de ir a TURN.
-    ld a, [snake_flags]
-    and %11110001
-    or STATE_TURN_GORILLA
-    ld [snake_flags], a
-
-
-    ; --- 3. MÁQUINA DE ESTADOS (FSM) ---
-.run_fsm:
-    ld a, [snake_flags]
-    and MASK_STATE
-    cp STATE_INIT_GORILLA
-    jr z, .init_state
-    cp STATE_IDLE_GORILLA
-    jr z, .idle_state
-    cp STATE_MOVE_GORILLA
-    jr z, .move_state
-    cp STATE_TURN_GORILLA
-    jr z, .turn_state
-    ret
-
-.init_state:
-    xor a
-    ld [snake_counter], a
-    ld a, 1
-    ld [gorilla_on_ground_flag], a ; Empezar en el suelo
-
-    ; Inicializar: empezar mirando a la derecha (sin flip), ir a IDLE
-    ld a, [snake_flags]
-    and %11110000      ; Limpiar dirección y estado
-    or STATE_IDLE_GORILLA ; Empezar en IDLE (Cambiado de MOVE)
-    ld [snake_flags], a
-    
-    ret
-
-.idle_state:
-    ; No hacer nada si está en el aire (esperar a aterrizar)
-    ld a, [gorilla_on_ground_flag]
-    cp 0
-    ret z
-    ; Está en el suelo, correr temporizador
-    ld a, [snake_counter]
-    add %00000100 ; Aumentar contador (ajusta esta velocidad si espera mucho/poco)
-    jr c, .fin_idle
-    ld [snake_counter], a
-    ret
-.fin_idle:
-    ; Se acabó el tiempo de espera, ir a MOVE (saltar)
-    xor a
-    ld [snake_counter], a
-    ld a, [snake_flags]
-    and %11110001
-    or STATE_MOVE_GORILLA
-    ld [snake_flags], a
-    ret
-
-.move_state:
-    ; Este estado es el "INICIO DEL SALTO"
-    ; Si ya está en el aire, la física de arriba se encarga.
-    ld a, [gorilla_on_ground_flag]
-    cp 0
-    ret z ; Ya está en el aire, no hacer nada
-
-    ; Está en el suelo y en estado MOVE, ¡ASÍ QUE SALTA!
-    ld a, 0
-    ld [gorilla_on_ground_flag], a ; Marcar como "en el aire"
-    ; Aplicar velocidad Y (salto) y velocidad X (dirección)
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    
-    ld bc, GORILLA_JUMP_SPEED ; Velocidad Y (negativa)
-
-    
-    ; Comprobar dirección para velocidad X
-    ld a, [snake_flags]
-    bit 0, a
-    jr nz, .jump_left
-
-.jump_right:
-    ld de, GORILLA_SPEED
-    jr .apply_jump
-.jump_left:
-    ld de, GORILLA_SPEED_NEGATIVE
-    
-.apply_jump:
-    ld a, GORILLA_SPRITES_SIZE  ; 
-    call change_entity_group_vel ; Aplica Vel-Y (bc) y Vel-X (de)
-    call change_gorilla_animation
     ret
 
 
-.turn_state:
-    ; No girar si está en el aire (esperar a aterrizar)
-    ld a, [gorilla_on_ground_flag]
-    cp 0
-    ret z
+manage_jump_0_state:
+    call check_ground
+    ret c
 
-    ;; Fila 1 
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld d, h
-    ld e, l
-    
-    ld a, ENEMY_START_ENTITY_ID + 3
-    call man_entity_locate_v2
+    call reset_vel
+    call reset_gravity
 
-    call swap_2_entities_positions 
+    ld hl, gorilla_state
+    ld [hl], GORILLA_STAND_0_STATE
 
-    ld a, ENEMY_START_ENTITY_ID + 1
-    call man_entity_locate_v2
-    ld d, h
-    ld e, l
+    ld hl, gorilla_state_counter
+    ld [hl], STAND_TIME
 
+    call swap_sprite_stand_jump
+
+    ret
+
+manage_strike_state:
+    ret
+
+manage_stand_1_state:
+    ret
+
+manage_jump_1_state:
+    ret
+
+; ====== UTILS ========
+check_ground:
     ld a, ENEMY_START_ENTITY_ID + 2
     call man_entity_locate_v2
+    inc h
+    ld a, [hl]
+    cp GROUND_Y
+    ret
 
-    call swap_2_entities_positions
-
-
-    ;; Fila 2
-    ld a, ENEMY_START_ENTITY_ID + 4
+reset_vel:
+    ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
-    ld d, h
-    ld e, l
-    
-    ld a, ENEMY_START_ENTITY_ID + 7
+    ld bc, 0
+    ld de, 0
+    ld a, GORILLA_NUM_ENTITIES
+    call change_entity_group_vel
+    ret
+
+reset_gravity:
+    ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
-
-    call swap_2_entities_positions 
-
-    ld a, ENEMY_START_ENTITY_ID + 5
-    call man_entity_locate_v2
-    ld d, h
-    ld e, l
-
-    ld a, ENEMY_START_ENTITY_ID + 6
-    call man_entity_locate_v2
-    
-    call swap_2_entities_positions
+    ld bc, 0
+    ld de, 0
+    ld a, GORILLA_NUM_ENTITIES
+    call change_entity_group_acc_y
+    ret
 
 
+; ======= ANIMATIONS =========
+swap_sprite_stand_jump:
+    ld c, GORILLA_NUM_ENTITIES
+    ld de, CMP_SIZE
 
-.flip_gorilla:
     ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
     inc h
     inc l
     inc l
-    inc l
-    ld c, GORILLA_SPRITES_SIZE
-    bit SPRITE_ATTR_FLIP_X_BIT, [hl]
-    jr z, .set_flip_x
-    .reset_flip_x:
-        ld a, 0
-        jr .loop
-    .set_flip_x:
-        ld a, 1
-    
     .loop:
-        or a
-        jr nz, .set
-        .reset:
-            res SPRITE_ATTR_FLIP_X_BIT, [hl]
-            jr .next_entity
-        .set:
-            set SPRITE_ATTR_FLIP_X_BIT, [hl]
+        ld a, [hl]
+        xor MASK_SPRITE_STAND_JUMP
+        ld [hl], a
 
-        .next_entity:
-        ld de, CMP_SIZE
         add hl, de
-
         dec c
         jr nz, .loop
 
-.finish_turn:
-    ; Invertir el bit de dirección
-    ld a, [snake_flags]
-    xor MASK_DIRECTION
-
-    ; Cambiar estado a IDLE
-    and %11110001
-    or STATE_IDLE_GORILLA
-    ld [snake_flags], a
-    ret
-
-; ==========================================================
-; change_gorilla_animation
-; Handles TIMER and TOGGLING the animation frame (Bit 6).
-; Calls update_gorilla_animation_tiles to display the correct frame.
-; MODIFICA: AF, HL
-; ==========================================================
-change_gorilla_animation::
-    
-    ; --- Toggle Frame Logic (using Bit 6) ---
-    ld hl, snake_flags
-    ld a, [hl]
-    xor MASK_ANIM_FRAME        ; Toggle Bit 6
-    ld [hl], a                 ; Save the toggled flag back
-
-    ; --- Now update the tiles based on the new flag ---
-    jp update_gorilla_animation_tiles
-
-; ==========================================================
-; update_gorilla_animation_tiles
-; Reads snake_flags Bit 6 and sets ALL 8 gorilla sprite tiles accordingly.
-; MODIFICA: AF, BC, DE, HL
-; ==========================================================
-update_gorilla_animation_tiles::
-    ; Get base address for Sprite 0's Tile ID
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld h, CMP_SPRITES_H
-    inc l                         ; Skip Y
-    inc l                         ; Point to Tile ID
-
-    
-
-    push hl                       ; Save pointer to Tile ID destination
-    ld hl, snake_flags
-    ld a, [hl]                    ; Load flags
-    pop hl                        ; Restore pointer to Tile ID destination
-    bit 6, a                      ; Check Bit 6 (MASK_ANIM_FRAME)
-    ld bc,CMP_SIZE
-    jr z, .set_frame_A_tiles      ; If Bit 6 is 0, show Frame A (Idle/Base)
-
-.set_frame_B_tiles:
-    ld a, ENEMY_START_TILE_ID + $10
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+2+$10
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+8+$10
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+$0A+$10
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+4+$10
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+6+$10
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+$0C+$10
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+$0E+$10
-    ld [hl],a
-    ret
-
-.set_frame_A_tiles:
-    ld a, ENEMY_START_TILE_ID
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+2
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+8
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+$0A
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+4
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+6
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+$0C
-    ld [hl],a
-    add hl,bc
-
-    ld a, ENEMY_START_TILE_ID+$0E
-    ld [hl],a
-    
     ret
 
 
