@@ -1,4 +1,4 @@
-INCLUDE "gorilla_consts.inc"
+INCLUDE "gorilla/gorilla_consts.inc"
 
 SECTION "Gorilla Variables", WRAM0 
 gorilla_looking_dir::    DS 1  ; 0 = derecha, 1 = izquierda

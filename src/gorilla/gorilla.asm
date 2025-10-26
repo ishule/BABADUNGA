@@ -1,4 +1,4 @@
-INCLUDE "gorilla_consts.inc"
+INCLUDE "gorilla/gorilla_consts.inc"
 
 SECTION "Gorilla Initialization", ROM0
 
