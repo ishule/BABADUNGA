@@ -66,9 +66,6 @@ man_entity_init::
 	; Inicializa contadores de entidades a 0
 	ld [next_free_entity], a 
 	ld [num_entities_alive], a 
-	;Inicializa flags bosses
-	ld a,%00100000
-	ld [snake_flags],a
 	ret 
 
 ;;	RETURN:
