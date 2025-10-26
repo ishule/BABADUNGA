@@ -218,8 +218,30 @@ init_gorilla::
 	ld hl, scenario_stalactites_spawn_definition
 	ld c, NUMBER_OF_SCENARIO_STALACTITES
 	call spawn_group_entity
+	call init_stalactite_flags
 
 	ret
+
+
+init_stalactite_flags:
+	ld a, STALACTITES_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld c, NUMBER_OF_SCENARIO_STALACTITES
+
+	.loop:
+	ld [hl], 0;BYTE_ACTIVE
+	inc l
+	ld [hl], TYPE_BULLET
+	inc l
+	ld [hl], FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT
+	inc l
+	inc l
+
+	dec c
+	jr nz, .loop
+
+	ret
+
 
 ;;============================================================
 ;; init_gorilla_tiles
