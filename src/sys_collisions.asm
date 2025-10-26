@@ -164,12 +164,16 @@ sys_collision_check_AABB::
 	;; E1.PosY y E1.Height -> I1 
 	inc h 		; h = $C1
 	ld a, [hl] 	; A = E1.PosY
-	ld [I1 + I_POS], a 
+    ld b, a
 
 	inc h 		; h = $C2
 	inc h 
 	inc h
 	inc h 		; h = $C5
+    ld a, [hl]  ; HL = Offset_Y
+    add b       ; A = PosY + OffsetY
+    ld [I1 + I_POS], a 
+
 	inc l 
 	inc l 		; hl -> $C502
 	ld a, [hl] 	; A = E1.Height 
@@ -181,12 +185,16 @@ sys_collision_check_AABB::
 
 	inc h 		; h = $C1
 	ld a, [hl] 	; A = E2.PosY
-	ld [I2 + I_POS], a 
+	ld b, a 
 
 	inc h
 	inc h 
 	inc h
 	inc h 		; h = $C5
+    ld a, [hl]  ; HL = Offset_Y
+    add b       ; A = PosY + OffsetY
+    ld [I2 + I_POS], a 
+
 	inc l
 	inc l 		; hl -> $C502
 	ld a, [hl] 	; A = E2.Height 
@@ -209,12 +217,16 @@ sys_collision_check_AABB::
 	inc h 		; h = $C1
 	inc l
 	ld a, [hl] 	; A = E1.PosX
-	ld [I1 + I_POS], a 
+	ld b, a 
 
 	inc h
 	inc h 
 	inc h
 	inc h 		; h = $C5
+    ld a, [hl]  ; HL = Offset_X
+    add b       ; A = PosX + OffsetX
+    ld [I1 + I_POS], a 
+
 	inc l 
 	inc l 		; hl = $C503
 	ld a, [hl] 	; A = E1.Width
@@ -227,12 +239,16 @@ sys_collision_check_AABB::
 	inc h 		; h = $C1
 	inc l
 	ld a, [hl] 	; A = E2.PosX
-	ld [I2 + I_POS], a 
+	ld b, a 
 
 	inc h
 	inc h 
 	inc h
 	inc h 		; h = $C5
+    ld a, [hl]  ; HL = Offset_X
+    add b       ; A = PosX + OffsetX
+    ld [I2 + I_POS], a 
+
 	inc l 
 	inc l 		; hl = $C503
 	ld a, [hl] 	; A = E2.Width

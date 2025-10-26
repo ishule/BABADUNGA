@@ -788,7 +788,7 @@ player_set_stand_sprite::
 ;; MODIFICA: A, HL
 player_set_lookup_sprite::
     ld hl, component_sprite + SPRITE_OFFSET_TILE
-    ld [hl], $14  ; Tile de Player_lookup ; MAGIC
+    ld [hl], $18  ; Tile de Player_lookup ; MAGIC
     ;ld a, 01 ; MAGIC
     ;ld [player_stand_or_walk], a
     ret
