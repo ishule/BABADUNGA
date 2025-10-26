@@ -101,7 +101,7 @@ main::
    ;; b = boss size
    ;;al borrar la verja se borra todo, y bueno al borrar el boss también xd
    boss_is_dead::
-
+   ret
       ld a,[boss_health]
       cp 0
       ret nz
@@ -110,15 +110,12 @@ main::
       ;;Buscamos entidad del boss y la borramos
       jp .deleteVerja
       ld a,ENEMY_START_ENTITY_ID
-      .deleteBoss:
-         push af
-         push bc
-         ;call man_entity_delete
-         pop bc
-         pop af
-         dec b
-         inc a
-         jr nz,.deleteBoss
+      ;.deleteBoss: MOVEMOS AL BOSS Y LO DESACTIVAMOS ( LO MOVEMOS EN EL EJE Y )
+      ;   push bc
+      ;   call man_entity_delete
+      ;   pop bc
+      ;   dec b
+      ;   jr nz,.deleteBoss
       .deleteVerja:
       ld a,TYPE_VERJA
       call man_entity_locate_first_type

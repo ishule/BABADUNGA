@@ -2,7 +2,7 @@ SECTION "Tutorial Screen",ROM0
 include "consts.inc"
 
 load_tutorial_screen::
-   ld a,2
+   ld a,40
    ld [player_health],a
    call turn_screen_off
    call clean_all_tiles
