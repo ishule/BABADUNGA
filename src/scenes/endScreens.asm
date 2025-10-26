@@ -2,8 +2,6 @@ SECTION "End Screens",ROM0
 include "consts.inc"
 load_defeat_screen::
 	
-   ld hl,rBGP
-   ld [hl],%11100001
    	call turn_screen_off
 
    	call clean_all_tiles
@@ -13,6 +11,9 @@ load_defeat_screen::
 	
 	call init_defeat_screen
 	call joypad_init
+	
+   ld hl,rBGP
+   ld [hl],%11100001
 	call turn_screen_on
 	.loop:
 		;ld b,3

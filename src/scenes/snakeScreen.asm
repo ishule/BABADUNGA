@@ -27,7 +27,7 @@ load_snake_screen::
    call joypad_init
    call init_bullets
 
-
+   call draw_hearts
    call init_snake_stats
    .game_loop:
       call wait_vblank

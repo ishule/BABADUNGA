@@ -26,7 +26,7 @@ load_tutorial_screen::
    call joypad_init
 
    call init_bullets
-
+   call draw_hearts
    call open_door
 
    .game_loop:

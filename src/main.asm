@@ -97,13 +97,13 @@ main::
 
 
    init_player_stats::
-      ld a,40
+      ld a,2
       ld [player_health],a
       ret
    init_snake_stats::
       xor a
       ld [boss_player_dead],a
-      ld a,2
+      ld a,1
       ld [boss_health],a
       ret
    ;; b = boss size (de momento nada)
@@ -123,6 +123,11 @@ main::
       ld de,_deactivate_and_move_boss_callback
       call man_entity_foreach_type
 
+      ld c,14
+      .waitLoop
+      call wait_time_vblank_24
+      dec c
+      jr z,.waitLoop
 
       ;Quitar verja derecha
       call open_door 

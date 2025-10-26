@@ -72,15 +72,72 @@ player_dies_animation::
     ld [rOBP0], a       ; Object palette 0 (opcional, si quieres sprites negros también)
     ld [rOBP1], a       ; Object palette 1 (opcional)
     
+    
     call sys_sound_player_dies
     ; Congelar el juego durante unos segundos (por ejemplo, 3 segundos)
     ; A 60 FPS, 3 segundos = 180 frames
-    ld b, 180           ; Ajusta este valor: 60 frames = 1 segundo
+    ld c, 20           ; Ajusta este valor: 60 frames = 1 segundo
 
 .freeze_loop:
-    call wait_vblank
-    dec b
+
+    call wait_time_vblank_24
+    dec c
     jr nz, .freeze_loop
     
-    
     ret
+
+
+
+;; Abre la puerta DERECHA con animación ascendente (CORREGIDO)
+open_door::
+    ; 1. Find the first gate entity
+    ld a, TYPE_VERJA
+    call man_entity_locate_first_type
+    ret c ; Exit if no gate found (Carry set)
+
+    ; 2. Calculate the ID of the first gate sprite
+    ld a, l ; Get the offset L
+    srl a   ; A = L / 2
+    srl a   ; A = L / 4 = ID of the first (left) gate sprite
+
+    ; 3. Calculate the ID of the second (right) gate sprite
+    inc a   ; A = ID_Left + 1 = ID_Right
+    push af ; Save the ID of the right gate for later deactivation
+
+    ; 4. Locate the second gate entity's SPRITE component
+    call man_entity_locate_v2 ; HL = Address of right gate's Info ($C0xx + L')
+    inc h                     ; HL = Address of right gate's Sprite ($C1xx + L')
+    ld d, h                   ; Store Sprite component address in DE
+    ld e, l                   ; DE now points to the Y coordinate byte
+
+    ; --- 5. Animation Loop: Move Up 16 Pixels (1 pixel per frame) ---
+    ld c, 16                  ; C = Number of pixels to move up
+.anim_loop:
+    ; *** CORRECCIÓN: Esperar UN VBLANK por cada píxel ***
+    call wait_time_vblank_12
+    ; Read current Y, decrement, write back
+    ld a, [de]                ; Read current Y from Sprite Component
+    dec a                     ; Move up 1 pixel
+    ld [de], a                ; Write new Y back
+
+    push bc
+    call man_entity_draw
+    pop bc
+    ; *** DIBUJAR INMEDIATAMENTE PARA VER EL CAMBIO (Opcional pero recomendado) ***
+    ; Si tu man_entity_draw es rápido, puedes llamarlo aquí para actualizar OAM
+    ; Si no, el cambio se verá en el siguiente wait_vblank del bucle principal
+    ; call man_entity_draw ; (Opcional)
+    call sys_sound_door_opening_scrape
+    dec c
+    jr nz, .anim_loop         ; Loop until moved 16 pixels
+
+    ; --- 6. Deactivate the entity AFTER animation ---
+    pop af                    ; Restore the ID of the right gate into A
+    call man_entity_locate_v2 ; HL = Address of right gate's Info ($C0xx + L')
+    xor a                     ; A = 0 (Inactive value)
+    ld [hl], a                ; Set ACTIVE flag to 0
+    call sys_sound_door_opened_clink
+    ret
+
+shake_screen::
+

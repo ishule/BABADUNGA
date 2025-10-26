@@ -172,56 +172,54 @@ sys_sound_spit_effect::
     ret
 
 sys_sound_player_dies::
-    ; Muerte del jugador: Grito dramático descendente largo
-    ; Canal 1: Grito principal
-    ld a, %01110111   ; Sweep descendente pronunciado
-    ld [NR10], a
-    ld a, %10111111   ; Duty 50%, longitud larga
-    ld [NR11], a
-    ld a, %11110010   ; Volumen inicial 15, decay
-    ld [NR12], a
-    ld a, $00         ; Frecuencia baja
-    ld [NR13], a
-    ld a, %10000111   ; Trigger + tono muy agudo (grito)
-    ld [NR14], a
-    
-    ; Canal 2: Armonía baja para dar cuerpo
-    ld a, %10011111   ; Duty 50%, longitud larga
-    ld [NR21], a
-    ld a, %11010011   ; Volumen 13, decay
-    ld [NR22], a
-    ld a, $80         ; Frecuencia más baja que canal 1
-    ld [NR23], a
-    ld a, %10000100   ; Trigger + tono medio
-    ld [NR24], a
-    
-    ; Canal 4: Textura dramática
-    ld a, %00111111   ; Longitud media-larga
-    ld [NR41], a
-    ld a, %10110010   ; Volumen 11, decay
-    ld [NR42], a
-    ld a, %01010011   ; Ruido medio
-    ld [NR43], a
-    ld a, %10000000   ; Trigger
-    ld [NR44], a
-    
-    ; Esperar para que el sonido se complete
-    ld b, 60          ; ~1 segundo
-.wait:
-    call wait_vblank
-    dec b
-    jr nz, .wait
-    
-    ; Silenciar canales
-    xor a
-    ld [NR12], a
-    ld [NR22], a
-    ld a, %10000000
-    ld [NR14], a
-    ld [NR24], a
-    
-    ret 
+    ; Muerte del jugador: Tono grave, largo y sostenido
 
+    ; --- Canal 1: Tono Grave 1 (e.g., C3) ---
+    ld a, %00000000      ; NR10: No sweep
+    ld [NR10], a
+    ld a, %10000000      ; NR11: Duty 50%, Length DISABLED (plays indefinitely until stopped)
+    ld [NR11], a
+    ld a, %11110000      ; NR12: Volume MAX (15), No Decay (sustained)
+    ld [NR12], a
+    ld a, $D4            ; NR13: Frequency LSB for C3
+    ld [NR13], a
+    ld a, %10000001      ; NR14: Trigger=1, Length Disable=0, Freq MSB=$01 (Completes C3)
+    ld [NR14], a
+
+    ; --- Canal 2: Tono Grave 2 (e.g., C#3 - slight dissonance) ---
+    ld a, %10000000      ; NR21: Duty 50%, Length DISABLED
+    ld [NR21], a
+    ld a, %11110000      ; NR22: Volume MAX (15), No Decay
+    ld [NR22], a
+    ld a, $63            ; NR23: Frequency LSB for C#3
+    ld [NR23], a
+    ld a, %10000010      ; NR24: Trigger=1, Length Disable=0, Freq MSB=$02 (Completes C#3)
+    ld [NR24], a
+
+    ; --- Canal 4: Ruido Grave (Rumble) ---
+    ld a, %00111111      ; NR41: Max Length (~0.25s with length enabled)
+    ld [NR41], a
+    ld a, %11110011      ; NR42: Volume MAX (15), Slow Decay (step=3)
+    ld [NR42], a
+    ld a, %01110111      ; NR43: Clock Shift=7, 7-bit Noise, Divisor=7 (Low rumble)
+    ld [NR43], a
+    ld a, %11000000      ; NR44: Trigger + Length Enable=1 (sound stops after NR41 duration)
+    ld [NR44], a
+
+    ; --- Wait for the sound duration ---
+    ld c, 14             ; Duration in frames (~1.5 seconds at 60fps)
+.wait:
+    call wait_time_vblank_24
+    dec c
+    jr nz, .wait
+
+    ; --- Explicitly Stop Channels 1 & 2 (by setting volume to 0) ---
+    xor a                ; A = 0
+    ld [NR12], a         ; Set Channel 1 Volume Envelope to 0
+    ld [NR22], a         ; Set Channel 2 Volume Envelope to 0
+    ; Channel 4 stops automatically due to length or decay
+
+    ret
 ; =============================================
 ; sys_sound_door_opening_scrape
 ; Plays a very short scraping noise. Call repeatedly during animation.
@@ -256,6 +254,23 @@ sys_sound_door_opened_clink::
     ld [NR13], a
     ld a, %11000111  ; NR14: Trigger + Length Enable + Frequency HIGH ($07)
     ld [NR14], a
+    ret
+
+; =============================================
+; sys_sound_earthquake_rumble
+; Plays a low-frequency rumbling noise.
+; Uses Channel 4.
+; MODIFIES: A
+; =============================================
+sys_sound_earthquake_rumble::
+    ld a, %00111111      ; NR41: Long Length (Max duration with length enabled)
+    ld [NR41], a
+    ld a, %11110011      ; NR42: Volume MAX (15), Slow Decay (step=3) - makes it rumble longer
+    ld [NR42], a
+    ld a, %10000111      ; NR43: Clock Shift=8, 7-bit Noise, Divisor=7 (Very low frequency rumble)
+    ld [NR43], a
+    ld a, %11000000      ; NR44: Trigger + Length Enable=1 (sound stops after NR41 duration)
+    ld [NR44], a
     ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inicializa el sistema de música (Tu versión)

@@ -26,7 +26,8 @@ load_spider_screen::
    call joypad_init
 
    call init_bullets
-
+   call draw_hearts
+   
    .game_loop:
       call wait_vblank
       call man_entity_draw
