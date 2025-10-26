@@ -276,6 +276,7 @@ sys_collision_check_player_vs_boss::
     ld a,[player_health]
     dec a
     ld [player_health],a
+    call sys_sound_player_gets_hit_effect
     ; TODO: decrementar HP
     ; TODO: comprobar si HP = 0
     
@@ -335,8 +336,18 @@ sys_collision_check_bullet_vs_boss::
     
     ; 1. Quitar vida al boss
     ld a,[boss_health]
-    dec a
+    ld b,1 ;; PONER DAÑO DE BALA
+    cp b
+    jr c,.set_health_zero
+    sub b
+    jr .quitar_vida
+    .set_health_zero
+    xor a
+
+    .quitar_vida
     ld [boss_health],a
+    call sys_sound_hit_effect
+
     ; TODO: decrementar boss HP
     
     ; 2. Desactivar flag del boss

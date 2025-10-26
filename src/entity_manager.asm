@@ -172,7 +172,7 @@ man_entity_delete::
 	ld a, [next_free_entity]
 	sub c; CMP_SIZE
 	ld [next_free_entity], a
-	jr .exit
+	;jr .exit
 	ret
 
 	.is_last_entity:

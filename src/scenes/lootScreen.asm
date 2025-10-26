@@ -214,19 +214,14 @@ player_pickup::
     ; Fall through to delete
 
 .delete_collided_pickup:
-   ld a,3
+   ld a,4
    call man_entity_delete
 
-   ld a,3
+   ld a,4
    call man_entity_delete
-   ld a,3
+   ld a,4
    call man_entity_delete
-   ld a,3
-   call man_entity_delete
-
-   ld a,3
-   call man_entity_delete
-
+   call open_door
    ld a,[lootFlag]
    set 0,a
    ld [lootFlag],a

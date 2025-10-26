@@ -1,9 +1,9 @@
 include "consts.inc"
 
 SECTION "Game Stats",WRAM0
-player_health: ds 1 ;; Bit 7 = Muerto
-
-boss_health: ds 1 ;; Bit 7 = Muerto
+player_health: ds 1 
+boss_player_dead: ds 1 ; Bit 0 a 1 boss muerto, bit 1 a 1 player muerto
+boss_health: ds 1 
 player_dmg: ds 1
 
 SECTION "DmgHealthManager",ROM0

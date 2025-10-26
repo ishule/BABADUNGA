@@ -27,7 +27,6 @@ load_spider_screen::
 
    call init_bullets
 
-
    .game_loop:
       call wait_vblank
       call man_entity_draw

@@ -28,6 +28,7 @@ load_snake_screen::
    call init_bullets
 
 
+   call init_snake_stats
    .game_loop:
       call wait_vblank
       call man_entity_draw

@@ -20,6 +20,25 @@ wait_vblank::
 	jr nz,.loop
 	ret
 
+wait_not_vblank::
+    ld hl, rLY          ; HL = Address of LY register ($FF44)
+    ld a, VBLANK_START  ; A = VBLANK start line (usually 144 / $90)
+.loop:
+    cp [hl]             ; Compare A with the value at [HL]
+    jr z, .loop         ; If equal (still in VBLANK range start), keep checking
+    ret                 ; Return when not equal (outside VBLANK range)
+
+; Waits for a specific number of VBLANK periods (frames)
+; In this case, waits for 4 VBLANKs.
+; MODIFIES: B
+wait_time_vblank::
+    ld b, 12             ; Initialize counter B to 4
+.wait_loop:
+    call wait_vblank    ; Wait for the start of one VBLANK period
+    dec b               ; Decrement counter
+    jr nz, .wait_loop   ; If counter is not zero, loop again
+    ret                 ; Return after 4 VBLANKs have passed
+
 
 ;; memcpy_256: Subrutina para copiar bytes a memoria(Ejemplo tiles a VRAM)
 ;; INPUT
@@ -155,34 +174,57 @@ memreset_256::
 	jr nz, memreset_256
 	ret
 
-;;Abre la puerta para avanzar al siguiente nivel
+;; Abre la puerta DERECHA con animación ascendente (CORREGIDO)
 open_door::
-     ld a,TYPE_VERJA
-     call man_entity_locate_first_type
-     ld a,l
-     srl a 
-     srl a ;; ID de Verja de la derecha
-     inc a ;; ID de Verja de la izquierda
-     call man_entity_delete
-	ret
-;; Función que hace que se inicialize el sonido para que se pueda escuchar básicamente
-init_sound::
-	ld hl,$FF10
-	ld b,20 ;; 20 Direcciones que hay que poner a 0
-	xor a
-	;; Se inicializa de $FF10 a $FF23
-	.loop:
-		ld [hl+],a
-		dec b
-		jr nz,.loop
-	;; Ahora los registros NR50 y NR51 si ponen a $FF. NR52 ponesmo el bit 7 a uno para producir audio
-	ld a,$FF
-	ld[hl+],a
-	ld[hl+],a
-	ld a,[hl]
-	or %10000000
-	ld [hl],a
-	ret
+    ; 1. Find the first gate entity
+    ld a, TYPE_VERJA
+    call man_entity_locate_first_type
+    ret c ; Exit if no gate found (Carry set)
+
+    ; 2. Calculate the ID of the first gate sprite
+    ld a, l ; Get the offset L
+    srl a   ; A = L / 2
+    srl a   ; A = L / 4 = ID of the first (left) gate sprite
+
+    ; 3. Calculate the ID of the second (right) gate sprite
+    inc a   ; A = ID_Left + 1 = ID_Right
+    push af ; Save the ID of the right gate for later deactivation
+
+    ; 4. Locate the second gate entity's SPRITE component
+    call man_entity_locate_v2 ; HL = Address of right gate's Info ($C0xx + L')
+    inc h                     ; HL = Address of right gate's Sprite ($C1xx + L')
+    ld d, h                   ; Store Sprite component address in DE
+    ld e, l                   ; DE now points to the Y coordinate byte
+
+    ; --- 5. Animation Loop: Move Up 16 Pixels (1 pixel per frame) ---
+    ld c, 16                  ; C = Number of pixels to move up
+.anim_loop:
+    ; *** CORRECCIÓN: Esperar UN VBLANK por cada píxel ***
+    call wait_time_vblank
+    ; Read current Y, decrement, write back
+    ld a, [de]                ; Read current Y from Sprite Component
+    dec a                     ; Move up 1 pixel
+    ld [de], a                ; Write new Y back
+
+    push bc
+    call man_entity_draw
+    pop bc
+    ; *** DIBUJAR INMEDIATAMENTE PARA VER EL CAMBIO (Opcional pero recomendado) ***
+    ; Si tu man_entity_draw es rápido, puedes llamarlo aquí para actualizar OAM
+    ; Si no, el cambio se verá en el siguiente wait_vblank del bucle principal
+    ; call man_entity_draw ; (Opcional)
+    call sys_sound_door_opening_scrape
+    dec c
+    jr nz, .anim_loop         ; Loop until moved 16 pixels
+
+    ; --- 6. Deactivate the entity AFTER animation ---
+    pop af                    ; Restore the ID of the right gate into A
+    call man_entity_locate_v2 ; HL = Address of right gate's Info ($C0xx + L')
+    xor a                     ; A = 0 (Inactive value)
+    ld [hl], a                ; Set ACTIVE flag to 0
+    call sys_sound_door_opened_clink
+    ret
+
 
 ; INPUT
 ;  BC -> positive number

@@ -26,8 +26,6 @@ load_gorilla_screen::
    call joypad_init
 
    call init_bullets
-   ld a,2
-   ld [boss_health],a
    .game_loop:
       call wait_vblank
       call man_entity_draw

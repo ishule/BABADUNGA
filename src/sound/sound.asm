@@ -132,6 +132,20 @@ sys_sound_hit_effect::
     ld [NR44], a
     ret
 
+sys_sound_player_gets_hit_effect::
+    ; "Oof" sound - Short, downward pitch sweep with decay
+    ld a, %00101100  ; NR10: Sweep Time=2, Direction=Decrease(1), Shift=4 (Fast pitch drop)
+    ld [NR10], a
+    ld a, %10001010  ; NR11: Duty 50%, Length=10 (Short duration)
+    ld [NR11], a
+    ld a, %11110010  ; NR12: Volume MAX (15), Fast Decay (step=2)
+    ld [NR12], a
+    ld a, $EC        ; NR13: Frequency LSB (Part of the starting pitch - approx G5)
+    ld [NR13], a
+    ld a, %11000101  ; NR14: Trigger=1, Length Enable=1, Freq MSB=$05 (Completes G5 pitch)
+    ld [NR14], a
+    ret
+
 sys_sound_spit_effect::
     ; Escupitajo: "Ptui!" húmedo y rápido
     ; Canal 1: Tono descendente rápido
@@ -207,6 +221,42 @@ sys_sound_player_dies::
     ld [NR24], a
     
     ret 
+
+; =============================================
+; sys_sound_door_opening_scrape
+; Plays a very short scraping noise. Call repeatedly during animation.
+; Uses Channel 4.
+; MODIFIES: A
+; =============================================
+sys_sound_door_opening_scrape::
+    ld a, %00000010  ; NR41: Length VERY short (2)
+    ld [NR41], a
+    ld a, %10100010  ; NR42: Volume=10, Decay fast (step=2)
+    ld [NR42], a
+    ld a, %01010100  ; NR43: Clock Shift=5, 7-bit Noise, Divisor=4 (Mid-frequency scrape)
+    ld [NR43], a
+    ld a, %11000000  ; NR44: Trigger + Length Enable
+    ld [NR44], a
+    ret
+
+; =============================================
+; sys_sound_door_opened_clink
+; Plays a short, clear "clink" sound. Call once when animation finishes.
+; Uses Channel 1.
+; MODIFIES: A
+; =============================================
+sys_sound_door_opened_clink::
+    ld a, %00000000  ; NR10: No Sweep
+    ld [NR10], a
+    ld a, %10001000  ; NR11: Duty 50%, Length=8 (short)
+    ld [NR11], a
+    ld a, %11100000  ; NR12: Volume=14, No Decay
+    ld [NR12], a
+    ld a, $00        ; NR13: Frequency LSB
+    ld [NR13], a
+    ld a, %11000111  ; NR14: Trigger + Length Enable + Frequency HIGH ($07)
+    ld [NR14], a
+    ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inicializa el sistema de música (Tu versión)
 ;; ENTRADA: 
