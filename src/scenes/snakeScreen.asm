@@ -25,7 +25,6 @@ load_snake_screen::
    call init_verja
    call init_invincibility
    call joypad_init
-
    call init_bullets
 
 
@@ -46,8 +45,11 @@ load_snake_screen::
       call check_player_shot
       ;call sys_blink_update
       call draw_hearts
-      ;call sys_collision_check_all
+
+      call sys_collision_check_all
       call check_screen_transition
       jp c,.game_loop
+
+      call player_is_dead
     .end
     ret

@@ -273,6 +273,9 @@ sys_collision_check_player_vs_boss::
     ld d , h 
     ld e, l
     ; 1. Quitar vida al jugador
+    ld a,[player_health]
+    dec a
+    ld [player_health],a
     ; TODO: decrementar HP
     ; TODO: comprobar si HP = 0
     

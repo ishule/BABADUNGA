@@ -80,10 +80,13 @@ main::
       call load_title_screen
       call load_tutorial_screen
       call load_gorilla_screen
+      jr c,.defeat
       call load_loot_screen
       call load_snake_screen
+      jr c,.defeat
       call load_loot_screen
       call load_spider_screen
+      jr c,.defeat
       .victory
       call load_win_screen
       jp .end
@@ -127,6 +130,11 @@ main::
       ret
 
    player_is_dead::
+      ld a,[player_health]
+      cp 0
+      ret nz
+      call player_dies_animation
+      scf
       ret
 
       ;;Borramos verja
@@ -149,6 +157,9 @@ main::
     jp .end_screen      ; Jump out of the game loop
 
    .no_transition:
+      ld a,[player_health]
+      cp 0
+      jr z,.die_player
       scf
       ret                         ; Continue game loop
 
@@ -164,3 +175,6 @@ main::
     ; Ahora sí, señalizar que se debe cambiar de pantalla
     or a                        ; Limpiar carry (salir del game loop)
     ret
+.die_player
+   or a
+   ret

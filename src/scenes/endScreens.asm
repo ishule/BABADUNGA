@@ -2,6 +2,8 @@ SECTION "End Screens",ROM0
 include "consts.inc"
 load_defeat_screen::
 	
+   ld hl,rBGP
+   ld [hl],%11100001
    	call turn_screen_off
 
    	call clean_all_tiles
