@@ -269,25 +269,49 @@ sys_collision_check_player_vs_boss::
     ret z               ; Si bit = 0, saltar
 
     dec l 
-    dec l
-	push hl
+    dec l 
+	ld d, h 
+    ld e, l     ; Player en de
+    push de
 
 	ld a, TYPE_BOSS
 	call man_entity_locate_first_type 	; Boss en HL
 
-	ld d, h 
-	ld e, l 
-	pop hl
-    push hl
+    pop de      ; DE = Player
 
-	call sys_collision_check_AABB
-    pop hl
-	ret c 
+    .loop_boss:
+        push hl
+        push de
 
+        inc l 
+        ld a, [hl]
+        cp TYPE_BOSS
+        jr nz, .no_collision_detected
 
+        dec l
+
+    	call sys_collision_check_AABB
+        pop de
+        pop hl
+
+    	jr nc, .collision_detected
+
+        inc l 
+        inc l 
+        inc l 
+        inc l   ; Pasamos a la siguiente entidad
+        jr .loop_boss
+
+    .no_collision_detected:
+        dec l
+        pop hl
+        pop de
+        ret 
+
+    .collision_detected:
     ; ===== AQUÍ HAY COLISIÓN Y PUEDE RECIBIR DAÑO =====
-    ld d , h 
-    ld e, l
+    ld h , d
+    ld l, e
     ; 1. Quitar vida al jugador
     ld a,[player_health]
     dec a
@@ -321,78 +345,118 @@ sys_collision_check_bullet_vs_boss::
     ; HL ya apunta a la bala
     inc l
     ld a, [hl]
-    cp TYPE_BULLET      ; Verificar que sea bala
-    ret nz
     dec l
+    cp TYPE_BULLET
+    ret nz
+
+    ; Verificar si es bala del jugador
+    inc l
+    inc l           ; FLAGS de la bala
+    ld a, [hl]
+    dec l 
+    dec l
+    bit 4, a        ; FLAG_BULLET_PLAYER (bit 4)
+    ret z           ; Si NO es bala del jugador, salir
     
-    push hl
+    ; Guardar bala
+    ld d, h 
+    ld e, l         ; DE = bullet
     
-    ; Buscar boss
+    ; Buscar primer boss
+    push de
     ld a, TYPE_BOSS
-    call man_entity_locate_first_type
+    call man_entity_locate_first_type   ; HL = primera entidad del boss
+    pop de
     
-    ; Verificar si boss puede recibir daño
+    ; Verificar si el boss puede recibir daño (UNA SOLA VEZ)
     push hl
     inc l
-    inc l               ; FLAGS
+    inc l           ; FLAGS
     bit 0, [hl]
     pop hl
-    jr z, .boss_invincible
+    ret z           ; Si es invencible, salir (todo el boss es invencible)
     
-    ld d, h
-    ld e, l
-    pop hl
-    push hl
+    ; Ahora iterar por todas las partes del boss
+.loop_boss:
+    push hl         ; [1] Guardar parte del boss actual
+    push de         ; [2] Guardar bullet
     
-    ; Comprobar AABB
+    ; Verificar si sigue siendo TYPE_BOSS
+    inc l
+    ld a, [hl]
+    cp TYPE_BOSS
+    jr nz, .end_loop    ; Si ya no es boss, terminamos
+    dec l
+    
+    ; Comprobar colisión (HL = parte del boss, DE = bullet)
     call sys_collision_check_AABB
-    jr c, .no_collision
+    jr nc, .collision_detected
     
-    ; ===== HAY COLISIÓN Y BOSS PUEDE RECIBIR DAÑO =====
+    ; No colisionó con esta parte, siguiente
+    pop de          ; [2] Recuperar bullet
+    pop hl          ; [1] Recuperar parte actual
+    
+    ; Avanzar a siguiente parte del boss
+    ld a, l
+    add a, 4
+    ld l, a
+    
+    jr .loop_boss
+
+.end_loop:
+    ; Llegamos al final sin colisión
+    pop de          ; [2]
+    pop hl          ; [1]
+    ret
+
+.collision_detected:
+    pop de          ; [2] DE = bullet
+    pop hl          ; [1] HL = parte del boss que colisionó
+    
+    ; === HAY COLISIÓN ===
     
     ; 1. Quitar vida al boss
-    ld a,[boss_health]
-    ld b,1 ;; PONER DAÑO DE BALA
+    push hl
+    push de
+    ld a, [boss_health]
+    ld b, 1         ; Daño de bala
     cp b
-    jr c,.set_health_zero
+    jr c, .set_health_zero
     sub b
     jr .quitar_vida
-    .set_health_zero
+.set_health_zero:
     xor a
-
-    .quitar_vida
-    ld [boss_health],a
+.quitar_vida:
+    ld [boss_health], a
     call sys_sound_hit_effect
-
-    ; TODO: decrementar boss HP
+    pop de
+    pop hl
     
-    ; 2. Desactivar flag del boss
-    ld h, d
-    ld l, e
+    ; 2. Activar flags del boss (en la PRIMERA parte)
+    ; Necesitamos volver a la primera parte del boss
+    push de
+    push hl
+    ld a, TYPE_BOSS
+    call man_entity_locate_first_type   ; HL = primera parte
     inc l
-    inc l               ; FLAGS
-    set 3, [hl]         ; Activar flag GOT_DAMAGE
-    res 0, [hl]
+    inc l           ; FLAGS
+    set 3, [hl]     ; GOT_DAMAGE
+    res 0, [hl]     ; CAN_TAKE_DAMAGE = 0
+    pop hl
+    pop de
     
-    ; 3. Iniciar invencibilidad del boss
-    ld a, 60            ; 1 segundo
+    ; 3. Iniciar invencibilidad
+    ld a, 60
     ld [boss_invincibility_timer], a
     ld a, 5
     ld [boss_blink_timer], a
     
     ; 4. Eliminar bala
-    pop hl
+    ld h, d
+    ld l, e
     inc l
     call delete_bullet
     
-    ret
-    
-.boss_invincible:
-    pop hl
-    ret
-    
-.no_collision:
-    pop hl
     ret
 
 

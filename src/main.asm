@@ -97,7 +97,7 @@ main::
 
 
    init_player_stats::
-      ld a,2
+      ld a,10
       ld [player_health],a
       ret
    init_snake_stats::
