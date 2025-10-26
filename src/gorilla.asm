@@ -271,7 +271,7 @@ init_gorilla_tiles::
 	call memcpy_256
 
 	;; Piedras
-	ld b, 208
+	ld b, 144
 	call memcpy_256
 
 	call turn_screen_on
