@@ -278,7 +278,6 @@ check_player_shot::
 		jr call_shot
 
 	.looking_up:
-		call player_set_lookup_sprite
 		ld a, PLAYER_GUN_ENTITY_ID
 		call man_entity_locate_v2
 		inc h

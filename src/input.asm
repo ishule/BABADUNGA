@@ -3,6 +3,8 @@ INCLUDE "consts.inc"
 SECTION "Player Vars", WRAM0
 player_anim_counter:: ds 1
 player_on_ground_flag:: ds 1   ; 1 = en el suelo, 0 = en el aire
+player_looking_up:: ds 1       ; 1 = mirando arriba, 0 = normal
+
 
 SECTION "Input Code", ROM0
 
@@ -24,7 +26,7 @@ process_input::
     call joypad_read
     ld a, [joypad_input]
     ld b, a
-
+    
     ; ======= DEBUG ========
     bit JOYPAD_DOWN, a
     jr z, .skip_debug
@@ -37,50 +39,80 @@ process_input::
     inc h
     ld [hl], $05
     ret
-    .skip_debug:
-
-    ; ==== SALTO PRIMERO ====
+    
+.skip_debug:
+    ; ==== VERIFICAR ARRIBA PRIMERO (prioridad) ====
+    bit JOYPAD_UP, a 
+    jr nz, .lookup
+    
+    ; Si NO está presionando arriba, verificar si estaba mirando arriba
+    ld a, [player_looking_up]
+    or a
+    jr z, .check_jump              ; Si no estaba mirando arriba, continuar normal
+    
+    ; Estaba mirando arriba pero soltó el botón → restaurar sprite Y DETENER
+    xor a
+    ld [player_looking_up], a      ; Marcar que ya no mira arriba
+    
+    ; DETENER MOVIMIENTO HORIZONTAL
+    ld a, PLAYER_BODY_ENTITY_ID
+    call man_entity_locate_v2
+    ld bc, $0000
+    ld d, PLAYER_SPRITES_SIZE
+    call change_entity_group_vel_x
+    
+    call player_set_stand_sprite   ; Restaurar sprite horizontal
+    jp .end                        ; Terminar (no procesar más inputs este frame)
+    
+.check_jump:
+    ld a, b                        ; Recuperar input
     bit JOYPAD_B, a
     jr z, .check_horizontal
-
-    ; Verificar si está en el suelo mediante la flag
+    
+    ; Verificar si está en el suelo
     ld a, [player_on_ground_flag]
     or a
-    jr z, .check_horizontal   ; Si está en el aire, no puede saltar
+    jr z, .check_horizontal
+    jr .do_jump
+
+.lookup:
+    ; Está presionando arriba → activar lookup Y DETENER MOVIMIENTO
+    ld a, 1
+    ld [player_looking_up], a      ; Marcar que está mirando arriba
+    
+    ; DETENER MOVIMIENTO HORIZONTAL
+    ld a, PLAYER_BODY_ENTITY_ID
+    call man_entity_locate_v2
+    ld bc, $0000
+    ld d, PLAYER_SPRITES_SIZE
+    call change_entity_group_vel_x
+    
+    call player_set_lookup_sprite
+    ret                            ; Salir sin procesar otros inputs
 
 .do_jump:
-
     push af
     call sys_sound_jump_effect
     pop af
-
     ld a, PLAYER_BODY_ENTITY_ID
-
     call man_entity_locate_v2
-
     ld bc, PLAYER_JUMP_SPEED
     ld d, PLAYER_SPRITES_SIZE
     call change_entity_group_vel_y
-
     ld a, PLAYER_BODY_ENTITY_ID
     call man_entity_locate_v2
-
     ld bc, PLAYER_GRAVITY
     ld d, PLAYER_SPRITES_SIZE
     call change_entity_group_acc_y
-
     call player_set_walk_sprite
     jr .end
 
-; ==== MOVIMIENTO LUEGO ====
 .check_horizontal:
     ld a, b
     bit JOYPAD_RIGHT, a
     jr z, .check_left
-
     ld a, PLAYER_BODY_ENTITY_ID
     call man_entity_locate_v2
-
     ld bc, PLAYER_SPEED
     ld d, PLAYER_SPRITES_SIZE
     call change_entity_group_vel_x
@@ -93,7 +125,6 @@ process_input::
     jr z, .no_horizontal_input
     ld a, PLAYER_BODY_ENTITY_ID
     call man_entity_locate_v2
-
     ld bc, PLAYER_SPEED_NEGATIVE
     ld d, PLAYER_SPRITES_SIZE
     call change_entity_group_vel_x
@@ -104,11 +135,9 @@ process_input::
 .no_horizontal_input:
     ld a, PLAYER_BODY_ENTITY_ID
     call man_entity_locate_v2
-    
     ld bc, $0000
     ld d, PLAYER_SPRITES_SIZE
     call change_entity_group_vel_x
-
 
 .end:
     ret
