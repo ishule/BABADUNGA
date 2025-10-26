@@ -98,32 +98,18 @@ main::
 
    init_player_stats::
       ret
-   ;; b = boss size
-   ;;al borrar la verja se borra todo, y bueno al borrar el boss también xd
+   ;; b = boss size (de momento nada)
+   ;;al borrar la verja se borra todo y/o pasan cosas rarisimas
    boss_is_dead::
-   ret
       ld a,[boss_health]
       cp 0
       ret nz
       bit 7,a
       ret nz
-      ;;Buscamos entidad del boss y la borramos
-      jp .deleteVerja
-      ld a,ENEMY_START_ENTITY_ID
-      ;.deleteBoss: MOVEMOS AL BOSS Y LO DESACTIVAMOS ( LO MOVEMOS EN EL EJE Y )
-      ;   push bc
-      ;   call man_entity_delete
-      ;   pop bc
-      ;   dec b
-      ;   jr nz,.deleteBoss
-      .deleteVerja:
-      ld a,TYPE_VERJA
-      call man_entity_locate_first_type
-      ld a,l
-      srl a ;; ID de Verja de la derecha
-      srl a
-      inc a
-      call man_entity_delete 
+      set 7,a ; Para que solo entre aquí una vez
+      ld [boss_health],a
+      call open_door 
+
       ret
 
    player_is_dead::

@@ -20,6 +20,7 @@ wait_vblank::
 	jr nz,.loop
 	ret
 
+
 ;; memcpy_256: Subrutina para copiar bytes a memoria(Ejemplo tiles a VRAM)
 ;; INPUT
 ;; hl: Source
@@ -156,13 +157,13 @@ memreset_256::
 
 ;;Abre la puerta para avanzar al siguiente nivel
 open_door::
-	call wait_vblank
-	xor a
-	ld [$99B3],a
-	ld [$99D3],a
-	ld a,0
-	ld [$9A13],a
-	ld [$99F3],a
+     ld a,TYPE_VERJA
+     call man_entity_locate_first_type
+     ld a,l
+     srl a 
+     srl a ;; ID de Verja de la derecha
+     inc a ;; ID de Verja de la izquierda
+     call man_entity_delete
 	ret
 ;; Función que hace que se inicialize el sonido para que se pueda escuchar básicamente
 init_sound::

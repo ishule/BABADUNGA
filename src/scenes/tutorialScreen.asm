@@ -28,6 +28,8 @@ load_tutorial_screen::
 
    call init_bullets
 
+   call open_door
+
    .game_loop:
       call wait_vblank
       call man_entity_draw
