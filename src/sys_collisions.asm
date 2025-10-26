@@ -333,10 +333,6 @@ sys_collision_check_bullet_vs_boss::
     
     ; ===== HAY COLISIÓN Y BOSS PUEDE RECIBIR DAÑO =====
     
-    ; 1. Quitar vida al boss
-    ld a,[boss_health]
-    dec a
-    ld [boss_health],a
     ; TODO: decrementar boss HP
     
     ; 2. Desactivar flag del boss
