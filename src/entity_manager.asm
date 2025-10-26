@@ -374,3 +374,24 @@ spawn_group_entity:
 	jr nz, spawn_group_entity
 	
 	ret
+
+; INPUT
+;  HL -> collisions preset address
+;  C  -> Entity size
+change_boss_collisions::
+	push hl
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld d, h
+	ld e, l
+	pop hl
+	ld d, CMP_COLLISIONS_H
+	
+	.loop:
+	ld b, CMP_SIZE
+	call memcpy_256
+
+	dec c
+	jr nz, .loop
+
+	ret

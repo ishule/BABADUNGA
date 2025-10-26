@@ -33,6 +33,9 @@ process_input::
     inc l
     inc l
     ld [hl], $08
+    inc h
+    inc h
+    ld [hl], $05
     ret
     .skip_debug:
 
