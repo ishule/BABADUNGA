@@ -61,7 +61,7 @@ main::
 
       call update_invincibility
 
-      ;call sys_collision_check_all
+      call sys_collision_check_all
       call sys_gorilla_movement
       ;call sys_snake_movement
       ;call spider_logic
