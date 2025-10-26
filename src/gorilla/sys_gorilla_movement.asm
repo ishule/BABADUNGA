@@ -1,4 +1,4 @@
-INCLUDE "gorilla_consts.inc"
+INCLUDE "gorilla/gorilla_consts.inc"
 
 SECTION "Gorilla Variables", WRAM0 
 gorilla_looking_dir::    DS 1  ; 0 = derecha, 1 = izquierda
@@ -323,7 +323,7 @@ manage_strike_state:
     .second_strike:
         ld hl, gorilla_state_counter
         ld [hl], WAIT_STRIKE_TIME
-        call drop_stalactites
+        ;call drop_stalactites
         jr .end_of_strike
         
 
@@ -429,6 +429,8 @@ manage_jump_1_state:
     call check_ground
     ret c
 
+    call throw_rocks
+
     call reset_vel
     call reset_gravity
 
@@ -449,6 +451,51 @@ manage_jump_1_state:
     ret
 
 ; ====== UTILS ========
+
+throw_rocks:
+    ;spawn rocks
+    call take_mid_gorilla_entity
+    call man_entity_locate_v2
+    inc h
+    ld a, [hl+]
+    add SPRITE_HEIGHT
+    ld b, a
+    
+    ld a, [hl]
+    sub SPRITE_WIDTH/2
+    ld c, a
+
+    ld de, gorilla_bullet_0_preset
+    ld a, LEFT_SHOT_DIRECTION
+    push bc
+    call shot_bullet_for_preset
+    pop bc
+
+    ld de, gorilla_bullet_0_preset
+    ld a, RIGHT_SHOT_DIRECTION
+    push bc
+    call shot_bullet_for_preset
+    pop bc
+
+    ld a, [num_entities_alive]
+    dec a
+    dec a
+    call man_entity_locate_v2
+    ld bc, ROCK_IMPULSE_Y
+    ld d, 2
+    call change_entity_group_vel_y
+
+    ld a, [num_entities_alive]
+    dec a
+    dec a
+    call man_entity_locate_v2
+    ld bc, ROCK_GRAVITY
+    ld d, 2
+    call change_entity_group_acc_y
+
+
+    ret
+
 
 drop_stalactites:
     ld a, [gorilla_strikes_to_do]
@@ -562,8 +609,7 @@ reset_gravity:
     ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
     ld bc, 0
-    ld de, 0
-    ld a, GORILLA_NUM_ENTITIES
+    ld d, GORILLA_NUM_ENTITIES
     call change_entity_group_acc_y
     ret
 

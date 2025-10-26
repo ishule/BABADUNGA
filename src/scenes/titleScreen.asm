@@ -7,7 +7,6 @@ load_title_screen::
    	call sys_sound_init
    	call sys_sound_init_inicio_music
 	call init_title_screen
-	call draw_title_screen
 	call joypad_init
 	call turn_screen_on
 	.loop:
