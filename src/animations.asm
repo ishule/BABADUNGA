@@ -66,27 +66,142 @@ wipe_out_right::
     ret
 
 player_dies_animation::
-    ; Poner la paleta BGP en negro (todo negro)
-    ld a, %11111111     ; Todos los colores a negro
-    ld [rBGP], a        ; Background palette
-    ld [rOBP0], a       ; Object palette 0 (opcional, si quieres sprites negros también)
-    ld [rOBP1], a       ; Object palette 1 (opcional)
+
+    ; --- 1. Set Player Sprite Priority (Above Background) ---
+    ld a, PLAYER_BODY_ENTITY_ID
+    ld b, PLAYER_SPRITES_SIZE
+    ld c,20
+    call die_animation
+    call restore_die_animation
+
+    ret
+; b -> Nº Sprites
+; hl -> map
+boss_dies_animation::
+    ld a,ENEMY_START_ENTITY_ID
+    ld c,16
+    push hl
+    call die_animation
     
-    
+
+    ;Restore game
+    call turn_screen_off
+    pop hl
+    call draw_map
+
+    call restore_die_animation
+    call turn_screen_on
+    ret
+;; c -> duration
+;; a -> Entity Start Id
+;; b -> Nº Sprites
+die_animation::
+    .priority_loop:
+    push af
+    push bc
+    call man_entity_locate_v2
+    ld h, CMP_SPRITES_H
+    inc l
+    inc l
+    inc l
+    res 7, [hl]                 ; 0 = Sprite Above BG
+    pop bc
+    pop af
+    inc a
+    dec b
+    jr nz, .priority_loop
+    push bc
+    ld hl,rOBP0
+    ld [hl],%00000000
+    ld hl,rOBP1
+    ld [hl],%00000000
+    call turn_screen_off
+    call fill_background_black ; <<< Call the new function
+    call turn_screen_on
+    call man_entity_draw
+    ; --- 3. Play Sound & Wait ---
+    ; call kill_boss
     call sys_sound_player_dies
-    ; Congelar el juego durante unos segundos (por ejemplo, 3 segundos)
-    ; A 60 FPS, 3 segundos = 180 frames
-    ld c, 20           ; Ajusta este valor: 60 frames = 1 segundo
-
+    pop bc ; mantener contador c
+    ; Freeze the game
 .freeze_loop:
-
     call wait_time_vblank_24
     dec c
     jr nz, .freeze_loop
+
+ret
+
+restore_die_animation::
+    .priority_loop:
+    push af
+    push bc
+    call man_entity_locate_v2
+    ld h, CMP_SPRITES_H
+    inc l
+    inc l
+    inc l
+    set 7, [hl]                 ; 0 = Sprite Above BG
+    pop bc
+    pop af
+    inc a
+    dec b
+    jr nz, .priority_loop
+    ld hl,rOBP0
+    ld [hl],%11100001
+    ld hl,rOBP1
+    ld [hl],%01010101
+ret
+
+fill_background_black::
+    ld b, 0             ; Columna inicial (0-19)
+    
+.next_column:
+    push bc
+    
+    ; Esperar 2-3 VBlanks por columna para hacerlo más lento
+    ld a, 1             ; Número de frames a esperar
+
+    ; Ahora dibujamos TODA la columna
+    ld c, 0
+    
+.draw_tile:
+    ; Calcular dirección en tilemap: $9800 + (fila * 32) + columna
+    ld a, c             ; A = fila
+    ld h, 0
+    ld l, a
+    ; Multiplicar fila por 32
+    add hl, hl          ; * 2
+    add hl, hl          ; * 4
+    add hl, hl          ; * 8
+    add hl, hl          ; * 16
+    add hl, hl          ; * 32
+    
+    ; Añadir columna
+    ld a, b             ; A = columna
+    ld e, a
+    ld d, 0
+    add hl, de
+    
+    ; Añadir base del tilemap
+    ld de, $9800
+    add hl, de          ; HL = dirección final en tilemap
+    
+    ; Escribir tile negro (tile 2) - SIN wait_vblank aquí
+    ld a, 2
+    ld [hl], a
+    
+    inc c               ; Siguiente fila
+    ld a, c
+    cp 18               ; ¿Hemos dibujado toda la columna?
+    jr c, .draw_tile
+    
+    pop bc
+    inc b               ; Siguiente columna
+    ld a, b
+    cp 20               ; ¿Hemos cubierto toda la pantalla? (20 columnas)
+    jr c, .next_column
     
     ret
-
-
 
 ;; Abre la puerta DERECHA con animación ascendente (CORREGIDO)
 open_door::
@@ -139,5 +254,47 @@ open_door::
     call sys_sound_door_opened_clink
     ret
 
+    ; =============================================
+; shake_screen
+; Plays rumble sound and shakes the screen briefly.
+; MODIFIES: AF, B, C, HL (uses rSCY, rSCX)
+; =============================================
 shake_screen::
 
+    ; --- 2. Screen Shake Loop ---
+    ld c, 8 ; C = Loop counter . DURACIÓN DEL TERREMOTO
+
+.shake_loop:
+    push bc              ; Save loop counter
+
+    ; Wait for next frame
+    call wait_time_vblank_24
+
+    ; --- Calculate Shake Offset ---
+    ; Simple alternating offset: +Amount, -Amount, +Amount, -Amount...
+    ; We can use the frame counter (C) parity (odd/even)
+    ld a, c
+    and 1                ; A = 0 if C is even, A = 1 if C is odd
+    jr z, .positive_offset
+
+.negative_offset:
+    ld a, -1  ; Offset = -1 or -2
+    jr .apply_offset
+
+.positive_offset:
+    ld a, 1   ; Offset = +1 or +2
+
+.apply_offset:
+    ld [$FF42], a         ; Apply vertical scroll offset
+    ld [$FF43], a         ; Apply horizontal scroll offset (can use different value if desired)
+
+    pop bc               ; Restore loop counter
+    dec c
+    jr nz, .shake_loop   ; Loop until C = 0
+
+    ; --- 3. Restore Scroll Position ---
+    xor a                ; A = 0
+    ld [$FF42], a         ; Reset vertical scroll
+    ld [$FF43], a         ; Reset horizontal scroll
+
+    ret

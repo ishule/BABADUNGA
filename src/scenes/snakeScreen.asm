@@ -46,6 +46,8 @@ load_snake_screen::
       call check_player_shot
       ;call sys_blink_update
       call draw_hearts
+      ld b,4
+      ld hl,map1
       call boss_is_dead
       call sys_collision_check_all
       call check_screen_transition

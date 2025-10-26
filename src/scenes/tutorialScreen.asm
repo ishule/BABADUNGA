@@ -27,6 +27,7 @@ load_tutorial_screen::
 
    call init_bullets
    call draw_hearts
+   call shake_screen
    call open_door
 
    .game_loop:

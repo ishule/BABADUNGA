@@ -118,10 +118,10 @@ main::
       set 0,a ; Para que solo entre aquí una vez
       ld [boss_player_dead],a
 
-      ;Desactivar y desplazar boss
-      ld a,TYPE_BOSS
-      ld de,_deactivate_and_move_boss_callback
-      call man_entity_foreach_type
+
+      call boss_dies_animation
+      ; Desactivamos y desplazamos al boss
+      call kill_boss
 
       ld c,14
       .waitLoop
@@ -133,6 +133,14 @@ main::
       call open_door 
 
       ret
+
+   kill_boss::
+      ;Desactivar y desplazar boss
+      ld a,TYPE_BOSS
+      ld de,_deactivate_and_move_boss_callback
+      call man_entity_foreach_type
+      ret
+
 
 ; =============================================
 ; _deactivate_and_move_boss_callback
@@ -184,6 +192,7 @@ _deactivate_and_move_boss_callback:
       cp 0
       ret nz
       call player_dies_animation
+
       scf
       ret
 
