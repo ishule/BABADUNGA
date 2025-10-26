@@ -804,6 +804,5 @@ player_set_lookup_sprite::
     inc l
     inc l
     ld [hl],$1A
-    ;ld a, 01 ; MAGIC
-    ;ld [player_stand_or_walk], a
+
     ret
