@@ -67,7 +67,7 @@ shot_bullet_for_preset::
 	.player_bullet:
 		xor a
 	    or FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT | FLAG_BULLET_PLAYER
-    
+    inc de
 
 	.go_on:
     ld [hl], a
