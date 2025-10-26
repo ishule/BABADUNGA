@@ -764,6 +764,11 @@ choose_stand_or_walk::
 player_set_walk_sprite::
     ld hl, component_sprite + SPRITE_OFFSET_TILE
     ld [hl], $0E  ; Tile de Player_walk ; MAGIC
+    inc l
+    inc l
+    inc l
+    inc l
+    ld [hl],$0C
     ld a, 00 
     ld [player_stand_or_walk], a
     ret
@@ -776,6 +781,29 @@ player_set_walk_sprite::
 player_set_stand_sprite::
     ld hl, component_sprite + SPRITE_OFFSET_TILE
     ld [hl], $0A  ; Tile de Player_stand  ; MAGIC
+    inc l
+    inc l
+    inc l
+    inc l
+    ld [hl],$0C
     ld a, 01 ; MAGIC
     ld [player_stand_or_walk], a
+    ret
+
+
+;;=============================================
+;; player_set_lookup_sprite
+;; Cambia el tile del sprite del jugador a mirando hacia arriba
+;;
+;; MODIFICA: A, HL
+player_set_lookup_sprite::
+    ld hl, component_sprite + SPRITE_OFFSET_TILE
+    ld [hl], $18  ; Tile de Player_lookup ; MAGIC
+    inc l
+    inc l
+    inc l
+    inc l
+    ld [hl],$1A
+    ;ld a, 01 ; MAGIC
+    ;ld [player_stand_or_walk], a
     ret

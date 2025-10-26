@@ -10,6 +10,7 @@ verja_sprites:
 
 
 
+
 ;;============================================================
 ;; init_player 
 ;; Inicialización completa del jugador 
