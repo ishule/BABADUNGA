@@ -80,6 +80,8 @@ check_stage_change:
     ret nc
 
     .change_stage:
+        call make_gorilla_eyes_white
+
         ld hl, gorilla_stage
         ld [hl], SECOND_STAGE
 
@@ -301,6 +303,10 @@ manage_wait_strike_state:
     xor a
     call swap_sprite_by_mask
 
+    ld hl, gorilla_down_strike_collisions
+    ld c, GORILLA_NUM_ENTITIES
+    call change_boss_collisions
+
     ret
 
 manage_strike_state:
@@ -367,6 +373,11 @@ manage_strike_state:
         ld c, GORILLA_NUM_ENTITIES
         xor a
         call swap_sprite_by_mask
+
+        ld hl, gorilla_up_strike_collisions
+        ld c, GORILLA_NUM_ENTITIES
+        call change_boss_collisions
+
         ret
 
 manage_stand_1_state:
@@ -679,5 +690,17 @@ swap_x_gorilla_entity:
     call man_entity_locate_v2
 
     call swap_2_entities_positions 
+
+    ret
+
+
+make_gorilla_eyes_white:
+    call wait_vblank
+    ld hl, GORILLA_HEAD_STAND_TILE_ADDRESS
+    ld de, GORILLA_EYES_STAND_OFFSET
+    add hl, de
+    ld a, [hl]
+    xor GORILLA_EYES_TO_WHITE_MASK
+    ld [hl], a
 
     ret
