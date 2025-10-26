@@ -215,6 +215,7 @@ init_gorilla::
 	ld [hl], GORILLA_LIFE
 
 
+	; TODO: Asign damage
 	ld hl, scenario_stalactites_spawn_definition
 	ld c, NUMBER_OF_SCENARIO_STALACTITES
 	call spawn_group_entity
@@ -235,6 +236,9 @@ init_stalactite_flags:
 	inc l
 	ld [hl], FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT
 	inc l
+	inc h
+	ld [hl], STALACTITE_DAMAGE
+	dec h
 	inc l
 
 	dec c
