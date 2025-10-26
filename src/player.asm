@@ -147,8 +147,8 @@ player_init_physics::
     ld a, $02 
     ld [hl+], a 	; Número de sprites
 
-    ld a, BYTE_ACTIVE
-	ld [hl+], a 		; Active = 1
+    ld a, BYTE_NON_ACTIVE
+	ld [hl+], a 		; Active = 0
 
 	ld a, TYPE_PLAYER
 	ld [hl+], a 	 	; Type = 0

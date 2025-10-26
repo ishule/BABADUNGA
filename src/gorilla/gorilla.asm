@@ -230,7 +230,7 @@ init_stalactite_flags:
 	ld c, NUMBER_OF_SCENARIO_STALACTITES
 
 	.loop:
-	ld [hl], 1;BYTE_ACTIVE
+	ld [hl], 0;BYTE_ACTIVE
 	inc l
 	ld [hl], TYPE_BULLET
 	inc l
