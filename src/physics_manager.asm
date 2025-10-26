@@ -779,3 +779,16 @@ player_set_stand_sprite::
     ld a, 01 ; MAGIC
     ld [player_stand_or_walk], a
     ret
+
+
+;;=============================================
+;; player_set_lookup_sprite
+;; Cambia el tile del sprite del jugador a mirando hacia arriba
+;;
+;; MODIFICA: A, HL
+player_set_lookup_sprite::
+    ld hl, component_sprite + SPRITE_OFFSET_TILE
+    ld [hl], $14  ; Tile de Player_lookup ; MAGIC
+    ;ld a, 01 ; MAGIC
+    ;ld [player_stand_or_walk], a
+    ret

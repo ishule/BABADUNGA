@@ -36,6 +36,7 @@ init_player::
 ;;		$10-$11: Player_walk 
 ;;      $12: Player_bullet
 ;;	    $13: Player_life 
+;; 		$14: Player_lookup
 ;; MODIFICA: A, BC, DE, HL
 init_player_tiles::
 	call wait_vblank
@@ -67,6 +68,13 @@ init_player_tiles::
 	ld hl,Player_life
 	ld de,VRAM_TILE_DATA_START + ($12*VRAM_TILE_SIZE)
 	ld b,2*VRAM_TILE_SIZE
+	call memcpy_256
+
+	;; Cargar Player_lookup en tile $14
+	call wait_vblank
+	ld hl,player_look_up
+	ld de,VRAM_TILE_DATA_START + ($14*VRAM_TILE_SIZE)
+	ld b,4*VRAM_TILE_SIZE
 	call memcpy_256
 
 	ret
