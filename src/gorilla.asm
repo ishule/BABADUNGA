@@ -52,13 +52,6 @@ scenario_stalactites_spawn_definition:
 	DB ROOF_Y_POS + 22, WALL_LEFT_X + 136, STALACTITE_1_START_TILE_ID, 0; Stalactite 15
 	DL STALACTITE_1_COLLISIONS
 
-	
-
-
-
-
-
-
 gorilla_spawn_definition::
     DB GORILLA_SPAWN_POINT_Y                , GORILLA_SPAWN_POINT_X                 , ENEMY_START_TILE_ID     , SPRITE_ATTR_PRIORITY   ; Sprite 0: Columna 1, Fila 1
     DB 11, 3, 5, 5

@@ -3,11 +3,46 @@ INCLUDE "spider/spider_consts.inc"
 
 SECTION "Spider Inicialization", ROM0
 
+; TODO: Definir colisiones bien
+spider_spawn_definition::
+    DB SPIDER_SPAWN_POINT_Y                , SPIDER_SPAWN_POINT_X                 , ENEMY_START_TILE_ID     , SPRITE_ATTR_PRIORITY_MASK  ; Sprite 0: Columna 1, Fila 1
+    DB 11, 3, 5, 5
+
+    DB SPIDER_SPAWN_POINT_Y                , SPIDER_SPAWN_POINT_X + SPRITE_WIDTH  , ENEMY_START_TILE_ID + 2 , SPRITE_ATTR_PRIORITY_MASK   ; Sprite 1: Columna 2, Fila 1
+    DB 4, 0, 12, 8
+
+    DB SPIDER_SPAWN_POINT_Y + SPRITE_HEIGHT, SPIDER_SPAWN_POINT_X                 , ENEMY_START_TILE_ID + 4 , SPRITE_ATTR_PRIORITY_MASK   ; Sprite 2: Columna 1, Fila 2
+    DB 0, 2, 16, 6
+
+    DB SPIDER_SPAWN_POINT_Y + SPRITE_HEIGHT, SPIDER_SPAWN_POINT_X + SPRITE_WIDTH  , ENEMY_START_TILE_ID + 6 , SPRITE_ATTR_PRIORITY_MASK   ; Sprite 3: Columna 2, Fila 2
+    DB 0, 0, 16, 8
+
+    DB SPIDER_SPAWN_POINT_Y                , SPIDER_SPAWN_POINT_X + SPRITE_WIDTH*2, ENEMY_START_TILE_ID + 2 , SPRITE_ATTR_PRIORITY_MASK | SPRITE_ATTR_FLIP_X_MASK   ; Sprite 4: Columna 3, Fila 1
+    DB 3, 0, 13, 8
+
+    DB SPIDER_SPAWN_POINT_Y                , SPIDER_SPAWN_POINT_X + SPRITE_WIDTH*3, ENEMY_START_TILE_ID + 0,  SPRITE_ATTR_PRIORITY_MASK | SPRITE_ATTR_FLIP_X_MASK   ; Sprite 5: Columna 4, Fila 1
+    DB 11, 0, 3, 1
+
+    DB SPIDER_SPAWN_POINT_Y + SPRITE_HEIGHT, SPIDER_SPAWN_POINT_X + SPRITE_WIDTH*2, ENEMY_START_TILE_ID + 6,  SPRITE_ATTR_PRIORITY_MASK | SPRITE_ATTR_FLIP_X_MASK   ; Sprite 6: Columna 3, Fila 2
+    DB 0, 0, 16, 6
+
+    DB SPIDER_SPAWN_POINT_Y + SPRITE_HEIGHT, SPIDER_SPAWN_POINT_X + SPRITE_WIDTH*3, ENEMY_START_TILE_ID + 4,  SPRITE_ATTR_PRIORITY_MASK | SPRITE_ATTR_FLIP_X_MASK   ; Sprite 7: Columna 4, Fila 2
+    DB 0, 0, 0, 0
+
+    ; TODO: Definir bien la telaraña
+    DB SPIDER_SPAWN_POINT_Y + SPRITE_HEIGHT, SPIDER_SPAWN_POINT_X + SPRITE_WIDTH*2, ENEMY_START_TILE_ID + 6,  SPRITE_ATTR_PRIORITY_MASK | SPRITE_ATTR_FLIP_X_MASK   ; Sprite 6: Columna 3, Fila 2
+    DB 0, 0, 16, 6
+
+    DB SPIDER_SPAWN_POINT_Y + SPRITE_HEIGHT, SPIDER_SPAWN_POINT_X + SPRITE_WIDTH*3, ENEMY_START_TILE_ID + 4,  SPRITE_ATTR_PRIORITY_MASK | SPRITE_ATTR_FLIP_X_MASK   ; Sprite 7: Columna 4, Fila 2
+    DB 0, 0, 0, 0
+
 init_spider::
 	call init_spider_tiles
-	call init_spider_roof_entity_sprites
-	call init_spider_entity_web_hook
 	
+	ld hl, spider_spawn_definition
+	ld c, SPIDER_ROOF_NUM_ENTITIES
+	call spawn_group_entity
+
 	ld hl, spider_state
 	ld [hl], SPIDER_ROOF_STATE
 
@@ -47,176 +82,5 @@ init_spider_tiles:
 	call memcpy_256
 
 	call turn_screen_on
-
-	ret
-
-init_spider_roof_entity_sprites:
-	ld b, SPIDER_SPAWN_POINT_Y
-	ld c, SPIDER_SPAWN_POINT_X
-
-	; upper legs
-	call man_entity_alloc
-	inc h
-	ld [hl], b
-	inc l
-	ld [hl], c
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID
-	inc l
-	ld [hl], SPRITE_ATTR_NO_FLIP
-
-
-	call man_entity_alloc
-	inc h
-	
-
-	ld [hl], b
-
-	ld a, c
-	add SPRITE_WIDTH
-	ld c, a
-	inc l
-	ld [hl], c
-	
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID + 2
-	
-	inc l
-	ld [hl], SPRITE_ATTR_NO_FLIP
-
-
-	ld b, SPIDER_SPAWN_POINT_Y+SPRITE_HEIGHT
-	ld c, SPIDER_SPAWN_POINT_X
-
-	; lower legs
-	call man_entity_alloc
-	inc h
-	ld [hl], b
-	inc l
-	ld [hl], c
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID + 4
-	inc l
-	ld [hl], SPRITE_ATTR_NO_FLIP
-
-
-	call man_entity_alloc
-	inc h
-	
-
-	ld [hl], b
-
-	ld a, c
-	add SPRITE_WIDTH
-	ld c, a
-	inc l
-	ld [hl], c
-	
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID + 6
-	
-	inc l
-	ld [hl], SPRITE_ATTR_NO_FLIP
-
-	; ======== RIGHT PART ========
-	ld b, SPIDER_SPAWN_POINT_Y
-	ld c, SPIDER_SPAWN_POINT_X + SPRITE_WIDTH * 2
-
-	; upper legs
-	call man_entity_alloc
-	inc h
-	ld [hl], b
-	inc l
-	ld [hl], c
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID + 2
-	inc l
-	ld [hl], SPRITE_ATTR_FLIP_X
-
-
-	call man_entity_alloc
-	inc h
-	
-
-	ld [hl], b
-
-	ld a, c
-	add SPRITE_WIDTH
-	ld c, a
-	inc l
-	ld [hl], c
-	
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID
-	
-	inc l
-	ld [hl], SPRITE_ATTR_FLIP_X
-
-
-	ld b, SPIDER_SPAWN_POINT_Y + SPRITE_HEIGHT
-	ld c, SPIDER_SPAWN_POINT_X + SPRITE_WIDTH * 2
-
-	; lower legs
-	call man_entity_alloc
-	inc h
-	ld [hl], b
-	inc l
-	ld [hl], c
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID + 6
-	inc l
-	ld [hl], SPRITE_ATTR_FLIP_X
-
-
-	call man_entity_alloc
-	inc h
-	
-
-	ld [hl], b
-
-	ld a, c
-	add SPRITE_WIDTH
-	ld c, a
-	inc l
-	ld [hl], c
-	
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID + 4
-	
-	inc l
-	ld [hl], SPRITE_ATTR_FLIP_X
-
-
-
-	ret
-
-init_spider_entity_web_hook:
-
-	ld b, SPIDER_SPAWN_POINT_Y - SPRITE_HEIGHT
-	ld c, SPIDER_SPAWN_POINT_X + SPRITE_WIDTH
-
-	call man_entity_alloc
-	inc h
-	ld [hl], b
-	inc l
-	ld [hl], c
-	inc l 
-	ld [hl], SPIDER_WEB_HOOK_TILE_ID
-	inc l
-	ld [hl], SPRITE_ATTR_NO_FLIP
-
-	call man_entity_alloc
-	inc h
-	ld [hl], b
-	inc l
-
-	ld a, c
-	add SPRITE_WIDTH
-	ld c, a
-	ld [hl], c
-	inc l 
-	ld [hl], SPIDER_WEB_HOOK_TILE_ID + 2
-	inc l
-	ld [hl], SPRITE_ATTR_NO_FLIP
 
 	ret
