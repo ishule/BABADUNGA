@@ -323,7 +323,7 @@ manage_strike_state:
     .second_strike:
         ld hl, gorilla_state_counter
         ld [hl], WAIT_STRIKE_TIME
-        ;call drop_stalactites
+        call drop_stalactites
         jr .end_of_strike
         
 

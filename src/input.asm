@@ -34,7 +34,7 @@ process_input::
     call man_entity_locate_v2
     inc l
     inc l
-    ld [hl], $08
+    ;ld [hl], $08
     inc h
     inc h
     ld [hl], $05

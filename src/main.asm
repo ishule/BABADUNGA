@@ -80,7 +80,7 @@ main::
       call load_title_screen
       call load_tutorial_screen
       ; ======== DEBUG =========
-      call load_spider_screen
+      ;call load_spider_screen
       ; =======================
 
       call load_gorilla_screen
