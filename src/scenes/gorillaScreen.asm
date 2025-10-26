@@ -50,5 +50,7 @@ load_gorilla_screen::
       call boss_is_dead
       call check_screen_transition
       jp c,.game_loop 
+      
+      call player_is_dead
      .end
     ret

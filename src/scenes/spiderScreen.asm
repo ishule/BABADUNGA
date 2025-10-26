@@ -49,4 +49,5 @@ load_spider_screen::
       call check_screen_transition
       jp c,.game_loop
     .end
+      call player_is_dead
     ret

@@ -158,6 +158,26 @@ player_pickup::
    ret nz
 ; --- Internal Callback for foreach loop ---
 .pickup_collision:
+.pickup_heart:
+   ld a,PLAYER_BODY_ENTITY_ID
+   call man_entity_locate_v2
+
+   ld h,CMP_SPRITES_H
+   ld a,[hl+] ; Y
+   
+
+   cp 105
+   jr nc,.pickup_bullet
+
+   ld a,[hl] ; X
+   cp 50
+   jr c,.pickup_bullet
+
+   cp 59
+   jr nc,.pickup_bullet
+   jr .apply_heart_effect
+
+.pickup_bullet:
    ld a,PLAYER_BODY_ENTITY_ID
    call man_entity_locate_v2
 
@@ -169,11 +189,12 @@ player_pickup::
    jr nc,.no_collision
 
    ld a,[hl] ; X
-   cp 50
+   cp 120
    jr c,.no_collision
 
-   cp 59
+   cp 129
    jr nc,.no_collision
+   jr .apply_bullet_effect
 
 .apply_heart_effect:
    ;Action: Increase Health by 2 ( 1 heart)
