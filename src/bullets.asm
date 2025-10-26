@@ -45,7 +45,7 @@ shot_bullet_for_preset::
 	ld [hl+], a
 
 	xor a
-    or FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT
+    or FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT | FLAG_BULLET_PLAYER
     ld [hl], a
     inc h ; Prepare for CMP_SPRITE_TILE
 

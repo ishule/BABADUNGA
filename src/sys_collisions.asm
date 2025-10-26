@@ -439,7 +439,6 @@ sys_collision_check_bullet_vs_player::
     ret
 
 
-
 sys_collision_check_bullet_vs_bullet::
     ; HL apunta a la bala actual
     inc l
@@ -469,7 +468,7 @@ sys_collision_check_bullet_vs_bullet::
     ld c, a
     ld a, [current_bullet_offset]
     cp c
-    jr z, .skip         ; Es la misma, saltar
+    jr z, .skip
     
     ; Verificar que esté activa y sea bala
     ld h, CMP_INFO_H
@@ -484,7 +483,7 @@ sys_collision_check_bullet_vs_bullet::
     jr nz, .skip
     dec l
     
-    ; Tenemos dos balas diferentes, comprobar AABB
+    ; Comprobar AABB
     ld d, h
     ld e, l             ; DE = otra bala
     
@@ -497,31 +496,59 @@ sys_collision_check_bullet_vs_bullet::
     call sys_collision_check_AABB
     pop de
     pop hl
-    jr c, .skip         ; No colisionan
-
+    jr c, .skip
     
     ; ===== COLISIÓN DETECTADA =====
-    ; Eliminar ambas balas
+    ; Verificar cuál tiene FLAG_BULLET_PLAYER activado
+    
+    ; Verificar bala actual (HL)
     push hl
-    ld [hl], 0          ; Bala actual inactiva
-    inc l 
-
-    call delete_bullet
-
+    push de
+    inc l
+    inc l               ; FLAGS
+    ld a, [hl]
+    bit 4, a            ; FLAG_BULLET_PLAYER está en bit 4
+    pop de
     pop hl
-    ld [hl], 0          ; Otra bala inactiva
-    inc l 
+    jr nz, .delete_current_bullet
+    
+    ; Verificar otra bala (DE)
+    push hl
+    ld h, d
+    ld l, e
+    inc l
+    inc l               ; FLAGS
+    ld a, [hl]
+    bit 4, a
+    pop hl
+    jr nz, .delete_other_bullet
+    
+    ; Ninguna tiene el flag, no eliminar nada
+    jr .skip
+    
+.delete_current_bullet:
+    ; Eliminar bala actual (la del jugador)
+    ld [hl], 0          ; Marcar inactiva
+    inc l
     call delete_bullet
-    
-    
     pop af
     pop bc
-    ret                 ; Salir (bala actual eliminada)
+    ret                 ; Salir (bala eliminada)
+    
+.delete_other_bullet:
+    ; Eliminar la otra bala (la del jugador)
+    ld h, d
+    ld l, e
+    ld [hl], 0          ; Marcar inactiva
+    inc l
+    call delete_bullet
+    ; Continuar el loop (la bala actual sigue viva)
+    jr .skip
     
 .skip:
     pop af
     pop bc
-    inc a               ; Siguiente ID
+    inc a
     dec b
     jr nz, .loop
     
@@ -593,17 +620,25 @@ sys_collision_check_entity_vs_entity::
 
 check_collision_player:
     dec l               ; HL = inicio entidad
+
     call sys_collision_check_entity_vs_verja
+
     call sys_collision_check_player_vs_boss
+
     pop hl              ; [1] ← Recuperar el push inicial
     ret
 
 check_collision_bullet:
     dec l               ; HL = inicio entidad
+
     call sys_collision_check_entity_vs_verja
+
     call sys_collision_check_bullet_vs_boss
+
     call sys_collision_check_bullet_vs_player
+
     call sys_collision_check_bullet_vs_bullet
+
     pop hl              ; [1] ← Recuperar el push inicial
     ret
 
@@ -650,6 +685,9 @@ sys_collision_check_entity_vs_tiles::
     cp 5 
     jr z, touching_up_collision
 
+    cp 6 
+    jr z, touching_down_collision
+
     ret
 
 .out_of_bounds:
@@ -662,7 +700,10 @@ sys_collision_check_entity_vs_tiles::
     cp TYPE_BULLET
     jr nz, .not_bullet
     
+    push hl
     call delete_bullet
+    pop hl
+    dec l
     ret
 
 .not_bullet:
@@ -756,6 +797,12 @@ touching_right_collision:
 
 touching_up_collision:
     ; De momento solo puede tocar el techo las balas
+    inc l
+    call delete_bullet
+    ret
+
+touching_down_collision:
+    ; De momento solo puede tocar el suelo las balas
     inc l
     call delete_bullet
     ret

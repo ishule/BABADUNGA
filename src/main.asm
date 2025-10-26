@@ -4,7 +4,7 @@ SECTION "Entry point", ROM0[$150]
 main::
    ld hl,rBGP
    ld [hl],%11100001
-   ;jp provisional_game_loop
+   jp provisional_game_loop
    
    call turn_screen_off
    ld hl,map1Tiles
