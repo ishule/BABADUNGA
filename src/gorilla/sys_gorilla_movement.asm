@@ -534,6 +534,23 @@ drop_stalactites:
 
     ld bc, STALACTITES_GRAVITY
     ld d, NUMBER_OF_STALACTITES_PER_STRIKE
+
+    ;; Desactivar flag STILL BULLET
+    push hl 
+    .loop:
+        inc l 
+        inc l 
+        res 5, [hl]
+        inc l
+        inc l
+        dec d
+        jr nz, .loop  
+
+
+    ld d, NUMBER_OF_STALACTITES_PER_STRIKE
+    pop hl
+
+
     call change_entity_group_acc_y
 
     ret
