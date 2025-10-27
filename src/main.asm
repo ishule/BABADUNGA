@@ -76,6 +76,7 @@ main::
 
 
    provisional_game_loop:
+
       call init_player_stats
       ; ======== DEBUG =========
       call load_spider_screen

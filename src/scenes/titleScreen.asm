@@ -4,12 +4,13 @@ load_title_screen::
 	
    	call turn_screen_off
    	call clean_all_tiles
+   	call init_OAM
    	call sys_sound_init
    	call sys_sound_init_inicio_music
 	call init_title_screen
 	call joypad_init
 	call turn_screen_on
-	call init_OAM
+	
 	.loop:
 		;ld b,3
 		call wait_vblank
