@@ -1,7 +1,6 @@
 INCLUDE "gorilla/gorilla_consts.inc"
 
 SECTION "Gorilla Variables", WRAM0 
-gorilla_looking_dir::    DS 1  ; 0 = derecha, 1 = izquierda
 gorilla_state::          DS 1
 gorilla_state_counter::  DS 1
 gorilla_stage::          DS 1
@@ -92,7 +91,7 @@ check_stage_change:
         ld de, JUMP_STAGE_CHANGE_IMPULSE_X
 
         ; Check is left or right
-        call take_mid_gorilla_entity        
+        call take_mid_boss_entity        
         call man_entity_locate_v2
         inc h
         inc l
@@ -101,13 +100,13 @@ check_stage_change:
         jr c, .jump_right
         .jump_left:
             call positive_to_negative_DE
-            ld a, [gorilla_looking_dir]
+            ld a, [boss_looking_dir]
             or a
             jr nz, .do_jump
             jr .x_rotation
 
         .jump_right:
-            ld a, [gorilla_looking_dir]
+            ld a, [boss_looking_dir]
             or a
             jr z, .do_jump
             jr .x_rotation
@@ -115,7 +114,8 @@ check_stage_change:
         .x_rotation:
             push de
             push bc
-            call rotate_gorilla_x
+            ld c, GORILLA_NUM_ENTITIES
+            call rotate_boss_x
             pop bc
             pop de
 
@@ -131,7 +131,11 @@ check_stage_change:
         ld bc, JUMP_GRAVITY
         ld d, GORILLA_NUM_ENTITIES
         call change_entity_group_acc_y
-        call change_spider_sprites_from_ground_to_jump
+        
+        ld b, SWAP_MASK_SPRITE_STAND_JUMP
+        ld c, GORILLA_NUM_ENTITIES
+        ld a, ENEMY_START_ENTITY_ID
+        call swap_sprite_by_mask
 
     ret
 
@@ -156,7 +160,7 @@ manage_stand_0_state:
     ld bc, JUMP_IMPULSE_Y
     ld de, JUMP_IMPULSE_X
 
-    ld a, [gorilla_looking_dir]
+    ld a, [boss_looking_dir]
     or a
     call nz, positive_to_negative_DE
     ld a, GORILLA_NUM_ENTITIES
@@ -164,7 +168,7 @@ manage_stand_0_state:
 
     ld b, SWAP_MASK_SPRITE_STAND_JUMP
     ld c, GORILLA_NUM_ENTITIES
-    xor a
+    ld a, ENEMY_START_ENTITY_ID
     call swap_sprite_by_mask
 
     ld hl, gorilla_jump_collisions
@@ -175,20 +179,24 @@ manage_stand_0_state:
 
 
 manage_jump_0_state:
-    call check_wall
+    call take_mid_boss_entity
+    call check_wall_for_boss
     jr c, .no_wall_collision
     .wall_collision:
-        call reset_vel_x
-
-        call rotate_gorilla_x
+        ld d, GORILLA_NUM_ENTITIES
+        call reset_group_vel_x
+        ld c, GORILLA_NUM_ENTITIES
+        call rotate_boss_x
 
 
     .no_wall_collision:
-    call check_ground
+    call check_ground_for_boss
     ret c
 
-    call reset_vel
-    call reset_gravity
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_vel
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_acc_y
 
     ld hl, gorilla_state
     ld [hl], GORILLA_STAND_STATE
@@ -198,7 +206,7 @@ manage_jump_0_state:
 
     ld b, SWAP_MASK_SPRITE_STAND_JUMP
     ld c, GORILLA_NUM_ENTITIES
-    xor a
+    ld a, ENEMY_START_ENTITY_ID
     call swap_sprite_by_mask
 
     ld hl, gorilla_stand_collisions
@@ -219,12 +227,12 @@ manage_jump_to_strike_state:
     jr z, .at_mid
 
     ; Check mid screen
-    call take_mid_gorilla_entity
+    call take_mid_boss_entity
     call man_entity_locate_v2
     inc h
     inc l
     ld c, [hl]
-    ld a, [gorilla_looking_dir]
+    ld a, [boss_looking_dir]
     or a
     jr nz, .looking_left
     .looking_right:
@@ -240,15 +248,18 @@ manage_jump_to_strike_state:
         ret c
 
     .reached_mid:
-    call reset_vel
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_vel
     ret
 
     .at_mid:
-    call check_ground
+    call check_ground_for_boss
     ret c
 
-    call reset_vel_y
-    call reset_gravity
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_vel_y
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_acc_y
 
     ld hl, gorilla_state
     ld [hl], GORILLA_WAIT_STRIKE_STATE
@@ -261,24 +272,25 @@ manage_jump_to_strike_state:
 
     ld b, SWAP_MASK_SPRITE_JUMP_UP_STRIKE_LEFT
     ld c, GORILLA_NUM_ENTITIES/2
-    xor a
+    ld a, ENEMY_START_ENTITY_ID
     call swap_sprite_by_mask
 
     ld b, SWAP_MASK_SPRITE_JUMP_UP_STRIKE_RIGHT
-    ld a, GORILLA_NUM_ENTITIES/2
-    ld c, a
+    ld c, GORILLA_NUM_ENTITIES/2
+    ld a, ENEMY_START_ENTITY_ID + GORILLA_NUM_ENTITIES/2
     call swap_sprite_by_mask
 
-    ld a, [gorilla_looking_dir]
+    ld a, [boss_looking_dir]
     or a
     jr z, .do_not_rotate
     .make_rotation:
-        call rotate_gorilla_x
+        ld c, GORILLA_NUM_ENTITIES
+        call rotate_boss_x
     .do_not_rotate:
-    ld a, GORILLA_NUM_ENTITIES/2
-    ld c, a
-    call flip_gorilla_x
-    call swap_x_right_half_gorilla_entity
+    ld c, GORILLA_NUM_ENTITIES/2
+    ld a, ENEMY_START_ENTITY_ID + GORILLA_NUM_ENTITIES/2
+    call flip_boss_x
+    call swap_x_right_half_boss_entity
 
     ld hl, gorilla_up_strike_collisions
     ld c, GORILLA_NUM_ENTITIES
@@ -300,7 +312,7 @@ manage_wait_strike_state:
 
     ld b, SWAP_MASK_SPRITE_STRIKE
     ld c, GORILLA_NUM_ENTITIES
-    xor a
+    ld a, ENEMY_START_ENTITY_ID
     call swap_sprite_by_mask
 
     ld hl, gorilla_down_strike_collisions
@@ -346,18 +358,18 @@ manage_strike_state:
         ; Change Skin
         ld b, SWAP_MASK_SPRITE_DOWN_STRIKE_LEFT_STAND
         ld c, GORILLA_NUM_ENTITIES/2
-        xor a
+        ld a, ENEMY_START_ENTITY_ID
         call swap_sprite_by_mask
 
         ld b, SWAP_MASK_SPRITE_DOWN_STRIKE_RIGHT_STAND
-        ld a, GORILLA_NUM_ENTITIES/2
-        ld c, a
+        ld c, GORILLA_NUM_ENTITIES/2
+        ld a, ENEMY_START_ENTITY_ID + GORILLA_NUM_ENTITIES/2
         call swap_sprite_by_mask
 
-        ld a, GORILLA_NUM_ENTITIES/2
-        ld c, a
-        call flip_gorilla_x
-        call swap_x_right_half_gorilla_entity
+        ld c, GORILLA_NUM_ENTITIES/2
+        ld a, ENEMY_START_ENTITY_ID + GORILLA_NUM_ENTITIES/2
+        call flip_boss_x
+        call swap_x_right_half_boss_entity
 
         ld hl, gorilla_stand_collisions
         ld c, GORILLA_NUM_ENTITIES
@@ -371,7 +383,7 @@ manage_strike_state:
 
         ld b, SWAP_MASK_SPRITE_STRIKE
         ld c, GORILLA_NUM_ENTITIES
-        xor a
+        ld a, ENEMY_START_ENTITY_ID
         call swap_sprite_by_mask
 
         ld hl, gorilla_up_strike_collisions
@@ -401,7 +413,7 @@ manage_stand_1_state:
     ld bc, JUMP_IMPULSE_STAGE_1_Y
     ld de, JUMP_IMPULSE_STAGE_1_X
 
-    ld a, [gorilla_looking_dir]
+    ld a, [boss_looking_dir]
     or a
     call nz, positive_to_negative_DE
     ld a, GORILLA_NUM_ENTITIES
@@ -409,7 +421,7 @@ manage_stand_1_state:
 
     ld b, SWAP_MASK_SPRITE_STAND_JUMP
     ld c, GORILLA_NUM_ENTITIES
-    xor a
+    ld a, ENEMY_START_ENTITY_ID
     call swap_sprite_by_mask
 
     ld hl, gorilla_jump_collisions
@@ -418,21 +430,26 @@ manage_stand_1_state:
     ret
 
 manage_jump_1_state:
-    call check_wall
+    call take_mid_boss_entity
+    call check_wall_for_boss
     jr c, .no_wall_collision
     .wall_collision:
-        call reset_vel_x
-        call rotate_gorilla_x
+        ld d, GORILLA_NUM_ENTITIES
+        call reset_group_vel_x
+        ld c, GORILLA_NUM_ENTITIES
+        call rotate_boss_x
 
 
     .no_wall_collision:
-    call check_ground
+    call check_ground_for_boss
     ret c
 
     call throw_rocks
 
-    call reset_vel
-    call reset_gravity
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_vel
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_acc_y
 
     ld hl, gorilla_state
     ld [hl], GORILLA_STAND_STATE
@@ -442,7 +459,7 @@ manage_jump_1_state:
 
     ld b, SWAP_MASK_SPRITE_STAND_JUMP
     ld c, GORILLA_NUM_ENTITIES
-    xor a
+    ld a, ENEMY_START_ENTITY_ID
     call swap_sprite_by_mask
 
     ld hl, gorilla_stand_collisions
@@ -454,7 +471,7 @@ manage_jump_1_state:
 
 throw_rocks:
     ;spawn rocks
-    call take_mid_gorilla_entity
+    call take_mid_boss_entity
     call man_entity_locate_v2
     inc h
     ld a, [hl+]
@@ -518,224 +535,6 @@ drop_stalactites:
     ld bc, STALACTITES_GRAVITY
     ld d, NUMBER_OF_STALACTITES_PER_STRIKE
     call change_entity_group_acc_y
-
-    ret
-
-
-
-take_mid_gorilla_entity:
-    ld a, [gorilla_looking_dir]
-    or a
-    jr nz, .looking_left
-    .looking_right:
-        ld a, ENEMY_START_ENTITY_ID + 4
-        ret
-    .looking_left:
-        ld a, ENEMY_START_ENTITY_ID + 1
-        ret
-
-
-check_ground:
-    ld a, ENEMY_START_ENTITY_ID + 2
-    call man_entity_locate_v2
-    inc h
-    inc h
-    inc h
-    ld a, [hl]
-    bit 7, a
-    jr z, .falling
-    scf
-    ret
-
-    .falling:
-    dec h
-    dec h
-    ld a, [hl]
-    cp GROUND_Y
-    ret
-
-
-check_wall:
-    call take_mid_gorilla_entity
-    call man_entity_locate_v2
-    inc h
-    inc l
-    ld c, [hl]
-    ld a, [gorilla_looking_dir]
-    or a
-    jr nz, .looking_left
-    .looking_right:
-        ld a, c
-        add SPRITE_WIDTH*2
-        ld c, WALL_RIGHT_X
-        cp c
-        ret
-
-    .looking_left:
-        ld a, c
-        sub SPRITE_WIDTH*2
-        ld c, a
-        ld a, WALL_LEFT_X
-        cp c
-        ret
-
-
-reset_vel_x:
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld bc, 0
-    ld d, GORILLA_NUM_ENTITIES
-    call change_entity_group_vel_x
-    ret
-
-reset_vel_y:
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld bc, 0
-    ld d, GORILLA_NUM_ENTITIES
-    call change_entity_group_vel_y
-    ret
-
-reset_vel:
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld bc, 0
-    ld de, 0
-    ld a, GORILLA_NUM_ENTITIES
-    call change_entity_group_vel
-    ret
-
-reset_gravity:
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld bc, 0
-    ld d, GORILLA_NUM_ENTITIES
-    call change_entity_group_acc_y
-    ret
-
-
-; ======= ANIMATIONS =========
-; INPUT
-;  b -> swap_mask
-;  c -> num_entities
-;  a -> entity_offset
-swap_sprite_by_mask:
-    ld de, CMP_SIZE
-    add ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    inc h
-    inc l
-    inc l
-    .loop:
-        ld a, [hl]
-        xor b
-        ld [hl], a
-
-        add hl, de
-        dec c
-        jr nz, .loop
-
-    ret
-
-
-rotate_gorilla_x::
-    ld c, GORILLA_NUM_ENTITIES
-    xor a
-    call flip_gorilla_x
-    call swap_x_gorilla_entity
-
-    ld a, [gorilla_looking_dir]
-    xor 1
-    ld [gorilla_looking_dir], a
-
-    ret
-
-; INPUT
-;  c -> num_entities
-;  a -> entity_offset
-flip_gorilla_x:
-    add a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    inc h
-    inc l
-    inc l
-    inc l
-    
-    .loop:
-        ld a, [hl]
-        xor SPRITE_ATTR_FLIP_X_MASK
-        ld [hl], a       
-         
-        ld de, CMP_SIZE
-        add hl, de
-
-        dec c
-        jr nz, .loop
-
-    ret
-
-swap_x_right_half_gorilla_entity:
-    ld a, ENEMY_START_ENTITY_ID + 4
-    call man_entity_locate_v2
-    ld d, h
-    ld e, l
-
-    ld a, ENEMY_START_ENTITY_ID + 5
-    call man_entity_locate_v2
-
-    call swap_2_entities_positions 
-
-    ld a, ENEMY_START_ENTITY_ID + 6
-    call man_entity_locate_v2
-    ld d, h
-    ld e, l
-
-    ld a, ENEMY_START_ENTITY_ID + 7
-    call man_entity_locate_v2
-
-    call swap_2_entities_positions 
-    ret
-
-swap_x_gorilla_entity:
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    ld d, h
-    ld e, l
-
-    ld a, ENEMY_START_ENTITY_ID + 5
-    call man_entity_locate_v2
-
-    call swap_2_entities_positions
-
-    ld a, ENEMY_START_ENTITY_ID + 1
-    call man_entity_locate_v2
-    ld d, h
-    ld e, l
-
-    ld a, ENEMY_START_ENTITY_ID + 4
-    call man_entity_locate_v2
-
-    call swap_2_entities_positions 
-
-    ld a, ENEMY_START_ENTITY_ID + 2
-    call man_entity_locate_v2
-    ld d, h
-    ld e, l
-
-    ld a, ENEMY_START_ENTITY_ID + 7
-    call man_entity_locate_v2
-
-    call swap_2_entities_positions 
-
-    ld a, ENEMY_START_ENTITY_ID + 3
-    call man_entity_locate_v2
-    ld d, h
-    ld e, l
-
-    ld a, ENEMY_START_ENTITY_ID + 6
-    call man_entity_locate_v2
-
-    call swap_2_entities_positions 
 
     ret
 

@@ -1,1 +1,276 @@
-;;En este archivo habrán funciones generales para los bosses
+INCLUDE "consts.inc"
+
+SECTION "General boss variables", WRAM0
+boss_looking_dir:: DS 1 ; 0:rigth | 1:left
+
+
+SECTION "General boss code", ROM0
+
+; RETURN
+;  a -> entity id
+take_mid_boss_entity::
+	ld a, [boss_looking_dir]
+    or a
+    jr nz, .looking_left
+    .looking_right:
+        ld a, ENEMY_START_ENTITY_ID + 4
+        ret
+    .looking_left:
+        ld a, ENEMY_START_ENTITY_ID + 1
+        ret
+
+; RETURN
+;  flags -> c:not_on_ground | nc:on_ground
+check_ground_for_boss::
+    ld a, ENEMY_START_ENTITY_ID + 2
+    call man_entity_locate_v2
+    inc h
+    inc h
+    inc h
+    ld a, [hl]
+    bit 7, a
+    jr z, .falling
+    scf
+    ret
+
+    .falling:
+    dec h
+    dec h
+    ld a, [hl]
+    cp GROUND_Y
+    ret
+
+; INPUT
+;  a -> mid_entity_id
+; RETURN
+;  
+check_wall_for_boss::
+    
+	;======== Llamar fuera ========
+    ;call take_mid_boss_entity
+    call man_entity_locate_v2
+    inc h
+    inc l
+    ld c, [hl]
+    ld a, [boss_looking_dir]
+    or a
+    jr nz, .looking_left
+    .looking_right:
+        ld a, c
+        add SPRITE_WIDTH*2
+        ld c, WALL_RIGHT_X
+        cp c
+        ret
+
+    .looking_left:
+        ld a, c
+        sub SPRITE_WIDTH*2
+        ld c, a
+        ld a, WALL_LEFT_X
+        cp c
+        ret
+
+; ======= ANIMATIONS =========
+; INPUT
+;  b -> swap_mask
+;  c -> num_entities
+;  a -> entity_id
+swap_sprite_by_mask::
+    ld de, CMP_SIZE
+    ; Llamar desde fuera
+    ;add ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc h
+    inc l
+    inc l
+    .loop:
+        ld a, [hl]
+        xor b
+        ld [hl], a
+
+        add hl, de
+        dec c
+        jr nz, .loop
+
+    ret
+
+; INPUT
+;  c-> num_entities
+rotate_boss_x::
+    ;Llamar desde fuera
+    ;ld c, GORILLA_NUM_ENTITIES
+    ld a, ENEMY_START_ENTITY_ID
+    call flip_boss_x
+    call swap_x_boss_entity
+
+    ld a, [boss_looking_dir]
+    xor 1
+    ld [boss_looking_dir], a
+
+    ret
+
+; INPUT
+;  c-> num_entities
+rotate_boss_y::
+    ;Llamar desde fuera
+    ;ld c, GORILLA_NUM_ENTITIES
+    ld a, ENEMY_START_ENTITY_ID
+    call flip_boss_y
+    call swap_y_boss_entity
+
+    ret
+
+; INPUT
+;  c -> num_entities
+;  a -> entity_id
+flip_boss_x::
+    call man_entity_locate_v2
+    inc h
+    inc l
+    inc l
+    inc l
+    
+    .loop:
+        ld a, [hl]
+        xor SPRITE_ATTR_FLIP_X_MASK
+        ld [hl], a       
+         
+        ld de, CMP_SIZE
+        add hl, de
+
+        dec c
+        jr nz, .loop
+
+    ret
+
+; INPUT
+;  c -> num_entities
+;  a -> entity_id
+flip_boss_y::
+    call man_entity_locate_v2
+    inc h
+    inc l
+    inc l
+    inc l
+    
+    .loop:
+        ld a, [hl]
+        xor SPRITE_ATTR_FLIP_Y_MASK
+        ld [hl], a       
+         
+        ld de, CMP_SIZE
+        add hl, de
+
+        dec c
+        jr nz, .loop
+
+    ret
+
+swap_x_right_half_boss_entity::
+    ld a, ENEMY_START_ENTITY_ID + 4
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 5
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ld a, ENEMY_START_ENTITY_ID + 6
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 7
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+    ret
+
+swap_x_boss_entity::
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 5
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions
+
+    ld a, ENEMY_START_ENTITY_ID + 1
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 4
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ld a, ENEMY_START_ENTITY_ID + 2
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 7
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ld a, ENEMY_START_ENTITY_ID + 3
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 6
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ret
+
+
+swap_y_boss_entity::
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 2
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions
+
+    ld a, ENEMY_START_ENTITY_ID + 1
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 3
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ld a, ENEMY_START_ENTITY_ID + 4
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 6
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ld a, ENEMY_START_ENTITY_ID + 5
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+
+    ld a, ENEMY_START_ENTITY_ID + 7
+    call man_entity_locate_v2
+
+    call swap_2_entities_positions 
+
+    ret

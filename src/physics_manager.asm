@@ -352,6 +352,36 @@ velocity_changers:
         jr nz, change_entity_group_vel_x
         ret
 
+
+    ; INPUT 
+    ;  d -> group_size
+    reset_group_vel_x:
+        ld a, ENEMY_START_ENTITY_ID
+        call man_entity_locate_v2
+        ld bc, 0
+        call change_entity_group_vel_x
+        ret
+
+    ; INPUT 
+    ;  d -> group_size
+    reset_group_vel_y:
+        ld a, ENEMY_START_ENTITY_ID
+        call man_entity_locate_v2
+        ld bc, 0
+        call change_entity_group_vel_y
+        ret
+
+    ; INPUT 
+    ;  d -> group_size
+    reset_group_vel:
+        ld a, ENEMY_START_ENTITY_ID
+        call man_entity_locate_v2
+        ld a, d
+        ld bc, 0
+        ld de, 0
+        call change_entity_group_vel
+        ret
+
 acceleration_changers:
     ; INPUT
     ;  bc -> a_y_high, a_y_low 
@@ -442,6 +472,15 @@ acceleration_changers:
 
         dec d
         jr nz, change_entity_group_acc_x
+        ret
+
+    ; INPUT 
+    ;  d -> group_size
+    reset_group_acc_y:
+        ld a, ENEMY_START_ENTITY_ID
+        call man_entity_locate_v2
+        ld bc, 0
+        call change_entity_group_acc_y
         ret
 
 

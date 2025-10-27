@@ -5,7 +5,6 @@ SECTION "Spider Variables", WRAM0
 spider_state::             DS 1 ; 0:roof | 1:falling | 2:stunned | 3:jump_to_stand | 4:stand | 5:jumping | 6:going_up
 spider_shot_cooldown::     DS 1
 spider_state_counter::     DS 1
-spider_looking_dir::       DS 1 ; 0:rigth | 1:left
 spider_animation_counter:: DS 1 
 spider_stage::             DS 1 ; 0:fase 0 | 1:fase 1
 
@@ -33,11 +32,11 @@ spider_logic::
 	cp SPIDER_JUMP_STATE
 	jr z, .jump_state
 
-	cp SPIDER_GO_UP_STATE
-	jr z, .go_up_state	
-
 	cp SPIDER_WAIT_STATE
 	jr z, .wait_state
+
+	cp SPIDER_GO_UP_STATE
+	jr z, .go_up_state	
 
 	.roof_state:
 		call manage_roof_state
@@ -63,13 +62,12 @@ spider_logic::
 		call manage_jump_state
 		ret
 
-	.go_up_state:
-		call manage_go_up_state
-		ret
-
 	.wait_state:
 		call manage_wait_state
 		ret
+
+	.go_up_state:
+		call manage_go_up_state
 
 	ret
 
@@ -100,12 +98,68 @@ manage_roof_state:
 	ld [spider_state], a
 
 	call transition_roof_to_fall
-	call set_spider_fall_sprites
+	
+	call reset_walk_anim
+	call reset_mouth_anim
+	
+	ld a, SPIDER_WEB_HOOK_ENTITY_ID
+	ld b, SWAP_MASK_SPRITE_WEB_HOOK
+	ld c, 2
+	call swap_sprite_by_mask
+
+	ld a, SPIDER_WEB_HOOK_ENTITY_ID
+	call man_entity_locate_v2
+    ld bc, 0
+	ld d, 2
+    call change_entity_group_vel_x
+
+	ld a, ENEMY_START_ENTITY_ID
+	ld b, SWAP_MASK_SPRITE_ROOF_LEFT_JUMP
+	ld c, SPIDER_NUM_ENTITIES/2
+	call swap_sprite_by_mask
+
+	ld a, ENEMY_START_ENTITY_ID + SPIDER_NUM_ENTITIES/2
+	ld b, SWAP_MASK_SPRITE_ROOF_RIGHT_JUMP
+	ld c, SPIDER_NUM_ENTITIES/2
+	call swap_sprite_by_mask
+
+	ld c, SPIDER_NUM_ENTITIES/2
+    ld a, ENEMY_START_ENTITY_ID + SPIDER_NUM_ENTITIES/2
+    call flip_boss_x
+    call swap_x_right_half_boss_entity
+	
+	ld c, SPIDER_NUM_ENTITIES
+	call rotate_boss_y
 
 	; TODO: Hacer que vaya en función de la vida
 	ld hl, spider_stage
 	ld [hl], $01
 
+	ret
+
+
+reset_walk_anim:
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	inc l
+	inc l
+	ld a, [hl]
+	cp ENEMY_START_TILE_ID
+	ret z
+	call animate_legs_roof
+	ret
+
+reset_mouth_anim:
+	ld a, ENEMY_START_ENTITY_ID + 3
+	call man_entity_locate_v2
+	inc h
+	inc l
+	inc l
+	ld a, [hl]
+	cp ENEMY_START_TILE_ID + 6
+	ret z
+	call anim_shut_spider_mouth
 	ret
 
 manage_fall_state:
@@ -146,7 +200,13 @@ manage_stun_state:
 	ld a, SPIDER_JUMP_TO_STAND_STATE
 	ld [spider_state], a
 
-	call change_spider_sprites_from_fall_to_ground
+	ld a, ENEMY_START_ENTITY_ID
+	ld b, SWAP_MASK_SPRITE_JUMP_STAND
+	ld c, SPIDER_NUM_ENTITIES
+	call swap_sprite_by_mask
+
+	ld c, SPIDER_NUM_ENTITIES
+	call rotate_boss_y
 
 	ld a, ENEMY_START_ENTITY_ID
 	call man_entity_locate_v2
@@ -160,8 +220,9 @@ manage_stun_state:
 	ld d, SPIDER_NUM_ENTITIES
 	call change_entity_group_acc_y
 
-	ld hl, spider_looking_dir
+	ld hl, boss_looking_dir
 	ld [hl], SPIDER_LOOKING_RIGHT
+
 
 	ret
 
@@ -224,7 +285,10 @@ manage_stand_state:
 		ld a, SPIDER_JUMP_STATE
 		ld [spider_state], a
 
-		call change_spider_sprites_from_ground_to_jump
+		ld a, ENEMY_START_ENTITY_ID
+		ld c, SPIDER_NUM_ENTITIES
+		ld b, SWAP_MASK_SPRITE_JUMP_STAND
+		call swap_sprite_by_mask
 
 		; Do jump
 		ld a, ENEMY_START_ENTITY_ID
@@ -232,7 +296,7 @@ manage_stand_state:
 
 
 		ld de, SPIDER_JUMP_IMPULSE_X
-		ld a, [spider_looking_dir]
+		ld a, [boss_looking_dir]
 		or a
 		jr z, .jump_right
 		.jump_left:
@@ -277,13 +341,13 @@ manage_jump_state:
 	cp b
 	jr c, .player_to_the_left
 	.player_to_the_right:
-		ld a, [spider_looking_dir]
+		ld a, [boss_looking_dir]
 		or a
 		ret z
 		jr .stop_x_vel
 
 	.player_to_the_left:
-		ld a, [spider_looking_dir]
+		ld a, [boss_looking_dir]
 		or a
 		ret nz
 
@@ -296,7 +360,10 @@ manage_jump_state:
 	ret
 
 	.on_ground:
-	call change_spider_sprites_from_jump_to_ground
+	ld a, ENEMY_START_ENTITY_ID
+	ld c, SPIDER_NUM_ENTITIES
+	ld b, SWAP_MASK_SPRITE_JUMP_STAND
+	call swap_sprite_by_mask
 
 	ld a, ENEMY_START_ENTITY_ID
 	call man_entity_locate_v2
@@ -341,23 +408,23 @@ manage_wait_state:
 	jr c, .jump_right
 	.jump_left:
 		call positive_to_negative_DE
-		ld a, [spider_looking_dir]
+		ld a, [boss_looking_dir]
 		or a
 		jr nz, .do_jump
 		push de
 		push bc
-		call change_spider_looking_dir
+		call change_boss_looking_dir
 		pop bc
 		pop de
 		jr .do_jump
 
 	.jump_right:
-		ld a, [spider_looking_dir]
+		ld a, [boss_looking_dir]
 		or a
 		jr z, .do_jump
 		push de
 		push bc
-		call change_spider_looking_dir
+		call change_boss_looking_dir
 		pop bc
 		pop de
 
@@ -374,7 +441,11 @@ manage_wait_state:
 	ld bc, SPIDER_GO_UP_GRAVITY
 	ld d, SPIDER_NUM_ENTITIES
 	call change_entity_group_acc_y
-	call change_spider_sprites_from_ground_to_jump
+
+	ld a, ENEMY_START_ENTITY_ID
+	ld b, SWAP_MASK_SPRITE_JUMP_STAND
+	ld c, SPIDER_NUM_ENTITIES
+	call swap_sprite_by_mask
 
 	ret
 
@@ -387,28 +458,48 @@ manage_go_up_state:
 	cp SPIDER_SPAWN_POINT_Y
 	ret nc
 
-	ld a, ENEMY_START_ENTITY_ID
-	call man_entity_locate_v2
-	ld bc, 0
-	ld de, 0
-	ld a, SPIDER_ROOF_NUM_ENTITIES
-	call change_entity_group_vel
-
-	ld a, ENEMY_START_ENTITY_ID
-	call man_entity_locate_v2
-	ld bc, 0
-	ld d, SPIDER_ROOF_NUM_ENTITIES
-	call change_entity_group_acc_y
-
-	call set_spider_roof_sprites
-
 	; Swap if looking left
-	ld a, [spider_looking_dir]
+	ld a, [boss_looking_dir]
 	or a
-	jr z, .do_not_swap
-	.swap_x:
-		call swap_x_spider_entity
-	.do_not_swap:
+	jr z, .skip_rotation
+	.rotate_x:
+	ld c, SPIDER_NUM_ENTITIES
+	call rotate_boss_x
+	.skip_rotation:
+	
+	ld d, SPIDER_NUM_ENTITIES
+	call reset_group_vel
+
+	ld d, SPIDER_NUM_ENTITIES
+	call reset_group_acc_y
+
+	ld a, ENEMY_START_ENTITY_ID
+	ld b, SWAP_MASK_SPRITE_ROOF_LEFT_JUMP
+	ld c, SPIDER_NUM_ENTITIES/2
+	call swap_sprite_by_mask
+
+	call wait_vblank
+	call man_entity_draw
+	call wait_vblank
+
+	ld a, ENEMY_START_ENTITY_ID + SPIDER_NUM_ENTITIES/2
+	ld b, SWAP_MASK_SPRITE_ROOF_RIGHT_JUMP
+	ld c, SPIDER_NUM_ENTITIES/2
+	call swap_sprite_by_mask
+
+		call wait_vblank
+	call man_entity_draw
+	call wait_vblank
+
+	ld c, SPIDER_NUM_ENTITIES/2
+    ld a, ENEMY_START_ENTITY_ID + SPIDER_NUM_ENTITIES/2
+    call flip_boss_x
+    call swap_x_right_half_boss_entity
+
+    	call wait_vblank
+	call man_entity_draw
+	call wait_vblank
+
 
 	ld hl, spider_state
 	ld [hl], SPIDER_ROOF_STATE
@@ -416,14 +507,18 @@ manage_go_up_state:
 	ld hl, spider_shot_cooldown
 	ld [hl], SPIDER_ROOF_STATE_SHOT_COOLDOWN
 
-	;DEBUG: reset damage
+	ld a, SPIDER_WEB_HOOK_ENTITY_ID
+	ld b, SWAP_MASK_SPRITE_WEB_HOOK
+	ld c, SPIDER_NUM_ENTITIES
+	call swap_sprite_by_mask
+
+	; === DEBUG ===
+	;Reset flag
 	ld a, ENEMY_START_ENTITY_ID
 	call man_entity_locate_v2
 	inc l
 	inc l
-	ld [hl], 0
-
-	call set_web_hook_entities
+	res 3, [hl]
 
 	ret
 
@@ -440,8 +535,7 @@ manage_roof_animation:
 	ret
 
 animate_legs_roof:
-	ld bc, $08 ; offset entre patas del mismo lado
-	ld de, $0C ; offset para cambiar de lado
+	ld bc, CMP_SIZE*2 ; offset entre patas del mismo lado
 
 	ld a, ENEMY_START_ENTITY_ID
 	call man_entity_locate_v2
@@ -459,7 +553,7 @@ animate_legs_roof:
 	xor SPIDER_ROOF_ANIM_MASK_LOWER_LEGS
 	ld [hl], a
 
-	add hl, de
+	add hl, bc
 
 	ld a, [hl]
 	xor SPIDER_ROOF_ANIM_MASK_UPPER_LEGS
@@ -471,227 +565,6 @@ animate_legs_roof:
 	xor SPIDER_ROOF_ANIM_MASK_LOWER_LEGS
 	ld [hl], a
 
-	ret
-
-set_web_hook_entities:
-	ld a, ENEMY_START_ENTITY_ID + 1
-	call man_entity_locate_v2
-	inc h	
-	inc l
-
-	ld d, SPIDER_SPAWN_POINT_Y - SPRITE_HEIGHT
-	ld e, [hl]
-
-	ld a, SPIDER_WEB_HOOK_ENTITY_ID
-	call man_entity_locate_v2
-	inc h
-	ld [hl], d
-	inc l
-	ld [hl], e
-	inc l
-	ld [hl], SPIDER_WEB_HOOK_TILE_ID
-	inc l
-	ld [hl], SPRITE_ATTR_NO_FLIP
-
-	ld a, e
-	add SPRITE_WIDTH
-	ld e, a
-
-	inc l
-	ld [hl], d
-	inc l
-	ld [hl], e
-	inc l
-	ld [hl], SPIDER_WEB_HOOK_TILE_ID + 2
-	inc l
-	ld [hl], SPRITE_ATTR_NO_FLIP
-
-	ret
-
-set_spider_roof_sprites:
-	ld de, CMP_SIZE
-	ld b, SPIDER_SPAWN_POINT_Y
-	ld c, SPIDER_SPAWN_POINT_Y + SPRITE_HEIGHT
-	
-	; upper legs
-	ld a, ENEMY_START_ENTITY_ID
-	call man_entity_locate_v2
-	inc h
-
-	ld [hl], b
-	inc l
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID
-	inc l
-	ld [hl], SPRITE_ATTR_NO_FLIP
-
-	add hl, de
-
-	ld [hl], SPRITE_ATTR_NO_FLIP
-	dec l
-	ld [hl], ENEMY_START_TILE_ID + 2
-	dec l 
-	dec l
-	ld [hl], b
-
-	add hl, de
-
-	ld [hl], c
-	inc l
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID + 4
-	inc l
-	ld [hl], SPRITE_ATTR_NO_FLIP
-
-	add hl, de
-
-	ld [hl], SPRITE_ATTR_NO_FLIP
-	dec l
-	ld [hl], ENEMY_START_TILE_ID + 6
-	dec l 
-	dec l
-	ld [hl], c
-
-	; === RIGHT PART ===
-
-	add hl, de
-
-	ld [hl], b
-	inc l
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID + 2
-	inc l
-	ld [hl], SPRITE_ATTR_FLIP_X
-
-	add hl, de
-
-	ld [hl], SPRITE_ATTR_FLIP_X
-	dec l
-	ld [hl], ENEMY_START_TILE_ID
-	dec l 
-	dec l
-	ld [hl], b
-
-	add hl, de
-
-	ld [hl], c
-	inc l
-	inc l 
-	ld [hl], ENEMY_START_TILE_ID + 6
-	inc l
-	ld [hl], SPRITE_ATTR_FLIP_X
-
-	add hl, de
-
-	ld [hl], SPRITE_ATTR_FLIP_X
-	dec l
-	ld [hl], ENEMY_START_TILE_ID + 4
-	dec l 
-	dec l
-	ld [hl], c
-
-	ret
-
-set_spider_fall_sprites:
-	ld c, SPIDER_JUMP_STATE_TILE_ID
-	ld b, SPIDER_NUM_ENTITIES
-
-	ld d, ENEMY_START_ENTITY_ID
-	.loop:
-		ld a, d
-		call man_entity_locate_v2
-
-		; Go to tile compoent
-		inc h
-		inc l
-		inc l
-		ld [hl], c
-
-		; Go to ATTR
-		inc l
-		ld [hl], %11000000
-		
-		; Go to next tile ID
-		inc c
-		inc c
-
-		inc d
-
-		dec b
-		jr nz, .loop
-
-	call swap_y_spider_entity
-	ret
-
-change_spider_sprites_from_fall_to_ground:
-	ld c, 16 ; gap between entity tiles
-	ld b, SPIDER_NUM_ENTITIES
-
-	ld d, ENEMY_START_ENTITY_ID
-	.loop:
-		ld a, d
-		call man_entity_locate_v2
-
-		; Go to tile compoent
-		inc h
-		inc l
-		inc l
-		ld a, [hl]
-		sub c
-		ld [hl+], a
-		ld [hl], %10000000
-
-		inc d
-
-		dec b
-		jr nz, .loop
-
-	call swap_y_spider_entity
-	ret
-
-change_spider_sprites_from_ground_to_jump:
-	ld c, 16 ; gap between entity tiles
-	ld b, SPIDER_NUM_ENTITIES
-
-	ld d, ENEMY_START_ENTITY_ID
-	.loop:
-		ld a, d
-		call man_entity_locate_v2
-
-		; Go to tile compoent
-		inc h
-		inc l
-		inc l
-		ld a, [hl]
-		add c
-		ld [hl], a
-
-		inc d
-		dec b
-		jr nz, .loop
-
-	ret
-
-change_spider_sprites_from_jump_to_ground:
-	ld c, 16 ; gap between entity tiles
-	ld b, SPIDER_NUM_ENTITIES
-
-	ld d, ENEMY_START_ENTITY_ID
-	.loop:
-		ld a, d
-		call man_entity_locate_v2
-
-		; Go to tile compoent
-		inc h
-		inc l
-		inc l
-		ld a, [hl]
-		sub c
-		ld [hl], a
-
-		inc d
-		dec b
-		jr nz, .loop
 	ret
 
 make_sure_spider_looks_at_player:
@@ -711,176 +584,47 @@ make_sure_spider_looks_at_player:
 	cp b
 	jr c, .player_to_the_left
 	.player_to_the_right:
-		ld a, [spider_looking_dir]
+		ld a, [boss_looking_dir]
 		cp 0
 		ret z
 		jr .change_dir
 
 	.player_to_the_left:
-		ld a, [spider_looking_dir]
+		ld a, [boss_looking_dir]
 		cp 1
 		ret z
 
 	.change_dir:
-	call change_spider_looking_dir
+	call change_boss_looking_dir
 
 	ret
 
-change_spider_looking_dir:
-	call swap_x_spider_entity
-	call flip_spider_x
-	; Invertir el bit
-	ld a, [spider_looking_dir]
-	xor 1
-	ld [spider_looking_dir], a
-
-	ret
-
-swap_y_spider_entity:
-	ld a, ENEMY_START_ENTITY_ID
-	call man_entity_locate_v2
-	ld d, h
-	ld e, l
-
-	ld a, ENEMY_START_ENTITY_ID + 2
-	call man_entity_locate_v2
-
-	call swap_2_entities_positions 
-
-	ld a, ENEMY_START_ENTITY_ID + 1
-	call man_entity_locate_v2
-	ld d, h
-	ld e, l
-
-	ld a, ENEMY_START_ENTITY_ID + 3
-	call man_entity_locate_v2
-
-	call swap_2_entities_positions 
-
-	ld a, ENEMY_START_ENTITY_ID + 4
-	call man_entity_locate_v2
-	ld d, h
-	ld e, l
-
-	ld a, ENEMY_START_ENTITY_ID + 6
-	call man_entity_locate_v2
-
-	call swap_2_entities_positions 
-
-	ld a, ENEMY_START_ENTITY_ID + 5
-	call man_entity_locate_v2
-	ld d, h
-	ld e, l
-
-	ld a, ENEMY_START_ENTITY_ID + 7
-	call man_entity_locate_v2
-
-	call swap_2_entities_positions 
-
-	ret
-
-swap_x_spider_entity:
-	ld a, ENEMY_START_ENTITY_ID
-	call man_entity_locate_v2
-	ld d, h
-	ld e, l
-
-	ld a, ENEMY_START_ENTITY_ID + 5
-	call man_entity_locate_v2
-
-	call swap_2_entities_positions
-
-	ld a, ENEMY_START_ENTITY_ID + 1
-	call man_entity_locate_v2
-	ld d, h
-	ld e, l
-
-	ld a, ENEMY_START_ENTITY_ID + 4
-	call man_entity_locate_v2
-
-	call swap_2_entities_positions 
-
-	ld a, ENEMY_START_ENTITY_ID + 2
-	call man_entity_locate_v2
-	ld d, h
-	ld e, l
-
-	ld a, ENEMY_START_ENTITY_ID + 7
-	call man_entity_locate_v2
-
-	call swap_2_entities_positions 
-
-	ld a, ENEMY_START_ENTITY_ID + 3
-	call man_entity_locate_v2
-	ld d, h
-	ld e, l
-
-	ld a, ENEMY_START_ENTITY_ID + 6
-	call man_entity_locate_v2
-
-	call swap_2_entities_positions 
-
-	ret
-
-flip_spider_x:
-	ld a, ENEMY_START_ENTITY_ID
-	call man_entity_locate_v2
-	inc h
-	inc l
-	inc l
-	inc l
+change_boss_looking_dir:
 	ld c, SPIDER_NUM_ENTITIES
-	bit SPRITE_ATTR_FLIP_X_BIT, [hl]
-	jr z, .set_flip_x
-	.reset_flip_x:
-		ld a, 0
-		jr .loop
-	.set_flip_x:
-		ld a, 1
-	
-	.loop:
-		or a
-		jr nz, .set
-		.reset:
-			res SPRITE_ATTR_FLIP_X_BIT, [hl]
-			jr .next_entity
-		.set:
-			set SPRITE_ATTR_FLIP_X_BIT, [hl]
-
-		.next_entity:
-		ld de, CMP_SIZE
-		add hl, de
-
-		dec c
-		jr nz, .loop
+	call rotate_boss_x
+	; Invertir el bit
+	ld a, [boss_looking_dir]
+	xor 1
+	ld [boss_looking_dir], a
 
 	ret
 
 transition_roof_to_fall:
+
+	; Reset X vel and apply knockback
 	ld a, ENEMY_START_ENTITY_ID
 	call man_entity_locate_v2
-
 	ld bc, SPIDER_FALLING_IMPULSE
 	ld de, $00
 	ld a, SPIDER_NUM_ENTITIES
-
 	call change_entity_group_vel
 
-
+	; Apply gravity
 	ld a, ENEMY_START_ENTITY_ID
 	call man_entity_locate_v2
-
 	ld bc, SPIDER_FALLING_GRAVITY
 	ld d, SPIDER_NUM_ENTITIES
-
 	call change_entity_group_acc_y
-
-
-	ld a, SPIDER_WEB_HOOK_ENTITY_ID 
-	call man_entity_locate_v2
-	inc h
-	ld b, CMP_SIZE*2
-	call memreset_256
 
 	ret
 
@@ -892,7 +636,7 @@ anim_open_spider_mouth:
 	inc l
 	ld [hl], SPIDER_OPEN_MOUTH_TILE_ID
 
-	ld a, ENEMY_START_ENTITY_ID + 6
+	ld a, ENEMY_START_ENTITY_ID + 7
 	call man_entity_locate_v2
 	inc h
 	inc l
@@ -900,7 +644,6 @@ anim_open_spider_mouth:
 	ld [hl], SPIDER_OPEN_MOUTH_TILE_ID
 
 	ret
-
 
 anim_shut_spider_mouth:
 	ld a, ENEMY_START_ENTITY_ID + 3
@@ -910,7 +653,7 @@ anim_shut_spider_mouth:
 	inc l
 	ld [hl], SPIDER_OPEN_MOUTH_TILE_ID-2
 
-	ld a, ENEMY_START_ENTITY_ID + 6
+	ld a, ENEMY_START_ENTITY_ID + 7
 	call man_entity_locate_v2
 	inc h
 	inc l
@@ -1024,7 +767,10 @@ spider_shot_ground_state_logic:
 	cp SPIDER_GROUND_STATE_SHOT_ANIM_TIME
 	ret nz
 
-	call change_spider_sprites_from_ground_to_jump
+	ld b, SWAP_MASK_SPRITE_JUMP_STAND
+	ld a, ENEMY_START_ENTITY_ID
+	ld c, SPIDER_NUM_ENTITIES
+	call swap_sprite_by_mask
 
 	ret
 
@@ -1038,7 +784,7 @@ spider_shot_ground_state_logic:
 		ld c, [hl]
 
 		; === SPAWN BULLET ===
-		ld a, [spider_looking_dir]
+		ld a, [boss_looking_dir]
 		or a
 		jr z, .shot_right
 		.shot_left:
@@ -1059,7 +805,10 @@ spider_shot_ground_state_logic:
 		inc l
 		ld [hl], SPIDER_GROUND_STATE_BULLET_GRAVITY
 
-		call change_spider_sprites_from_jump_to_ground
+		ld b, SWAP_MASK_SPRITE_JUMP_STAND
+        ld c, SPIDER_NUM_ENTITIES
+        ld a, ENEMY_START_ENTITY_ID
+        call swap_sprite_by_mask
 
 	ret
 
