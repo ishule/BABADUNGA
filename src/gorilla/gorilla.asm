@@ -207,12 +207,7 @@ init_gorilla::
 	call rotate_boss_x
 
 	; Init life
-	ld a, ENEMY_START_ENTITY_ID
-	call man_entity_locate_v2
-	inc h
-	inc h
-	inc l
-	inc l
+	ld hl, boss_health
 	ld [hl], GORILLA_LIFE
 
 
@@ -306,7 +301,14 @@ gorilla_init_info::
 	    ld [hl+], a                     ; guarda el nuevo valor
 
 	   	ld a, GORILLA_NUM_ENTITIES
-	    ld [hl+], a 	; Número sprites
+	    ld [hl], a 	; Número sprites
+
+	    inc h
+	    inc h
+	    ld [hl], 1
+	    dec h
+	    dec h
+	    inc l
 
 	    dec b 
 	    jr nz, .info_loop 

@@ -68,13 +68,7 @@ sys_gorilla_movement::
     ret
 
 check_stage_change:
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    inc h
-    inc h
-    inc l
-    inc l
-    ld a, [hl]
+    ld a, [boss_health]
     cp STAGE_CHANGE_LIFE
     ret nc
 

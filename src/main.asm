@@ -105,22 +105,6 @@ main::
       ld [player_health],a
       ret
 
-   ; a = health
-   ; b = damage
-   init_boss_stats::
-      ld [boss_health],a
-      push bc
-      ld a,TYPE_BOSS
-      call man_entity_locate_first_type
-      push hl
-      inc l
-      inc l
-      inc l
-      ld d,[hl]
-      pop hl
-      pop bc
-      call change_entity_group_dmg
-      ret
    init_snake_stats::
       xor a
       ld [boss_player_dead],a
