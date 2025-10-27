@@ -319,13 +319,21 @@ check_player_shot::
 		jr call_shot
 
 	.looking_up:
-		ld a, PLAYER_GUN_ENTITY_ID
+		ld a, PLAYER_BODY_ENTITY_ID
 		call man_entity_locate_v2
 		inc h
 		ld b, [hl]
 		inc l
 		ld c, [hl]
 		ld d, UP_SHOT_DIRECTION
+		
+		ld a, [player_orientation]
+		or a
+		jr z, .skip_transform
+		ld a, c
+		sub 7
+		ld c, a
+		.skip_transform:
 
 	call_shot:
 	push af
