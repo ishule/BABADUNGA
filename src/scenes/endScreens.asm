@@ -24,6 +24,7 @@ load_defeat_screen::
 		ld a, [joypad_input]
 		bit JOYPAD_START, a       ; Comprobar bit 7 (START)
 		jr z, .loop               ; Si no está presionado, continuar loop
+		call wait_time_vblank_24
 	ret
 
 load_win_screen::
@@ -46,4 +47,5 @@ load_win_screen::
 		ld a, [joypad_input]
 		bit JOYPAD_START, a       ; Comprobar bit 7 (START)
 		jr z, .loop               ; Si no está presionado, continuar loop
+		call wait_time_vblank_24
 	ret

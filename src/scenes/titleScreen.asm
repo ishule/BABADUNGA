@@ -9,6 +9,7 @@ load_title_screen::
 	call init_title_screen
 	call joypad_init
 	call turn_screen_on
+	call init_OAM
 	.loop:
 		;ld b,3
 		call wait_vblank
