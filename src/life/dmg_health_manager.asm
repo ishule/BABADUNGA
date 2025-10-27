@@ -9,43 +9,6 @@ player_dmg: ds 1
 SECTION "DmgHealthManager",ROM0
 
 
-;;;; b, nueva vida a poner
-;;;; hl -> entity start address
-change_entity_dmg::
-	ld h,CMP_PHYSICS_P_H
-	inc l
-	inc l
-	inc l
-	ld [hl],b
-    inc l
-	ret
-
-
-;;;; b, nueva vida a poner
-;;;; hl -> entity start address
-;;;; d -> group size
-change_entity_group_dmg::
-	call change_entity_dmg
-	dec d
-	jr nz,change_entity_group_dmg
-	ret
-
-
-change_player_dmg::
-
-	ld a,PLAYER_BODY_ENTITY_ID
-	call man_entity_locate_v2
-	ld a,[player_dmg]
-	ld d,PLAYER_SPRITES_SIZE
-	call change_entity_group_dmg
-	ret
-
-
-draw_player_health::
-
-	ret
-
-
 ; ==========================================================
 ; draw_hearts
 ; Draws half-hearts sequentially (L, R, L, R...) up to player_health.
