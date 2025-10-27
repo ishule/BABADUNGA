@@ -77,6 +77,14 @@ init_player_tiles::
 	ld b,4*VRAM_TILE_SIZE
 	call memcpy_256
 
+
+	;; Cargar Player_lookup en tile $18
+	call wait_vblank
+	ld hl,Player_life2
+	ld de,VRAM_TILE_DATA_START + ($1C*VRAM_TILE_SIZE)
+	ld b,4*VRAM_TILE_SIZE
+	call memcpy_256
+
 	ret
 
 ;;============================================================

@@ -87,7 +87,7 @@ init_pickups::
     ld a, b                 ; *** Load B into A ***
     ld [hl], a              ; Write X
     inc hl                    ; *** Manually increment HL ***
-    ld b, $12                 ; Tile ID
+    ld b, $1C                 ; Tile ID
     ld a, b                 ; *** Load B into A ***
     ld [hl], a              ; Write Tile
     inc hl                    ; *** Manually increment HL ***
@@ -106,7 +106,7 @@ init_pickups::
     ld a, b
     ld [hl], a
     inc hl
-    ld b, $13                 ; Tile ID
+    ld b, $1D                 ; Tile ID
     ld a, b
     ld [hl], a
     inc hl
