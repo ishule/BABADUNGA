@@ -24,7 +24,9 @@ load_gorilla_screen::
    call init_verja
    call init_invincibility
    call joypad_init
-
+   ld a,10
+   ld b,1
+   call init_boss_stats
    call init_bullets
    call draw_hearts
    .game_loop:

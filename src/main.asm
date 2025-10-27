@@ -104,6 +104,23 @@ main::
       ld a,10
       ld [player_health],a
       ret
+
+   ; a = health
+   ; b = damage
+   init_boss_stats::
+      ld [boss_health],a
+      push bc
+      ld a,TYPE_BOSS
+      call man_entity_locate_first_type
+      push hl
+      inc l
+      inc l
+      inc l
+      ld d,[hl]
+      pop hl
+      pop bc
+      call change_entity_group_dmg
+      ret
    init_snake_stats::
       xor a
       ld [boss_player_dead],a
@@ -122,16 +139,16 @@ main::
       set 0,a ; Para que solo entre aquí una vez
       ld [boss_player_dead],a
 
-
+      ld hl,map1
       call boss_dies_animation
       ; Desactivamos y desplazamos al boss
       call kill_boss
 
-      ld c,14
+      ;ld c,14
       .waitLoop
-      call wait_time_vblank_24
-      dec c
-      jr z,.waitLoop
+      ;call wait_time_vblank_24
+      ;dec c
+      ;jr z,.waitLoop
 
       ;Quitar verja derecha
       call open_door 

@@ -17,6 +17,7 @@ change_entity_dmg::
 	inc l
 	inc l
 	ld [hl],b
+    inc l
 	ret
 
 
@@ -24,11 +25,8 @@ change_entity_dmg::
 ;;;; hl -> entity start address
 ;;;; d -> group size
 change_entity_group_dmg::
-	push hl
 	call change_entity_dmg
-	pop hl
 	dec d
-	cp 0
 	jr nz,change_entity_group_dmg
 	ret
 

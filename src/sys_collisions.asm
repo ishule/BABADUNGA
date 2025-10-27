@@ -320,18 +320,36 @@ sys_collision_check_player_vs_boss::
 
     .collision_detected:
     ; ===== AQUÍ HAY COLISIÓN Y PUEDE RECIBIR DAÑO =====
-    ld h , d
-    ld l, e
+    
     ; 1. Quitar vida al jugador
+    push hl
+    push de
+    inc h ; Fisicas
+    inc h
+    inc l
+    inc l
+    inc l ; Daño
+    ld b, [hl]
     ld a,[player_health]
-    dec a
-    ld [player_health],a
+    cp b
+    jr c, .set_health_zero
+    sub b
+    jr .quitar_vida
+.set_health_zero:
+    xor a
+.quitar_vida:
+    ld [player_health], a
+    call sys_sound_hit_effect
+    pop de
+    pop hl
+
     call sys_sound_player_gets_hit_effect
     ; TODO: decrementar HP
     ; TODO: comprobar si HP = 0
     
     ; 2. Desactivar flag de daño
-
+    ld h , d
+    ld l, e
     ld h, CMP_INFO_H
     inc l 
     inc l               ; FLAGS
@@ -428,8 +446,14 @@ sys_collision_check_bullet_vs_boss::
     ; 1. Quitar vida al boss
     push hl
     push de
-    ld a, [boss_health]
-    ld b, 1         ; Daño de bala
+    inc d ; Fisicas
+    inc d
+    inc e
+    inc e
+    inc e ; Daño
+    ld a, [de]
+    ld b,a
+    ld a,[boss_health]
     cp b
     jr c, .set_health_zero
     sub b
@@ -506,7 +530,27 @@ sys_collision_check_bullet_vs_player::
     
     ; 1. Quitar vida al player
     ; TODO: decrementar player HP
-    
+    push hl
+    push de
+    inc d ; Fisicas
+    inc d
+    inc e
+    inc e
+    inc e ; Daño
+    ld a, [de]
+    ld b,a
+    ld a,[player_health]
+    cp b
+    jr c, .set_health_zero
+    sub b
+    jr .quitar_vida
+.set_health_zero:
+    xor a
+.quitar_vida:
+    ld [player_health], a
+    call sys_sound_hit_effect
+    pop de
+    pop hl
     ; 2. Desactivar flag del player
     ld h, d
     ld l, e
