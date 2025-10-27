@@ -842,6 +842,9 @@ sys_collision_check_entity_vs_tiles::
     cp 2
     jr z, touching_up_collision
 
+    cp 6
+    jr z, touching_up_collision
+
     ret
 
 
