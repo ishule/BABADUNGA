@@ -189,7 +189,9 @@ init_gorilla::
 	ld c, GORILLA_NUM_ENTITIES
 	call spawn_group_entity
 	
-	call gorilla_init_info
+	ld d, GORILLA_NUM_ENTITIES
+	ld e, GORILLA_DAMAGE
+	call init_boss_info
 
 	ld hl, gorilla_state
 	ld [hl], 0
@@ -210,8 +212,6 @@ init_gorilla::
 	ld hl, boss_health
 	ld [hl], GORILLA_LIFE
 
-
-	; TODO: Asign damage
 	ld hl, scenario_stalactites_spawn_definition
 	ld c, NUMBER_OF_SCENARIO_STALACTITES
 	call spawn_group_entity
@@ -274,44 +274,5 @@ init_gorilla_tiles::
 	ret
 
 
-;;=================================================
-;; gorilla_init_info
-;; Inicializa el componente de las físicas del gorila
-;;
-;; Establece:
-;; 		- Posición inicial (visible en pantalla)
-;; 		- Velocidad inicial: 0, 0 
-;;
-;; MODIFICA: A, BC, DE
-gorilla_init_info:: 
-	ld a, ENEMY_START_ENTITY_ID
-	call man_entity_locate_v2
-	
-	;; Gorilla INFO 
-	ld b, GORILLA_NUM_ENTITIES
-	.info_loop:
-		ld a, BYTE_ACTIVE
-		ld [hl+], a 		; Active = 1
 
-		ld a, TYPE_BOSS
-		ld [hl+], a 	 	; Type = 1
-
-		ld a, [hl]                     ; carga el byte actual
-	    or FLAG_CAN_TAKE_DAMAGE | FLAG_CAN_DEAL_DAMAGE
-	    ld [hl+], a                     ; guarda el nuevo valor
-
-	   	ld a, GORILLA_NUM_ENTITIES
-	    ld [hl], a 	; Número sprites
-
-	    inc h
-	    inc h
-	    ld [hl], 1
-	    dec h
-	    dec h
-	    inc l
-
-	    dec b 
-	    jr nz, .info_loop 
-	
-	ret
 

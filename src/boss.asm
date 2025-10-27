@@ -2,7 +2,7 @@ INCLUDE "consts.inc"
 
 SECTION "General boss variables", WRAM0
 boss_looking_dir:: DS 1 ; 0:rigth | 1:left
-
+boss_health: ds 1 
 
 SECTION "General boss code", ROM0
 
@@ -273,4 +273,61 @@ swap_y_boss_entity::
 
     call swap_2_entities_positions 
 
+    ret
+
+; INPUT
+;  HL -> collisions preset address
+;  C  -> Entity size
+change_boss_collisions::
+    push hl
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld d, h
+    ld e, l
+    pop hl
+    ld d, CMP_COLLISIONS_H
+    
+    .loop:
+    ld b, CMP_SIZE
+    call memcpy_256
+
+    dec c
+    jr nz, .loop
+
+    ret
+
+
+;; INPUT 
+;;  d -> num_entities
+;;  e -> damage
+init_boss_info:: 
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    
+    ;; Gorilla INFO 
+    ld b, d
+    .info_loop:
+        ld a, BYTE_ACTIVE
+        ld [hl+], a         ; Active = 1
+
+        ld a, TYPE_BOSS
+        ld [hl+], a         ; Type = 1
+
+        ld a, [hl]                     ; carga el byte actual
+        or FLAG_CAN_TAKE_DAMAGE | FLAG_CAN_DEAL_DAMAGE
+        ld [hl+], a                     ; guarda el nuevo valor
+
+        ld a, d
+        ld [hl], a  ; Número sprites
+
+        inc h
+        inc h
+        ld [hl], e
+        dec h
+        dec h
+        inc l
+
+        dec b 
+        jr nz, .info_loop 
+    
     ret

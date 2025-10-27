@@ -413,7 +413,8 @@ manage_wait_state:
 		jr nz, .do_jump
 		push de
 		push bc
-		call change_boss_looking_dir
+		ld c, SPIDER_NUM_ENTITIES
+		call rotate_boss_x
 		pop bc
 		pop de
 		jr .do_jump
@@ -424,7 +425,8 @@ manage_wait_state:
 		jr z, .do_jump
 		push de
 		push bc
-		call change_boss_looking_dir
+		ld c, SPIDER_NUM_ENTITIES
+		call rotate_boss_x
 		pop bc
 		pop de
 
@@ -478,28 +480,15 @@ manage_go_up_state:
 	ld c, SPIDER_NUM_ENTITIES/2
 	call swap_sprite_by_mask
 
-	call wait_vblank
-	call man_entity_draw
-	call wait_vblank
-
 	ld a, ENEMY_START_ENTITY_ID + SPIDER_NUM_ENTITIES/2
 	ld b, SWAP_MASK_SPRITE_ROOF_RIGHT_JUMP
 	ld c, SPIDER_NUM_ENTITIES/2
 	call swap_sprite_by_mask
 
-		call wait_vblank
-	call man_entity_draw
-	call wait_vblank
-
 	ld c, SPIDER_NUM_ENTITIES/2
     ld a, ENEMY_START_ENTITY_ID + SPIDER_NUM_ENTITIES/2
     call flip_boss_x
     call swap_x_right_half_boss_entity
-
-    	call wait_vblank
-	call man_entity_draw
-	call wait_vblank
-
 
 	ld hl, spider_state
 	ld [hl], SPIDER_ROOF_STATE
@@ -511,6 +500,22 @@ manage_go_up_state:
 	ld b, SWAP_MASK_SPRITE_WEB_HOOK
 	ld c, SPIDER_NUM_ENTITIES
 	call swap_sprite_by_mask
+
+
+	ld a, ENEMY_START_ENTITY_ID + 1
+	call man_entity_locate_v2
+	inc h
+	ld b, [hl]
+	inc l
+	ld c, [hl]
+
+	ld a, SPIDER_WEB_HOOK_ENTITY_ID
+	call man_entity_locate_v2
+	ld d, SPIDER_NUM_ENTITIES
+	ld a, b
+	sub SPRITE_HEIGHT
+	ld b, a
+	call change_entity_group_pos
 
 	; === DEBUG ===
 	;Reset flag
@@ -595,19 +600,12 @@ make_sure_spider_looks_at_player:
 		ret z
 
 	.change_dir:
-	call change_boss_looking_dir
-
-	ret
-
-change_boss_looking_dir:
 	ld c, SPIDER_NUM_ENTITIES
 	call rotate_boss_x
-	; Invertir el bit
-	ld a, [boss_looking_dir]
-	xor 1
-	ld [boss_looking_dir], a
 
 	ret
+
+
 
 transition_roof_to_fall:
 
@@ -826,7 +824,7 @@ move_spider_towards_player:
 	; B = PLAYER_POS_MID
 
 	; === READ SPIDER POS ===
-	ld a, ENEMY_START_ENTITY_ID + 4
+	ld a, ENEMY_START_ENTITY_ID + 5
 	call man_entity_locate_v2
 	inc h
 	inc l
