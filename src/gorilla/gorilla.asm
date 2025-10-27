@@ -230,11 +230,11 @@ init_stalactite_flags:
 	ld c, NUMBER_OF_SCENARIO_STALACTITES
 
 	.loop:
-	ld [hl], 0;BYTE_ACTIVE
+	ld [hl], BYTE_ACTIVE
 	inc l
 	ld [hl], TYPE_BULLET
 	inc l
-	ld [hl], FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT
+	ld [hl], FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT | FLAG_STILL_BULLET
 	inc l
 	inc h
 	ld [hl], STALACTITE_DAMAGE

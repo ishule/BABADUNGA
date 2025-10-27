@@ -25,6 +25,11 @@ sys_collision_check_all::
     jr z, .next_entity           ; Si está inactiva, saltar
 
     inc l 
+    inc l
+    bit 5, [hl]     ; Ver si flag STILL BULLET está a 1 
+    jr nz, .adjust_l_for_still_bullet   ; Si está a 1 saltamos a siguiente entidad
+
+    dec l 
     ld a, [hl]
     cp TYPE_BOSS
     jr nz, .skip_flag
@@ -43,6 +48,11 @@ sys_collision_check_all::
     push hl
     call sys_collision_check_entity_vs_entity
     pop hl
+    jr .next_entity 
+
+.adjust_l_for_still_bullet:
+    dec l
+    dec l
 
 .next_entity:
     ; Avanzar HL al siguiente bloque de entidad
@@ -539,6 +549,16 @@ sys_collision_check_bullet_vs_bullet::
     ld a, l
     ld [current_bullet_offset], a
     
+    ; Verificar si la bala actual tiene FLAG_BULLET_PLAYER
+    inc l
+    inc l               ; FLAGS
+    ld a, [hl]
+    bit 4, a            ; FLAG_BULLET_PLAYER
+    dec l
+    dec l               ; Volver al inicio
+    
+    ld c, a             ; C = flags de bala actual (para comparar después)
+    
     ; Obtener número de entidades
     ld a, [num_entities_alive]
     ld b, a             ; B = contador
@@ -553,14 +573,14 @@ sys_collision_check_bullet_vs_bullet::
     add a               ; A = ID * 4
     
     ; Verificar que no sea la misma bala
-    ld c, a
+    ld e, a             ; E = offset temporal
     ld a, [current_bullet_offset]
-    cp c
+    cp e
     jr z, .skip         ; Es la misma, saltar
     
     ; Verificar que esté activa y sea bala
     ld h, CMP_INFO_H
-    ld l, c
+    ld l, e
     ld a, [hl]          ; Active?
     or a
     jr z, .skip
@@ -569,9 +589,31 @@ sys_collision_check_bullet_vs_bullet::
     ld a, [hl]          ; Type
     cp TYPE_BULLET
     jr nz, .skip
-    dec l
     
-    ; Tenemos dos balas diferentes, comprobar AABB
+    ; Verificar flags de la otra bala
+    inc l               ; FLAGS de otra bala
+    ld a, [hl]
+    bit 4, a            ; ¿Tiene FLAG_BULLET_PLAYER?
+    
+    ; Verificar que una tenga el flag y la otra no
+    ; XOR: si ambas tienen el flag o ninguna lo tiene → skip
+    jr z, .check_xor    ; Otra bala NO tiene flag
+    
+    ; Otra bala SÍ tiene flag, verificar que actual NO lo tenga
+    bit 4, c            ; ¿Bala actual tiene flag?
+    jr nz, .skip        ; Ambas tienen flag → skip
+    jr .do_collision_check
+    
+.check_xor:
+    ; Otra bala NO tiene flag, verificar que actual SÍ lo tenga
+    bit 4, c
+    jr z, .skip         ; Ninguna tiene flag → skip
+    
+.do_collision_check:
+    ; Una tiene flag y la otra no → comprobar colisión
+    dec l
+    dec l               ; Volver al inicio de otra bala
+    
     ld d, h
     ld e, l             ; DE = otra bala
     
@@ -585,25 +627,40 @@ sys_collision_check_bullet_vs_bullet::
     pop de
     pop hl
     jr c, .skip         ; No colisionan
-
     
     ; ===== COLISIÓN DETECTADA =====
-    ; Eliminar ambas balas
+    ; Determinar cuál tiene FLAG_BULLET_PLAYER y eliminar solo esa
+    
+    ; Verificar bala actual
     push hl
-    ld [hl], 0          ; Bala actual inactiva
-    inc l 
-
-    call delete_bullet
-
+    push de
+    inc l
+    inc l               ; FLAGS bala actual
+    bit 4, [hl]
+    pop de
     pop hl
-    ld [hl], 0          ; Otra bala inactiva
-    inc l 
+    jr nz, .delete_current
+    
+    ; La otra bala tiene el flag
+.delete_other:
+    ld h, d
+    ld l, e
+    ld [hl], 0          ; Marcar inactiva
+    inc l
     call delete_bullet
+    jr .exit_after_delete
     
-    
+.delete_current:
+    ld [hl], 0          ; Marcar inactiva
+    inc l
+    call delete_bullet
     pop af
     pop bc
     ret                 ; Salir (bala actual eliminada)
+    
+.exit_after_delete:
+    ; Continuar loop (bala actual sigue viva)
+    jr .skip
     
 .skip:
     pop af
@@ -613,7 +670,6 @@ sys_collision_check_bullet_vs_bullet::
     jr nz, .loop
     
     ret
-
 
 sys_collision_check_entity_vs_verja::
     push hl
@@ -690,8 +746,21 @@ check_collision_bullet:
     call sys_collision_check_entity_vs_verja
     call sys_collision_check_bullet_vs_boss
     call sys_collision_check_bullet_vs_player
+
+    ;; Solo compruebo bala con bala si es bala del jugador
+    inc l 
+    inc l 
+    ld a, [hl] 
+    dec l 
+    dec l
+    bit 4, a
+    jr z, .end
     call sys_collision_check_bullet_vs_bullet
     pop hl              ; [1] ← Recuperar el push inicial
+    ret
+
+.end:
+    pop hl 
     ret
 
 
