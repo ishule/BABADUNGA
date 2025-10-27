@@ -171,7 +171,7 @@ DEF PLAYER_WIDTH	equ 8
 
 ;; Fïsica de la verja
 DEF VERJA_HEIGHT   equ 16
-DEF VERJA_WIDTH    equ 2
+DEF VERJA_WIDTH    equ 8
 
 
 DEF GROUND_Y equ 124	; Altura del suelo
