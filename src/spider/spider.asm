@@ -92,6 +92,11 @@ init_spider::
 	ld hl, spider_spawn_definition
 	ld c, SPIDER_ROOF_NUM_ENTITIES
 	call spawn_group_entity
+
+    ld d, SPIDER_NUM_ENTITIES
+    ld e, SPIDER_DAMAGE
+    call init_boss_info
+
 	ret
 
 init_spider_variables:
