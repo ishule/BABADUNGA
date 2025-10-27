@@ -208,7 +208,9 @@ player_pickup::
 
 .apply_bullet_effect:
     ; Action: Change ammo
-
+    ld a,[player_bullet]
+    inc a
+    ld [player_bullet],a
 
     call sys_sound_pickup_effect
     ; Fall through to delete

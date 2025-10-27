@@ -102,6 +102,8 @@ main::
 
 
    init_player_stats::
+      xor a
+      ld [player_bullet],a
       ld a,10
       ld [player_health],a
       ret

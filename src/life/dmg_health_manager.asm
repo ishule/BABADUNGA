@@ -3,7 +3,7 @@ include "consts.inc"
 SECTION "Game Stats",WRAM0
 player_health: ds 1 
 boss_player_dead: ds 1 ; Bit 0 a 1 boss muerto, bit 1 a 1 player muerto
-
+player_bullet: ds 1 ; 0 = preset0, 1 preset1, 2 preset2
 player_dmg: ds 1
 
 SECTION "DmgHealthManager",ROM0

@@ -12,13 +12,13 @@ player_bullet_0_preset::
 	DB PLAYER_BULLET_SPEED_LOW, PLAYER_BULLET_SPEED_HIGH
 player_bullet_1_preset::
 	DB 1
-	DB PLAYER_BULLET_TILE_H, PLAYER_BULLET_TILE_V, PLAYER_BULLET_DAMAGE
+	DB PLAYER_BULLET_1_TILE_H, PLAYER_BULLET_1_TILE_V, PLAYER_BULLET_DAMAGE
 	DL PLAYER_BULLET_1_H_COLLISION
 	DL PLAYER_BULLET_1_V_COLLISION
 	DB PLAYER_BULLET_SPEED_LOW, PLAYER_BULLET_SPEED_HIGH
 player_bullet_2_preset::
 	DB 1
-	DB PLAYER_BULLET_TILE_H, PLAYER_BULLET_TILE_V, PLAYER_BULLET_DAMAGE
+	DB PLAYER_BULLET_2_TILE_H, PLAYER_BULLET_2_TILE_V, PLAYER_BULLET_DAMAGE
 	DL PLAYER_BULLET_2_H_COLLISION
 	DL PLAYER_BULLET_2_V_COLLISION
 	DB PLAYER_BULLET_SPEED_LOW, PLAYER_BULLET_SPEED_HIGH
@@ -339,8 +339,20 @@ check_player_shot::
 	push af
 	call sys_sound_shoot_effect ;; Se llama aquí por tema de argumentos del preset
 	pop af
+	;Switch para decidir que bala se llama
+	ld a,[player_bullet]
+	ld hl,player_bullet_0_preset
+	cp 0
+	jr z,.fin_shot
+	ld hl,player_bullet_1_preset
+	cp 1
+	jr z,.fin_shot
+	ld hl,player_bullet_2_preset
+
+	.fin_shot
 	ld a, d
-	ld de, player_bullet_0_preset
+	ld d,h
+	ld e,l
 	call shot_bullet_for_preset
 
 
@@ -364,6 +376,32 @@ init_bullets::
 	call wait_vblank
 	ld hl, bullet_0_v
 	ld de, $8220 ; MAGIC
+	ld b, 16     ; MAGIC
+	call memcpy_256
+
+
+	call wait_vblank
+	ld hl, bullet_1_h
+	ld de, $8240 ; MAGIC
+	ld b, 16     ; MAGIC
+	call memcpy_256
+
+	call wait_vblank
+	ld hl, bullet_1_v
+	ld de, $8260 ; MAGIC
+	ld b, 16     ; MAGIC
+	call memcpy_256
+
+
+	call wait_vblank
+	ld hl, bullet_2_h
+	ld de, $8280 ; MAGIC
+	ld b, 16     ; MAGIC
+	call memcpy_256
+
+	call wait_vblank
+	ld hl, bullet_2_v
+	ld de, $82A0 ; MAGIC
 	ld b, 16     ; MAGIC
 	call memcpy_256
 
