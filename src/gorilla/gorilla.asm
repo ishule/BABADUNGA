@@ -197,13 +197,14 @@ init_gorilla::
 	ld hl, gorilla_stage
 	ld [hl], 0
 
-	ld hl, gorilla_looking_dir
+	ld hl, boss_looking_dir
 	ld [hl], 0
 
 	ld hl, gorilla_state_counter
 	ld [hl], STAND_TIME
 
-	call rotate_gorilla_x
+	ld c, GORILLA_NUM_ENTITIES
+	call rotate_boss_x
 
 	; Init life
 	ld a, ENEMY_START_ENTITY_ID

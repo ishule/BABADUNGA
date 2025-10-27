@@ -4,8 +4,7 @@ DEF GORILLA_NUM_ENTITIES equ $08
 def GORILLA_SPAWN_POINT_Y equ GROUND_Y - SPRITE_HEIGHT
 def GORILLA_SPAWN_POINT_X equ $80
 
-def WALL_RIGHT_X equ $A0
-def WALL_LEFT_X  equ $10
+
 
 ;; Constantes de máscara
 DEF SWAP_MASK_SPRITE_STAND_JUMP              equ %00010000

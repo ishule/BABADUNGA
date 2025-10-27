@@ -77,11 +77,11 @@ main::
 
    provisional_game_loop:
       call init_player_stats
-      call load_title_screen
-      call load_tutorial_screen
       ; ======== DEBUG =========
       call load_spider_screen
       ; =======================
+      call load_title_screen
+      call load_tutorial_screen
 
       call load_gorilla_screen
       jr c,.defeat
