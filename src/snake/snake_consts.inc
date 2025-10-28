@@ -6,20 +6,13 @@ def SNAKE_SPAWN_POINT_X equ WALL_RIGHT_X - SPRITE_WIDTH * 5 - 3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TILES
 def SNAKE_HEAD_TILE_ID equ $80
-
 def SNAKE_IDLE_NECK_TILE_ID equ $84
 def SNAKE_WALK_NECK_TILE_ID equ $88
-
 def SNAKE_BODY_TILE_ID equ $8C
-
 def SNAKE_SHOT_HEAD_TILE_ID equ $8E
-
 def SNAKE_SHOT_BODY_TILE_ID equ $92
-
 def SNAKE_TAIL_UP_TILE_ID equ $96
-
 def SNAKE_HEAD_EDGE_TILE_ID equ $9A
-
 def SNAKE_BULLET_TILE_ID equ $9C
 def EMPTY_TILE_ID equ $A0
 
@@ -43,6 +36,7 @@ def SNAKE_DAMAGE equ 1
 def SNAKE_STAND_STATE equ 0
 def SNAKE_WALK_STATE equ 1
 def SNAKE_STAGE_TRANSITION_STATE equ 2
+def SNAKE_DEAD_STATE equ $FF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TIMERS
@@ -52,6 +46,7 @@ def SNAKE_WALK_ANIM_TIME equ $10
 def STAGE_TRANSITION_TIME equ $30
 def SNAKE_YELL_ANIM_TIME equ $20
 def SHOT_ANIM_TIME       equ $10
+def DEAD_ANIM_TIME       equ $FF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SWAP MASKS

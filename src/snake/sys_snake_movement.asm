@@ -1,18 +1,19 @@
 INCLUDE "snake/snake_consts.inc"
 
 SECTION "Snake Variables", WRAM0
-snake_state::             DS 1 ; 0:stand | 1:walk
+
 snake_shot_cooldown::     DS 1
-snake_state_counter::     DS 1
-snake_animation_counter:: DS 1 
-snake_stage::             DS 1 ; 0:fase 0 | 1:fase 1
 shots_counter::           DS 1 
 
 SECTION "Snake Code", ROM0
 
 sys_snake_movement::
+	ld e, DEAD_ANIM_TIME
+	ld d, SNAKE_NUM_ENTITIES
+	call check_dead_state
+
 	; === Check state ==
-	ld a, [snake_state]
+	ld a, [boss_state]
 
 	cp SNAKE_STAND_STATE
 	jr z, .stand_state
@@ -22,6 +23,9 @@ sys_snake_movement::
 
 	cp SNAKE_STAGE_TRANSITION_STATE
 	jr z, .stage_transition_state
+
+	cp SNAKE_DEAD_STATE
+	jr z, .snake_dead_state
 
 	.stand_state:
 		call manage_snake_stand_state
@@ -33,11 +37,15 @@ sys_snake_movement::
 
 	.stage_transition_state:
 		call manage_stage_transition
+		ret
+
+	.snake_dead_state:
+		call manage_dead_state
 		
 	ret
 
 manage_snake_stand_state:
-	ld a, [snake_stage]
+	ld a, [boss_stage]
 	or a
 	jr nz, .stage_1
 	
@@ -45,17 +53,17 @@ manage_snake_stand_state:
 	cp SNAKE_STAGE_CHANGE_HEALTH
 	jr nc, .stage_0
 	.change_stage:
-		ld hl, snake_stage
+		ld hl, boss_stage
 		ld [hl], 1
-		ld hl, snake_state
+		ld hl, boss_state
 		ld [hl], SNAKE_STAGE_TRANSITION_STATE
 
 		call animate_snake_mouth
 		
-		ld hl, snake_state_counter
+		ld hl, boss_state_counter
 		ld [hl], STAGE_TRANSITION_TIME
 
-		ld hl, snake_animation_counter
+		ld hl, boss_animation_counter
 		ld [hl], SNAKE_YELL_ANIM_TIME
 
 		; SONIDO GRITO
@@ -67,16 +75,16 @@ manage_snake_stand_state:
 		call manage_snake_shot
 	.stage_0:
 
-	ld a, [snake_state_counter]
+	ld a, [boss_state_counter]
 	dec a
-	ld [snake_state_counter], a
+	ld [boss_state_counter], a
 	ret nz
 
 	; STATE CHANGED
-	ld hl, snake_state
+	ld hl, boss_state
 	ld [hl], SNAKE_WALK_STATE
 
-	ld hl, snake_animation_counter
+	ld hl, boss_animation_counter
 	ld [hl], SNAKE_WALK_ANIM_TIME
 
 	; APPLY movement
@@ -113,10 +121,10 @@ manage_walk_state:
 
 	.stage_change:
 
-	ld hl, snake_state
+	ld hl, boss_state
     ld [hl], SNAKE_STAND_STATE
 
-    ld hl, snake_state_counter
+    ld hl, boss_state_counter
     ld [hl], STAND_TIME
 
     ld hl, snake_shot_cooldown
@@ -136,26 +144,40 @@ manage_walk_state:
 	ret
 
 manage_stage_transition:
-	ld a, [snake_animation_counter]
+	ld a, [boss_animation_counter]
 	dec a
-	ld [snake_animation_counter], a
+	ld [boss_animation_counter], a
 	jr nz, .skip_animation
 	.shut_mouth:
 		call animate_snake_mouth
 	.skip_animation:
-	ld a, [snake_state_counter]
+	ld a, [boss_state_counter]
 	dec a
-	ld [snake_state_counter], a
+	ld [boss_state_counter], a
 	ret nz
 
-	ld hl, snake_state_counter
+	ld hl, boss_state_counter
 	ld [hl], STAND_TIME
 
-	ld hl, snake_state
+	ld hl, boss_state
 	ld [hl], SNAKE_STAND_STATE
 
 	ret
 
+manage_dead_state:
+	ld a, [boss_state_counter]
+	dec a
+	ld [boss_state_counter], a
+	ret nz
+
+	ld hl, boss_dead
+	ld [hl], 1
+	ret
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; UTILS
 animate_snake_mouth:
 	ld a, TAIL_ENTITY_ID
 	call man_entity_locate_v2
@@ -213,14 +235,14 @@ animate_snake_walk:
 	ret
 
 manage_walk_animation:
-	ld a, [snake_animation_counter]
+	ld a, [boss_animation_counter]
 	dec a
-	ld [snake_animation_counter], a
+	ld [boss_animation_counter], a
 	ret nz
 
 	call animate_snake_walk
 
-	ld hl, snake_animation_counter
+	ld hl, boss_animation_counter
     ld [hl], SNAKE_WALK_ANIM_TIME
 
 	ret

@@ -441,7 +441,9 @@ acceleration_changers:
     ;  hl -> entity start address
     ;  a  -> group size
     change_entity_group_acc:
+        push af
         call change_entity_acc
+        pop af
         inc l
 
         dec a
@@ -490,6 +492,17 @@ acceleration_changers:
         call man_entity_locate_v2
         ld bc, 0
         call change_entity_group_acc_x
+        ret
+
+    ; INPUT 
+    ;  d -> group_size
+    reset_group_acc:
+        ld a, ENEMY_START_ENTITY_ID
+        call man_entity_locate_v2
+        ld a, d
+        ld bc, 0
+        ld de, 0
+        call change_entity_group_acc
         ret
 
 

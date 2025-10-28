@@ -54,22 +54,22 @@ init_snake::
     ld e, SNAKE_DAMAGE
     call init_boss_info
 
-    ld hl, snake_state
+    ld hl, boss_state
     ld [hl], SNAKE_STAND_STATE
 
-    ld hl, snake_state_counter
+    ld hl, boss_state_counter
     ld [hl], STAND_TIME
 
     ld hl, snake_shot_cooldown
     ld [hl], SNAKE_SHOT_COOLDOWN
 
-    ld hl, snake_animation_counter
+    ld hl, boss_animation_counter
     ld [hl], SNAKE_WALK_ANIM_TIME
 
     ld hl, boss_looking_dir
     ld [hl], 0
 
-    ld hl, snake_stage
+    ld hl, boss_stage
     ld [hl], 0
 
     call rotate_snake

@@ -1,10 +1,42 @@
 INCLUDE "consts.inc"
 
-SECTION "General boss variables", WRAM0
-boss_looking_dir:: DS 1 ; 0:rigth | 1:left
-boss_health: ds 1 
+def DEAD_STATE equ $FF
 
+SECTION "General boss variables", WRAM0
+boss_looking_dir:: ds 1 ; 0:rigth | 1:left
+boss_health: ds 1 
+boss_dead:: ds 1 ; 0:alive | 1:dead
+
+boss_state_counter::     DS 1
+boss_animation_counter:: DS 1 
+boss_stage::             DS 1 ; 0:fase 0 | 1:fase 1
+boss_state::             DS 1
 SECTION "General boss code", ROM0
+
+; INPUT 
+;  e -> dead animation timer
+;  d -> num_entities
+check_dead_state:
+    ld a, [boss_state]
+    cp DEAD_STATE
+    ret z
+
+    ld a, [boss_health]
+    or a
+    ret nz
+    
+    ld hl, boss_state
+    ld [hl], DEAD_STATE
+
+    ld hl, boss_state_counter
+    ld [hl], e
+    
+    push de
+    call reset_group_vel
+    pop de
+    call reset_group_acc
+
+    ret
 
 ; RETURN
 ;  a -> entity id
@@ -325,4 +357,8 @@ init_boss_info::
         dec b 
         jr nz, .info_loop 
     
+
+    ld hl, boss_dead
+    ld [hl], 0
+
     ret
