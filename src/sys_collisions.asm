@@ -321,8 +321,8 @@ sys_collision_check_player_vs_boss::
 
     .no_collision_detected:
         dec l
-        pop hl
         pop de
+        pop hl
         ret 
 
     .collision_detected:
@@ -539,6 +539,8 @@ sys_collision_check_bullet_vs_player::
     ; TODO: decrementar player HP
     push hl
     push de
+    ld d, h 
+    ld e, l
     inc d ; Fisicas
     inc d
     inc e
