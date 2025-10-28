@@ -6,6 +6,7 @@ snake_shot_cooldown::     DS 1
 snake_state_counter::     DS 1
 snake_animation_counter:: DS 1 
 snake_stage::             DS 1 ; 0:fase 0 | 1:fase 1
+shots_counter::           DS 1 
 
 SECTION "Snake Code", ROM0
 
@@ -19,16 +20,51 @@ sys_snake_movement::
 	cp SNAKE_WALK_STATE
 	jr z, .walk_state
 
+	cp SNAKE_STAGE_TRANSITION_STATE
+	jr z, .stage_transition_state
+
 	.stand_state:
 		call manage_snake_stand_state
 		ret
 
 	.walk_state:
 		call manage_walk_state
+		ret
+
+	.stage_transition_state:
+		call manage_stage_transition
 		
 	ret
 
 manage_snake_stand_state:
+	ld a, [snake_stage]
+	or a
+	jr nz, .stage_1
+	
+	ld a, [boss_health]
+	cp SNAKE_STAGE_CHANGE_HEALTH
+	jr nc, .stage_0
+	.change_stage:
+		ld hl, snake_stage
+		ld [hl], 1
+		ld hl, snake_state
+		ld [hl], SNAKE_STAGE_TRANSITION_STATE
+
+		call animate_snake_mouth
+		
+		ld hl, snake_state_counter
+		ld [hl], STAGE_TRANSITION_TIME
+
+		ld hl, snake_animation_counter
+		ld [hl], SNAKE_YELL_ANIM_TIME
+
+		ret
+
+
+	.stage_1:
+		call manage_snake_shot
+	.stage_0:
+
 	ld a, [snake_state_counter]
 	dec a
 	ld [snake_state_counter], a
@@ -52,8 +88,6 @@ manage_snake_stand_state:
 		call positive_to_negative_BC
 	.skip_conversion:
 	call change_entity_group_acc_x
-
-
 	ret
 
 manage_walk_state:
@@ -94,14 +128,72 @@ manage_walk_state:
 
     call rotate_snake
 
+    ld hl, shots_counter
+    ld [hl], 0
+
 	ret
 
-manage_walk_animation:
+manage_stage_transition:
 	ld a, [snake_animation_counter]
 	dec a
 	ld [snake_animation_counter], a
+	jr nz, .skip_animation
+	.shut_mouth:
+		call animate_snake_mouth
+	.skip_animation:
+	ld a, [snake_state_counter]
+	dec a
+	ld [snake_state_counter], a
 	ret nz
 
+	ld hl, snake_state_counter
+	ld [hl], STAND_TIME
+
+	ld hl, snake_state
+	ld [hl], SNAKE_STAND_STATE
+
+	ret
+
+animate_snake_mouth:
+	ld a, TAIL_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	inc l
+	inc l
+	ld a, [hl]
+	cp SNAKE_TAIL_UP_TILE_ID
+	jr z, .skip_animation
+	call animate_snake_walk
+	.skip_animation:
+
+	ld a, HEAD_ENTITY_ID
+	ld c, 1
+	ld b, SWAP_MASK_HEAD
+	call swap_sprite_by_mask
+
+	ld a, MOUTH_ENTITY_ID
+	ld c, 1
+	ld b, SWAP_MASK_MOUTH
+	call swap_sprite_by_mask
+
+	ld a, NECK_ENTITY_ID
+	ld c, 1
+	ld b, SWAP_MASK_NECK_L
+	call swap_sprite_by_mask
+
+	ld a, NECK_ENTITY_ID + 1
+	ld c, 1
+	ld b, SWAP_MASK_NECK_R
+	call swap_sprite_by_mask
+
+	ld a, BODY_ENTITY_ID + 1
+	ld c, 1
+	ld b, SWAP_MASK_BODY_NECK
+	call swap_sprite_by_mask
+
+	ret
+
+animate_snake_walk:
 	ld a, TAIL_ENTITY_ID
 	ld c, 1
 	ld b, SWAP_MASK_TAILS
@@ -115,6 +207,16 @@ manage_walk_animation:
 	ld a, BODY_ENTITY_ID
 	ld c, 2
 	call flip_boss_x
+
+	ret
+
+manage_walk_animation:
+	ld a, [snake_animation_counter]
+	dec a
+	ld [snake_animation_counter], a
+	ret nz
+
+	call animate_snake_walk
 
 	ld hl, snake_animation_counter
     ld [hl], SNAKE_WALK_ANIM_TIME
@@ -148,3 +250,86 @@ rotate_snake::
     call change_entity_pos_x
 	
 	ret
+
+manage_snake_shot:
+	ld a, [snake_shot_cooldown]
+	dec a
+	ld [snake_shot_cooldown], a
+	jr z, .skip_animation
+
+	cp SHOT_ANIM_TIME
+	ret nz
+	call animate_snake_mouth
+	ret
+
+
+	.skip_animation:
+	ld a, [shots_counter]
+	inc a
+	ld [shots_counter], a
+
+	ld a, MOUTH_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	ld b, [hl]
+	inc l
+	ld c, [hl]
+
+	ld a, [boss_looking_dir]
+	or a
+	jr z, .looking_right
+	.looking_left:
+		ld a, LEFT_SHOT_DIRECTION
+		jr .shot_bullet
+	.looking_right:
+		ld a, RIGHT_SHOT_DIRECTION
+
+	.shot_bullet:
+	ld de, snake_bullet_preset
+	call shot_bullet_for_preset
+
+	ld a, [num_entities_alive]
+	dec a
+	call man_entity_locate_v2
+	
+	ld a, [shots_counter]
+	cp 1
+	jr z, .first_shot
+	cp 2
+	jr z, .second_shot
+	cp 3
+	jr z, .third_shot
+
+	.first_shot:
+		ld bc, SNAKE_SHOT_1_V_Y
+		ld de, SNAKE_SHOT_1_V_X
+		jr .end_switch
+	.second_shot:
+		ld bc, SNAKE_SHOT_2_V_Y
+		ld de, SNAKE_SHOT_2_V_X
+		jr .end_switch
+	.third_shot:
+		ld bc, SNAKE_SHOT_3_V_Y
+		ld de, SNAKE_SHOT_3_V_X
+
+	.end_switch:
+	ld a, [boss_looking_dir]
+	or a
+	jr z, .skip_conversion
+		call positive_to_negative_DE
+	.skip_conversion:
+	call change_entity_vel
+	
+	dec l
+	dec l
+	dec l
+
+	ld bc, BULLETS_GRAVITY
+	call change_entity_acc_y
+
+	ld hl, snake_shot_cooldown
+	ld [hl], SNAKE_SHOT_COOLDOWN
+
+	call animate_snake_mouth
+
+	ret 

@@ -24,7 +24,6 @@ load_snake_screen::
    call init_bullets
 
    call draw_hearts
-   call init_snake_stats
    .game_loop:
       call wait_vblank
       call man_entity_draw

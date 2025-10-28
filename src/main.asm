@@ -38,12 +38,6 @@ main::
       ld [player_health],a
       ret
 
-   init_snake_stats::
-      xor a
-      ld [boss_player_dead],a
-      ld a,1
-      ld [boss_health],a
-      ret
    ;; b = boss size (de momento nada)
    ;;al borrar la verja se borra todo y/o pasan cosas rarisimas
    boss_is_dead::

@@ -233,8 +233,8 @@ DEF PLAYER_BULLET_SPEED_HIGH equ $03   ;
 DEF PLAYER_BULLET_SPEED_LOW  equ $00   ;
 
 ; Snake
-DEF SNAKE_BULLET_SPEED_HIGH  equ $01   ; 
-DEF SNAKE_BULLET_SPEED_LOW   equ $F0   ;
+DEF SNAKE_BULLET_SPEED_HIGH  equ $00   ; ## Para la serpiente se define desde sus propias constantes ##
+DEF SNAKE_BULLET_SPEED_LOW   equ $00   ;
 
 ; Gorilla
 DEF GORILLA_BULLET_SPEED_HIGH equ $02   ; 
@@ -264,8 +264,8 @@ DEF PLAYER_BULLET_2_TILE_H equ $28
 DEF PLAYER_BULLET_2_TILE_V equ $2A 
 
 ; Snake
-DEF SNAKE_BULLET_TILE_H  equ $20 ; TODO: Cambiarlo por el real
-DEF SNAKE_BULLET_TILE_V  equ $20 ; TODO: Cambiarlo por el real
+DEF SNAKE_BULLET_TILE_H  equ $9C ; TODO: Cambiarlo por el real
+DEF SNAKE_BULLET_TILE_V  equ $9C ; TODO: Cambiarlo por el real
 
 ; Gorilla
 DEF GORILLA_BULLET_TILE_H equ $B8
