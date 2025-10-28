@@ -498,7 +498,7 @@ manage_go_up_state:
 
 	ld a, SPIDER_WEB_HOOK_ENTITY_ID
 	ld b, SWAP_MASK_SPRITE_WEB_HOOK
-	ld c, SPIDER_NUM_ENTITIES
+	ld c, 2
 	call swap_sprite_by_mask
 
 
@@ -511,7 +511,7 @@ manage_go_up_state:
 
 	ld a, SPIDER_WEB_HOOK_ENTITY_ID
 	call man_entity_locate_v2
-	ld d, SPIDER_NUM_ENTITIES
+	ld d, 2
 	ld a, b
 	sub SPRITE_HEIGHT
 	ld b, a

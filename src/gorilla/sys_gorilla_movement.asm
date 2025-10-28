@@ -59,10 +59,29 @@ sys_gorilla_movement::
         ret
 
     .wait_strike_state:
+        push af 
+        push hl
+        ld a, ENEMY_START_ENTITY_ID 
+        call man_entity_locate_v2
+        inc l 
+        inc l 
+        res 0, [hl] ; Set flag to 0
+        pop hl 
+        pop af
         call manage_wait_strike_state
         ret
 
     .strike_state:
+        push af 
+        push hl
+        ld a, ENEMY_START_ENTITY_ID 
+        call man_entity_locate_v2
+        inc l 
+        inc l 
+        res 0, [hl] ; Set flag to 0
+        pop hl 
+        pop af
+        call shake_screen
         call manage_strike_state
 
     ret

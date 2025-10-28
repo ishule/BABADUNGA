@@ -247,7 +247,7 @@ open_door::
 shake_screen::
 
     ; --- 2. Screen Shake Loop ---
-    ld c, 8 ; C = Loop counter . DURACIÓN DEL TERREMOTO
+    ld c, 2 ; C = Loop counter . DURACIÓN DEL TERREMOTO
 
 .shake_loop:
     push bc              ; Save loop counter

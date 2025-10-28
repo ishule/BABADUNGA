@@ -31,12 +31,19 @@ sys_collision_check_all::
 
     dec l 
     ld a, [hl]
+    dec l 
+    cp TYPE_VERJA ; Si es verja saltar colisiones
+    jr z, .next_entity
+
+    inc l
     cp TYPE_BOSS
     jr nz, .skip_flag
 
     inc l 
     res 3, [hl]     ; Desactivar flag GOT_DAMAGE
     dec l
+    dec l 
+    jr .continue
 
 .skip_flag:
     dec l
