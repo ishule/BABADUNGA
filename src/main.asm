@@ -79,11 +79,10 @@ main::
 
       call init_player_stats
       ; ======== DEBUG =========
-      call load_spider_screen
+      call load_snake_screen
       ; =======================
       call load_title_screen
       call load_tutorial_screen
-
       call load_gorilla_screen
       jr c,.defeat
       call load_loot_screen
