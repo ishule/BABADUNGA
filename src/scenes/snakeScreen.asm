@@ -5,16 +5,12 @@ load_snake_screen::
    
    call turn_screen_off
    call clean_all_tiles
-   ld hl,map1Tiles
-   ld de,$8000
-   ld b, 12 * $10
-   call memcpy_256
+   call draw_map_snake
    
    call InitDmaCopy
    call sys_sound_init
    call sys_sound_init_snake_music
-   ld hl,map1
-   call draw_map
+   
    call turn_screen_on
    call init_all_sprites
 
@@ -46,8 +42,7 @@ load_snake_screen::
       call check_player_shot
       ;call sys_blink_update
       call draw_hearts
-      ld b,4
-      ld hl,map1
+      
       call boss_is_dead
       call sys_collision_check_all
       call check_screen_transition

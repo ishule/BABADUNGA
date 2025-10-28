@@ -20,42 +20,271 @@ def map1Bank   EQU 0
 
  SECTION "map1", ROM0
 
-map1::
-DB $05,$05,$05,$05,$05,$05,$05,$05,$05,$05
-DB $05,$05,$05,$05,$05,$05,$05,$05,$05,$05
-DB $03,$00,$00,$08,$07,$00,$09,$09,$00,$00
-DB $09,$00,$00,$09,$07,$09,$00,$09,$00,$04
-DB $03,$00,$00,$09,$07,$00,$08,$09,$00,$00
-DB $00,$00,$00,$08,$07,$09,$00,$09,$00,$04
-DB $03,$00,$00,$08,$07,$00,$09,$00,$00,$00
-DB $00,$00,$00,$08,$07,$08,$00,$09,$00,$04
-DB $03,$00,$00,$00,$07,$00,$08,$00,$00,$00
-DB $00,$00,$00,$08,$07,$00,$00,$09,$00,$04
-DB $03,$00,$00,$00,$07,$00,$08,$00,$00,$00
-DB $00,$00,$00,$09,$07,$00,$00,$09,$00,$04
-DB $03,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $00,$00,$00,$09,$07,$00,$00,$00,$00,$04
-DB $03,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $00,$00,$00,$08,$07,$00,$00,$00,$00,$04
-DB $03,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $00,$00,$00,$09,$07,$00,$00,$00,$00,$04
-DB $03,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $00,$00,$00,$09,$07,$00,$00,$00,$00,$04
-DB $03,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $00,$00,$00,$08,$07,$00,$00,$00,$00,$04
-DB $03,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $00,$00,$00,$00,$07,$00,$00,$00,$00,$04
-DB $03,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $00,$00,$00,$00,$07,$00,$00,$00,$00,$04
-DB $00,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $00,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $00,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $00,$00,$00,$00,$07,$00,$00,$00,$00,$00
-DB $03,$06,$06,$06,$06,$06,$06,$06,$06,$06
-DB $06,$06,$06,$06,$06,$06,$06,$06,$06,$04
-DB $02,$02,$02,$02,$02,$02,$02,$02,$02,$02
-DB $02,$02,$02,$02,$02,$02,$02,$02,$02,$02
-DB $02,$02,$02,$02,$02,$02,$02,$02,$02,$02
-DB $02,$02,$02,$02,$02,$02,$02,$02,$02,$02
+draw_map_snake::
+   call clear_map
+   ld hl,mapTiles
+   ld de,$8000
+   ld b, 10 * $10
+   call memcpy_256
+
+   ;Ahora los añadidos a partir del tile 2Cç
+   ld hl,jungle_lianas_h
+   ld de,$82C0
+   ld b,3*$10
+   call memcpy_256
+
+   	ld a,16
+	ld b,2
+	ld c,2
+	ld d,2
+	ld e,2
+	call draw_bordered_lines
+
+	ld a,15
+	ld b,1
+	ld c,5
+	ld d,5
+	ld e,5
+	call draw_bordered_lines
+
+
+	ld a,9
+	ld b,4
+	ld c,3
+	ld d,0
+	ld e,3
+	call draw_bordered_lines
+
+
+	ld a,0
+	ld b,1
+	ld c,6
+	ld d,4
+	ld e,7
+	call draw_bordered_lines
+
+
+	ld hl,mapSnake
+	ld a,1
+	ld c,8
+	call draw_bg_line
+
+   ret
+
+draw_map_gorilla::
+	call clear_map
+	ld hl,mapTiles
+	ld de,$8000
+	ld b, 3 * $10
+	call memcpy_256
+
+	ld hl,caveTiles
+	ld de,$8030
+	ld b,5 * $10
+	call memcpy_256
+
+	ld hl,mapMonkey_tiles
+	ld de,$82C0
+	ld b,7 * $10
+	call memcpy_256
+
+
+	ld a,16
+	ld b,2
+	ld c,2
+	ld d,2
+	ld e,2
+	call draw_bordered_lines
+
+
+	ld a,15
+	ld b,1
+	ld c,5
+	ld d,5
+	ld e,5
+	call draw_bordered_lines
+
+	ld a,5
+	ld b,8
+	ld c,3
+	ld d,0
+	ld e,4
+	call draw_bordered_lines
+
+
+	ld a,0
+	ld b,1
+	ld c,7
+	ld d,7
+	ld e,7
+	call draw_bordered_lines
+
+
+
+	ld hl,mapGorilla
+	ld a,1
+	ld c,4
+	call draw_bg_line
+
+	ret
+
+
+draw_map_spider::
+	call clear_map
+	ld hl,mapTiles
+	ld de,$8000
+	ld b, 3 * $10
+	call memcpy_256
+
+	ld hl,caveTiles
+	ld de,$8030
+	ld b,5 * $10
+	call memcpy_256
+
+	ld hl,mapSpider_tiles
+	ld de,$82C0
+	ld b,0
+	call memcpy_256
+
+	ld hl,telarana_pequena
+	ld de,$82C0 + $10 * 16
+	ld b,2 * $10
+	call memcpy_256
+
+	ld a,16
+	ld b,2
+	ld c,2
+	ld d,2
+	ld e,2
+	call draw_bordered_lines
+
+
+	ld a,15
+	ld b,1
+	ld c,5
+	ld d,5
+	ld e,5
+	call draw_bordered_lines
+
+
+	ld a,13
+	ld b,2
+	ld c,0
+	ld d,0
+	ld e,0
+	call draw_bordered_lines
+
+	ld a,5
+	ld b,8
+	ld c,3
+	ld d,0
+	ld e,4
+	call draw_bordered_lines
+
+
+	ld a,0
+	ld b,1
+	ld c,7
+	ld d,6
+	ld e,7
+	call draw_bordered_lines
+
+	ld hl,mapSpider
+	ld a,1
+	ld c,4
+	call draw_bg_line
+	
+
+	ret
+; =============================================
+; draw_bordered_lines
+; Dibuja B líneas de 20 tiles (C...D...E) empezando en la fila A.
+;
+; INPUT: A = Fila de inicio (0-17)
+;        B = Número de líneas a dibujar
+;        C = Tile ID para la columna 0 (Borde Izquierdo)
+;        D = Tile ID para las columnas 1-18 (Medio)
+;        E = Tile ID para la columna 19 (Borde Derecho)
+;
+; MODIFICA: AF, BC, DE, HL
+; ASUME: VRAM_BG_MAP_0 está definido (ej: $9800)
+; =============================================
+draw_bordered_lines::
+    ld h, a             ; H = Fila Actual (empezando por A)
+    ; B, C, D, E contienen sus parámetros
+
+.outer_loop: ; Bucle para cada línea
+    push bc             ; Guardar Contador Líneas(B) y Tile Izquierdo(C)
+    push de             ; Guardar Tile Medio(D) y Tile Derecho(E)
+    push hl             ; Guardar HL (H contiene la Fila Actual)
+
+    ; Calcular Dirección VRAM Destino: HL = $9800 + (FilaActual * 32)
+    ld a, h             ; A = Fila Actual (guardada en H)
+    ld l, a
+    ld h, 0
+    add hl, hl          ; *2
+    add hl, hl          ; *4
+    add hl, hl          ; *8
+    add hl, hl          ; *16
+    add hl, hl          ; *32 (Offset de fila)
+    
+    ; *** CORRECCIÓN: Usar BC para la dirección base, no DE ***
+    push bc
+    ld bc, $9800
+    add hl, bc          ; HL = Dirección VRAM para el inicio de esta fila
+
+    ; 1. Dibujar Borde Izquierdo (Columna 0)
+    pop bc
+    ld a, c             ; A = Tile Izquierdo (guardado en C)
+    ld [hl+], a         ; Escribir tile, HL apunta ahora a Col 1
+
+    ; 2. Dibujar Medio (18 tiles)
+    ld b, 18            ; B = Contador Bucle Interior (18 tiles)
+.inner_loop:
+    ld a, d             ; A = Tile Medio (guardado en D)
+    ld [hl+], a         ; Escribir tile, HL avanza
+    dec b
+    jr nz, .inner_loop  ; Repetir 18 veces
+
+    ; HL apunta ahora a Columna 19
+
+    ; 3. Dibujar Borde Derecho (Columna 19)
+    ld a, e             ; A = Tile Derecho (guardado en E)
+    ld [hl], a          ; Escribir tile
+
+    pop hl              ; Restaurar HL (H vuelve a tener la Fila Actual)
+    pop de              ; Restaurar Tile Medio(D) y Tile Derecho(E)
+    pop bc              ; Restaurar Contador Líneas(B) y Tile Izquierdo(C)
+
+    inc h               ; H = Siguiente Fila
+    dec b               ; Decrementar Contador de Líneas
+    jr nz, .outer_loop  ; Si B > 0, dibujar la siguiente línea
+
+    ret
+;JUNGLE
+mapSnake::
+DB $03,$2C,$2D,$2D,$2E,$08,$00,$00,$08,$2C,$2D,$2E,$08,$00,$00,$00,$08,$2C,$2D,$03
+DB $03,$00,$00,$08,$00,$08,$00,$00,$08,$00,$00,$00,$08,$00,$00,$00,$08,$00,$08,$03
+DB $03,$00,$00,$08,$00,$09,$00,$00,$08,$00,$00,$00,$08,$00,$00,$00,$08,$00,$08,$03
+DB $03,$00,$00,$08,$00,$00,$00,$00,$08,$00,$00,$00,$08,$00,$00,$00,$08,$00,$08,$03
+DB $03,$00,$00,$08,$00,$00,$00,$00,$09,$00,$00,$00,$08,$00,$00,$00,$08,$00,$08,$03
+DB $03,$00,$00,$08,$00,$00,$00,$00,$00,$00,$00,$00,$08,$00,$00,$00,$09,$00,$08,$03
+DB $03,$00,$00,$09,$00,$00,$00,$00,$00,$00,$00,$00,$08,$00,$00,$00,$00,$00,$09,$03
+DB $03,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$09,$00,$00,$00,$00,$00,$00,$03
+
+
+;Mapa de la araña
+mapSpider::
+DB $03,$2C,$2E,$34,$36,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$3C,$3D,$04
+DB $03,$2D,$2F,$35,$37,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$04
+DB $03,$30,$32,$38,$3a,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$04
+DB $03,$31,$33,$39,$3b,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$04
+
+;; Mapa del gorila
+mapGorilla::
+DB $07,$07,$07,$07,$07,$07,$07,$07,$2F,$32,$32,$2E,$07,$07,$07,$07,$07,$07,$07,$07
+DB $07,$07,$07,$07,$2F,$2E,$2F,$30,$00,$00,$00,$00,$31,$2E,$07,$07,$07,$07,$07,$07
+DB $07,$07,$2F,$30,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$31,$2E,$06,$06,$07,$07
+DB $07,$2C,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$2D,$07
 
 ; End of MAP1.Z80

@@ -7,7 +7,7 @@ main::
    jp provisional_game_loop
    
    call turn_screen_off
-   ld hl,map1Tiles
+   ld hl,mapTiles
    ld de,$8000
    ld b, 12 * $10
    call memcpy_256
@@ -15,8 +15,8 @@ main::
    call InitDmaCopy
    call sys_sound_init
    call sys_sound_init_snake_music
-   ld hl,map1
-   call draw_map
+   ;ld hl,map1
+   ;call draw_map
    call turn_screen_on
    call init_all_sprites
 
@@ -126,8 +126,8 @@ main::
       set 0,a ; Para que solo entre aquí una vez
       ld [boss_player_dead],a
 
-      ld hl,map1
-      call boss_dies_animation
+      ;ld hl,map1
+      ;call boss_dies_animation
       ; Desactivamos y desplazamos al boss
       call kill_boss
 
