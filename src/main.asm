@@ -79,7 +79,7 @@ main::
 
       call init_player_stats
       ; ======== DEBUG =========
-      call load_spider_screen
+      ;call load_spider_screen
       ; =======================
       call load_title_screen
       call load_tutorial_screen
@@ -104,7 +104,7 @@ main::
    init_player_stats::
       xor a
       ld [player_bullet],a
-      ld a,10
+      ld a,30
       ld [player_health],a
       ret
 
