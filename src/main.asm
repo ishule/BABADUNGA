@@ -15,8 +15,7 @@ main::
    call InitDmaCopy
    call sys_sound_init
    call sys_sound_init_snake_music
-   ;ld hl,map1
-   ;call draw_map
+   call draw_map_spider
    call turn_screen_on
    call init_all_sprites
 
