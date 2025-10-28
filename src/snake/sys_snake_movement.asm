@@ -58,6 +58,8 @@ manage_snake_stand_state:
 		ld hl, snake_animation_counter
 		ld [hl], SNAKE_YELL_ANIM_TIME
 
+		; SONIDO GRITO
+
 		ret
 
 
