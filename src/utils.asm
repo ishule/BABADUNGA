@@ -77,36 +77,6 @@ memcut_256::
 	ret
 
 
-;; draw_map: Draws a map on the screen
-;; hl: Puntero a tilemap
-draw_map::
-	ld de,$9800 ; Destination: VRAM Tile Map 0
-	ld b,18  ; B: Altura (18 rows)
-		
-	.loopRow:
-		ld c,20  ; C: Anchura (20 columns)
-
-	.loopCol:
-		ld a,[hl+] ; Load tile index from source (HL), advance HL
-		ld [de],a ; Write tile index to VRAM (DE)
-		inc de; Advance VRAM pointer
-		
-		dec c
-		jr nz,.loopCol ; Loop until 20 columns are done
-
-		;; Ajustamos VRAM: Sumamos 12 bytes (32 - 20)
-		;; Usamos A y H para la suma.
-	    ld a, 12
-	    add a, e    ; Suma 12 al byte bajo (E)
-	    ld e, a
-	    jr nc, .no_carry ; Si no hay acarreo, salta
-	    inc d       ; Si hay acarreo, incrementa el byte alto (D)
-	.no_carry:
-		dec b
-		jr nz,.loopRow ; Loop back for the next row
-
-		ret; Exit the subroutine
-
 ;; Apaga la pantalla del Game Boy
 ;; LCD_CONTROL ($FF40) bit 7 = LCD Display Enable
 turn_screen_off::

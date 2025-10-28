@@ -104,8 +104,8 @@ draw_map_gorilla::
 	ld e,5
 	call draw_bordered_lines
 
-	ld a,5
-	ld b,8
+	ld a,1
+	ld b,12
 	ld c,3
 	ld d,0
 	ld e,4
@@ -115,16 +115,16 @@ draw_map_gorilla::
 	ld a,0
 	ld b,1
 	ld c,7
-	ld d,7
+	ld d,6
 	ld e,7
 	call draw_bordered_lines
 
 
 
-	ld hl,mapGorilla
-	ld a,1
-	ld c,4
-	call draw_bg_line
+	;ld hl,mapGorilla
+	;ld a,1
+	;ld c,4
+	;call draw_bg_line
 
 	ret
 

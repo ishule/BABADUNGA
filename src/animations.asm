@@ -65,6 +65,57 @@ wipe_out_right::
     
     ret
 
+fill_background_black::
+    ld b, 0             ; Columna inicial (0-19)
+    
+.next_column:
+    push bc
+    
+    ; Esperar 2-3 VBlanks por columna para hacerlo más lento
+    ld a, 1             ; Número de frames a esperar
+
+    ; Ahora dibujamos TODA la columna
+    ld c, 0
+    
+.draw_tile:
+    ; Calcular dirección en tilemap: $9800 + (fila * 32) + columna
+    ld a, c             ; A = fila
+    ld h, 0
+    ld l, a
+    ; Multiplicar fila por 32
+    add hl, hl          ; * 2
+    add hl, hl          ; * 4
+    add hl, hl          ; * 8
+    add hl, hl          ; * 16
+    add hl, hl          ; * 32
+    
+    ; Añadir columna
+    ld a, b             ; A = columna
+    ld e, a
+    ld d, 0
+    add hl, de
+    
+    ; Añadir base del tilemap
+    ld de, $9800
+    add hl, de          ; HL = dirección final en tilemap
+    
+    ; Escribir tile negro (tile 2) - SIN wait_vblank aquí
+    ld a, 2
+    ld [hl], a
+    
+    inc c               ; Siguiente fila
+    ld a, c
+    cp 18               ; ¿Hemos dibujado toda la columna?
+    jr c, .draw_tile
+    
+    pop bc
+    inc b               ; Siguiente columna
+    ld a, b
+    cp 20               ; ¿Hemos cubierto toda la pantalla? (20 columnas)
+    jr c, .next_column
+    
+    ret
+    
 player_dies_animation::
 
     ; --- 1. Set Player Sprite Priority (Above Background) ---
@@ -75,23 +126,7 @@ player_dies_animation::
     call restore_die_animation
 
     ret
-; b -> Nº Sprites
-; hl -> map
-boss_dies_animation::
-    ld a,ENEMY_START_ENTITY_ID
-    ld c,16
-    push hl
-    call die_animation
-    
 
-    ;Restore game
-    call turn_screen_off
-    pop hl
-    call draw_map
-
-    call restore_die_animation
-    call turn_screen_on
-    ret
 ;; c -> duration
 ;; a -> Entity Start Id
 ;; b -> Nº Sprites
@@ -152,56 +187,6 @@ restore_die_animation::
     ld [hl],%01010101
 ret
 
-fill_background_black::
-    ld b, 0             ; Columna inicial (0-19)
-    
-.next_column:
-    push bc
-    
-    ; Esperar 2-3 VBlanks por columna para hacerlo más lento
-    ld a, 1             ; Número de frames a esperar
-
-    ; Ahora dibujamos TODA la columna
-    ld c, 0
-    
-.draw_tile:
-    ; Calcular dirección en tilemap: $9800 + (fila * 32) + columna
-    ld a, c             ; A = fila
-    ld h, 0
-    ld l, a
-    ; Multiplicar fila por 32
-    add hl, hl          ; * 2
-    add hl, hl          ; * 4
-    add hl, hl          ; * 8
-    add hl, hl          ; * 16
-    add hl, hl          ; * 32
-    
-    ; Añadir columna
-    ld a, b             ; A = columna
-    ld e, a
-    ld d, 0
-    add hl, de
-    
-    ; Añadir base del tilemap
-    ld de, $9800
-    add hl, de          ; HL = dirección final en tilemap
-    
-    ; Escribir tile negro (tile 2) - SIN wait_vblank aquí
-    ld a, 2
-    ld [hl], a
-    
-    inc c               ; Siguiente fila
-    ld a, c
-    cp 18               ; ¿Hemos dibujado toda la columna?
-    jr c, .draw_tile
-    
-    pop bc
-    inc b               ; Siguiente columna
-    ld a, b
-    cp 20               ; ¿Hemos cubierto toda la pantalla? (20 columnas)
-    jr c, .next_column
-    
-    ret
 
 ;; Abre la puerta DERECHA con animación ascendente (CORREGIDO)
 open_door::
