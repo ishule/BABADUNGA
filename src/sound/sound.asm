@@ -145,29 +145,29 @@ sys_sound_player_gets_hit_effect::
     ld a, %11000101  ; NR14: Trigger=1, Length Enable=1, Freq MSB=$05 (Completes G5 pitch)
     ld [NR14], a
     ret
-
 sys_sound_spit_effect::
-    ; Escupitajo: "Ptui!" húmedo y rápido
-    ; Canal 1: Tono descendente rápido
-    ld a, %00010111   ; Sweep descendente muy rápido
+    ; Disparo de Boss: Tono grave, descendente y corto + "thump" de ruido
+
+    ; --- Canal 1: Tono grave descendente ---
+    ld a, %00011011  ; NR10: Sweep Time=1, Direction=Decrease(1), Shift=3 (Descenso rápido)
     ld [NR10], a
-    ld a, %00000100   ; Duty 0% (más áspero), longitud muy corta (4)
+    ld a, %10001000  ; NR11: Duty 50% (tono lleno), Longitud MUY corta (8)
     ld [NR11], a
-    ld a, %11000010   ; Volumen 12, decay
+    ld a, %11110010  ; NR12: Volumen MAX (15), Decay rápido (step=2)
     ld [NR12], a
-    ld a, $50         ; Frecuencia media-alta
+    ld a, $36        ; NR13: Frecuencia LSB (Tono grave, C3)
     ld [NR13], a
-    ld a, %11000101   ; Trigger + length enable
+    ld a, %11000001  ; NR14: Trigger=1, Length Enable=1, Freq MSB=$01 (Completa C3)
     ld [NR14], a
     
-    ; Canal 4: Ruido húmedo/siseante simultáneo
-    ld a, %00000011   ; Longitud muy corta
+    ; --- Canal 4: Ruido grave y corto (impacto/thump) ---
+    ld a, %00000100  ; NR41: Longitud muy corta (4)
     ld [NR41], a
-    ld a, %10100001   ; Volumen 10, decay rápido
+    ld a, %11110001  ; NR42: Volumen 15, Decay muy rápido (step=1)
     ld [NR42], a
-    ld a, %01100001   ; Ruido "hissy" agudo
+    ld a, %01110111  ; NR43: Clock Shift=7, 7-bit, Divisor=7 (Ruido grave)
     ld [NR43], a
-    ld a, %11000000   ; Trigger + length enable
+    ld a, %11000000  ; NR44: Trigger + Length Enable
     ld [NR44], a
     ret
 

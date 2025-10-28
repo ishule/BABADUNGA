@@ -689,6 +689,10 @@ spider_shot_roof_state_logic_for_stage_1:
 		; === SPAWN BULLET ===
 		ld de, spider_big_bullet_0_preset
 		ld a, DOWN_SHOT_DIRECTION
+
+		push af
+		call sys_sound_spit_effect
+		pop af
 		push bc
 		call shot_bullet_for_preset
 		pop bc
@@ -697,6 +701,10 @@ spider_shot_roof_state_logic_for_stage_1:
 		ld c, a
 		ld de, spider_big_bullet_1_preset
 		ld a, DOWN_SHOT_DIRECTION
+
+		push af
+		call sys_sound_spit_effect
+		pop af
 		call shot_bullet_for_preset
 
 		; === SET COOLDOWN ===
@@ -712,6 +720,7 @@ spider_shot_roof_state_logic:
 	cp 0
 	jr z, .shot
 	.decrease_cooldown:
+	
 	dec a
 	ld [spider_shot_cooldown], a
 	cp SPIDER_ROOF_STATE_SHOT_ANIM_TIME
@@ -739,6 +748,10 @@ spider_shot_roof_state_logic:
 		; === SPAWN BULLET ===
 		ld de, spider_bullet_preset
 		ld a, DOWN_SHOT_DIRECTION
+
+		push af
+		call sys_sound_spit_effect
+		pop af
 		call shot_bullet_for_preset
 		inc h
 		inc l
@@ -798,6 +811,9 @@ spider_shot_ground_state_logic:
 		ld hl, spider_shot_cooldown
 		ld [hl], SPIDER_GROUND_STATE_SHOT_COOLDOWN
 
+		push af
+		call sys_sound_spit_effect
+		pop af
 		call shot_bullet_for_preset
 		inc h
 		inc l
