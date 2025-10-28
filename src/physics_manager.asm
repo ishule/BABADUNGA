@@ -135,7 +135,7 @@ position_changers:
         ld [hl], c
         ; X pos (decimal)
         inc h
-        ld [hl], $00
+        ;ld [hl], $00
 
         dec h
         dec l
@@ -481,6 +481,15 @@ acceleration_changers:
         call man_entity_locate_v2
         ld bc, 0
         call change_entity_group_acc_y
+        ret
+
+    ; INPUT 
+    ;  d -> group_size
+    reset_group_acc_x:
+        ld a, ENEMY_START_ENTITY_ID
+        call man_entity_locate_v2
+        ld bc, 0
+        call change_entity_group_acc_x
         ret
 
 

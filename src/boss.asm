@@ -45,9 +45,6 @@ check_ground_for_boss::
 ; RETURN
 ;  
 check_wall_for_boss::
-    
-	;======== Llamar fuera ========
-    ;call take_mid_boss_entity
     call man_entity_locate_v2
     inc h
     inc l
@@ -112,8 +109,6 @@ rotate_boss_x::
 ; INPUT
 ;  c-> num_entities
 rotate_boss_y::
-    ;Llamar desde fuera
-    ;ld c, GORILLA_NUM_ENTITIES
     ld a, ENEMY_START_ENTITY_ID
     call flip_boss_y
     call swap_y_boss_entity
