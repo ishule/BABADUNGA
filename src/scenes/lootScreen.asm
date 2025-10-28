@@ -125,7 +125,7 @@ init_pickups::
     ; Set Sprite Data: Y, X, Tile, Attr
     pop hl                    ; HL = C0xx + L
     ld h, CMP_SPRITES_H       ; HL = C1xx + L
-    ld b, 100                 ; Y Position
+    ld b, 108                 ; Y Position
     ld a, b
     ld [hl], a
     inc hl
@@ -137,8 +137,28 @@ init_pickups::
     ld a, b
     ld [hl], a
     inc hl
-    ld b, %10100000
+    ld b, %00100000
     ld [hl], b
+
+        ; Sprite 2: Right Half (Tile $13)
+    call man_entity_alloc     ; L=new offset, HL=C0xx+L
+
+    ld h, CMP_SPRITES_H       ; HL = C1xx + L
+    ld b, 108                 ; Y Position
+    ld a, b
+    ld [hl], a
+    inc hl
+    ld b, 120 +2               ; X Position
+    ld a, b
+    ld [hl], a
+    inc hl
+    ld b, $10                ; Tile ID
+    ld a, b
+    ld [hl], a
+    inc hl
+    ld b, %10100000           ; Attribute (Flip X?)
+    ld a, b
+    ld [hl], a              ; Write Attr
 
     ret
 
@@ -217,6 +237,8 @@ player_pickup::
    ld a,4
    call man_entity_delete
    ld a,4
+   call man_entity_delete
+      ld a,4
    call man_entity_delete
    call open_door
    ld a,[lootFlag]
