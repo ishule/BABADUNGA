@@ -104,8 +104,8 @@ draw_map_gorilla::
 	ld e,5
 	call draw_bordered_lines
 
-	ld a,1
-	ld b,12
+	ld a,5
+	ld b,8
 	ld c,3
 	ld d,0
 	ld e,4
@@ -115,16 +115,16 @@ draw_map_gorilla::
 	ld a,0
 	ld b,1
 	ld c,7
-	ld d,6
+	ld d,7
 	ld e,7
 	call draw_bordered_lines
 
 
 
-	;ld hl,mapGorilla
-	;ld a,1
-	;ld c,4
-	;call draw_bg_line
+	ld hl,mapGorilla
+	ld a,1
+	ld c,4
+	call draw_bg_line
 
 	ret
 
@@ -141,15 +141,15 @@ draw_map_spider::
 	ld b,5 * $10
 	call memcpy_256
 
-	ld hl,mapSpider_tiles
-	ld de,$82C0
-	ld b,0
-	call memcpy_256
+	;ld hl,mapSpider_tiles
+	;ld de,$82C0
+	;ld b,0
+	;call memcpy_256
 
-	ld hl,telarana_pequena
-	ld de,$82C0 + $10 * 16
-	ld b,2 * $10
-	call memcpy_256
+	;ld hl,telarana_pequena
+	;ld de,$82C0 + $10 * 16
+	;ld b,2 * $10
+	;call memcpy_256
 
 	ld a,16
 	ld b,2
@@ -174,8 +174,8 @@ draw_map_spider::
 	ld e,0
 	call draw_bordered_lines
 
-	ld a,5
-	ld b,8
+	ld a,1
+	ld b,12
 	ld c,3
 	ld d,0
 	ld e,4
@@ -189,10 +189,10 @@ draw_map_spider::
 	ld e,7
 	call draw_bordered_lines
 
-	ld hl,mapSpider
-	ld a,1
-	ld c,4
-	call draw_bg_line
+	;ld hl,mapSpider
+	;ld a,1
+	;ld c,4
+	;call draw_bg_line
 	
 
 	ret
@@ -275,10 +275,10 @@ DB $03,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$09,$00,$00,$00,$00,$00,$00,$
 
 ;Mapa de la araña
 mapSpider::
-DB $03,$2C,$2E,$34,$36,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$3C,$3D,$04
-DB $03,$2D,$2F,$35,$37,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$04
-DB $03,$30,$32,$38,$3a,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$04
-DB $03,$31,$33,$39,$3b,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$04
+;DB $03,$2C,$2E,$34,$36,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$3C,$3D,$04
+;DB $03,$2D,$2F,$35,$37,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$04
+;DB $03,$30,$32,$38,$3a,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$04
+;DB $03,$31,$33,$39,$3b,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$04
 
 ;; Mapa del gorila
 mapGorilla::
