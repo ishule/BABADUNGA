@@ -51,6 +51,9 @@ sys_gorilla_movement::
             call manage_jump_0_state
             ret
         .stage_1_jump:
+            ld b, 1 
+            call set_flag_can_take_damage_to_b 
+            
             call manage_jump_1_state
             ret
 
@@ -59,31 +62,38 @@ sys_gorilla_movement::
         ret
 
     .wait_strike_state:
-        push af 
-        push hl
-        ld a, ENEMY_START_ENTITY_ID 
-        call man_entity_locate_v2
-        inc l 
-        inc l 
-        res 0, [hl] ; Set flag to 0
-        pop hl 
-        pop af
+        ld b, 0
+        call set_flag_can_take_damage_to_b
         call manage_wait_strike_state
         ret
 
     .strike_state:
-        push af 
-        push hl
-        ld a, ENEMY_START_ENTITY_ID 
-        call man_entity_locate_v2
-        inc l 
-        inc l 
-        res 0, [hl] ; Set flag to 0
-        pop hl 
-        pop af
+        ld b, 0
+        call set_flag_can_take_damage_to_b
         call shake_screen
         call manage_strike_state
 
+    ret
+
+set_flag_can_take_damage_to_b::
+    push hl
+    push af
+    ld a, ENEMY_START_ENTITY_ID 
+    call man_entity_locate_v2
+    inc l 
+    inc l
+    ld a, b 
+    cp 0 
+    jr z, .set_zero 
+    set 0, [hl]     ; Set to 1 
+    jr .continue
+
+.set_zero:
+    res 0, [hl] ; Set flag CAN TAKE DAMAGE to 0
+
+.continue:
+    pop hl 
+    pop af
     ret
 
 check_stage_change:

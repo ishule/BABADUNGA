@@ -79,17 +79,6 @@ sys_collision_check_all::
 
     ret
 
-; INPUT: DE = entidades a saltar
-; OUTPUT: DE = número de bytes que saltamos
-multiply_DE_by_4:
-	;; x2
-    sla e 
-    rl d 
-    sla e
-    rl d 
-
-    ret
-
 
 ;; Verifica si se solapan dos intervalos 1D
 ;; INPUT:

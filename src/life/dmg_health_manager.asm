@@ -68,7 +68,7 @@ draw_hearts::
     pop bc                  ; Restore slot index B and original health C
     inc b                   ; Increment slot index
     ld a, b
-    cp 6    ; Have we processed all 6 slots? (MAX_PLAYER_HEALTH should be 6)
+    cp 12    ; Have we processed all 6 slots? (MAX_PLAYER_HEALTH should be 6)
     jr c, .loop             ; If B < 6, loop again
 
     ret

@@ -160,7 +160,7 @@ DEF CMP_COLLISIONS_WIDTH	equ 3
 ; Física del jugador (Q5.3, C2)
 DEF PLAYER_SPEED			equ $0100	; +1
 DEF PLAYER_SPEED_NEGATIVE 	equ $FF00 	; -1
-DEF PLAYER_JUMP_SPEED		equ $FC00	; -5
+DEF PLAYER_JUMP_SPEED		equ $FAE0	; -5.25
 DEF PLAYER_GRAVITY			equ $0050 	; +1 
 
 DEF PLAYER_INITIAL_POS_X  	equ $13 ; Posición inicial del jugador en X
