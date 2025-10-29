@@ -44,6 +44,7 @@ main::
       or a
       ret z
 
+
       ; TODO LO QUE TENGA QUE PASAR AL ACABAR LA ANIMACION DE MUERTE
       call open_door
       
