@@ -184,58 +184,6 @@ position_changers:
         
         ret
 
-    ; INPUT
-    ;  b  -> base pos Y
-    ;  c  -> base pos X
-    ;  hl -> first entity start address
-    ;
-    ; Usa change_entity_group_pos para colocar dos filas de 4 sprites (32x32 total)
-    ;
-    ; MODIFICA: A, B, C, D, HL
-    change_entity_group_pos_32x32::
-        push bc                ; guardar X e Y originales
-
-        ; === Fila superior ===
-        ld d, 4                ; MAGIC (ancho de el sprite 32x32)
-        call change_entity_group_pos
-        pop bc                 ; restaurar X e Y originales
-        
-        ; === Fila inferior ===
-        ld a, b
-        add a, SPRITE_HEIGHT              
-        ld b, a
-
-        ld d, 4
-        call change_entity_group_pos
-
-        ret
-
-
-    ; INPUT:
-    ;  b  -> nueva pos Y base (suelo)
-    ;  hl -> entity start address (primer sprite del grupo)
-    ;
-    ; Cambia solo las Y de un grupo 32x32 (4 columnas x 2 filas),
-    ; procesando 2 sprites por llamada a change_entity_group_pos_y
-    ;
-    ; MODIFICA: A, B, D, HL
-    change_entity_group_pos_y_32x32::
-        push bc                ; guardar X e Y originales
-
-        ; === Fila superior ===
-        ld d, 4                ; MAGIC (ancho de el sprite 32x32)
-        call change_entity_group_pos_y
-        pop bc                 ; restaurar X e Y originales
-        
-        ; === Fila inferior ===
-        ld a, b
-        add a, SPRITE_HEIGHT              
-        ld b, a
-
-        ld d, 4
-        call change_entity_group_pos_y
-        ret
-
 
     ; INPUT
     ;  hl -> start entity_0 address ($C0)

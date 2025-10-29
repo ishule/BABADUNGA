@@ -20,13 +20,6 @@ wait_vblank::
 	jr nz,.loop
 	ret
 
-wait_not_vblank::
-    ld hl, rLY          ; HL = Address of LY register ($FF44)
-    ld a, VBLANK_START  ; A = VBLANK start line (usually 144 / $90)
-.loop:
-    cp [hl]             ; Compare A with the value at [HL]
-    jr z, .loop         ; If equal (still in VBLANK range start), keep checking
-    ret                 ; Return when not equal (outside VBLANK range)
 
 ; Waits for a specific number of VBLANK periods (frames)
 ; In this case, waits for 4 VBLANKs.
