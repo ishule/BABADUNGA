@@ -35,7 +35,17 @@ spider_spawn_definition::
     DB SPIDER_SPAWN_POINT_Y - SPRITE_HEIGHT, SPIDER_SPAWN_POINT_X + SPRITE_WIDTH*2, SPIDER_WEB_HOOK_TILE_ID + 2,  SPRITE_ATTR_PRIORITY_MASK                          ; Sprite 9: Columna 3, Fila 0
     DB 0, 0, 0, 0
 
-spider_stand_colisions:
+spider_roof_collisions::
+    DB 4, 5, 12, 3
+    DB 0, 0, 16, 16
+    DB 0, 6, 2, 2
+    DB 8, 2, 6, 6
+    DB 4, 5, 12, 3
+    DB 0, 0, 16, 16
+    DB 0, 6, 2, 2
+    DB 8, 2, 6, 6
+
+spider_stand_collisions:
 	; Sprite 0: Columna 1, Fila 1
     DB 13, 3, 3, 5
 
@@ -60,7 +70,7 @@ spider_stand_colisions:
     ; Sprite 7: Columna 4, Fila 2
     DB 0, 0, 7, 8
 
-spider_jump_colisions:
+spider_jump_collisions:
 	; Sprite 0: Columna 1, Fila 1
     DB 13, 3, 3, 5
 
@@ -71,7 +81,7 @@ spider_jump_colisions:
     DB 0, 1, 10, 7
 
     ; Sprite 3: Columna 2, Fila 2
-    DB 0, 0, 10, 8
+    DB 0, 0, 16, 8
 
     ; Sprite 4: Columna 3, Fila 1
     DB 13, 0, 3, 8
@@ -93,25 +103,32 @@ init_spider::
 	ld c, SPIDER_ROOF_NUM_ENTITIES
 	call spawn_group_entity
 
-    ld d, SPIDER_NUM_ENTITIES
-    ld e, SPIDER_DAMAGE
-    call init_boss_info
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld bc, ENTER_ANIMATION_SPEED
+    ld d, SPIDER_ROOF_NUM_ENTITIES
+    call change_entity_group_vel_y
 
 	ret
 
 init_spider_variables:
-	ld hl, spider_state
-	ld [hl], SPIDER_ROOF_STATE
 
 	ld hl, spider_shot_cooldown
 	ld [hl], SPIDER_ROOF_STATE_SHOT_COOLDOWN
 
-	ld hl, spider_animation_counter
+	ld hl, boss_animation_counter
 	ld [hl], SPIDER_ROOF_STATE_WALK_ANIM_TIME
 
-	ld hl, spider_stage
-	ld [hl], SPIDER_INITIAL_STAGE
-	ret
+    ld hl, boss_health
+    ld [hl], SPIDER_HEALTH
+
+    ld hl, damaged_times
+    ld [hl], DAMAGED_TIMES_TO_FALL
+
+    ld hl, boss_state
+    ld [hl], SPIDER_ENTER_STATE
+
+    ret
 
 init_spider_tiles:
 	call turn_screen_off

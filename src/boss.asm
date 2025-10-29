@@ -1,5 +1,6 @@
 INCLUDE "consts.inc"
 
+def ENTER_STATE equ $00
 def DEAD_STATE equ $FF
 
 SECTION "General boss variables", WRAM0
@@ -359,6 +360,9 @@ init_boss_info::
     
 
     ld hl, boss_dead
+    ld [hl], 0
+
+    ld hl, boss_stage
     ld [hl], 0
 
     ret
