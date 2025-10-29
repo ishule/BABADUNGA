@@ -808,6 +808,13 @@ sys_collision_check_entity_vs_tiles::
 	ld e, l
 
     ld h, CMP_SPRITES_H 	; HL = $C1xx
+
+    ; Check estalactita fuera de pantalla
+    ld h, CMP_SPRITES_H
+    ld a, [hl]
+    cp 140              ; Fuera de pantalla
+    jr nc, delete_out_of_bounds
+
     call get_address_of_tile_being_touched
 
     ld a, [hl]
@@ -842,6 +849,12 @@ sys_collision_check_entity_vs_tiles::
 
     ret
 
+delete_out_of_bounds::
+    ld h, d
+    ld l, e
+    inc l
+    call delete_bullet
+    ret
 
 ; B = 0 → izquierda (inc), B = 1 → derecha (dec)
 touching_horizontal_collision:
