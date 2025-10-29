@@ -63,10 +63,9 @@ sys_collision_check_all::
 
 .next_entity:
     ; Avanzar HL al siguiente bloque de entidad
-    inc l 
-    inc l 
-    inc l 	; HL = $C003 (número de sprites)
-    inc l
+    ld a, 4 
+    add l 
+    ld l, a
 
     ld a, [num_entities_alive]   
     ld b, a                      ; B = número de entidades 
@@ -162,10 +161,9 @@ sys_collision_check_AABB::
 	ld a, [hl] 	; A = E1.PosY
     ld b, a
 
-	inc h 		; h = $C2
-	inc h 
-	inc h
-	inc h 		; h = $C5
+    ld a, 4 
+    add h 
+    ld h, a     ; H = $C5
     ld a, [hl]  ; HL = Offset_Y
     add b       ; A = PosY + OffsetY
     ld [I1 + I_POS], a 
@@ -183,10 +181,9 @@ sys_collision_check_AABB::
 	ld a, [hl] 	; A = E2.PosY
 	ld b, a 
 
-	inc h
-	inc h 
-	inc h
-	inc h 		; h = $C5
+    ld a, 4 
+    add h 
+    ld h, a     ; H = $C5
     ld a, [hl]  ; HL = Offset_Y
     add b       ; A = PosY + OffsetY
     ld [I2 + I_POS], a 
@@ -215,10 +212,9 @@ sys_collision_check_AABB::
 	ld a, [hl] 	; A = E1.PosX
 	ld b, a 
 
-	inc h
-	inc h 
-	inc h
-	inc h 		; h = $C5
+    ld a, 4 
+    add h 
+    ld h, a     ; H = $C5
     ld a, [hl]  ; HL = Offset_X
     add b       ; A = PosX + OffsetX
     ld [I1 + I_POS], a 
@@ -237,10 +233,9 @@ sys_collision_check_AABB::
 	ld a, [hl] 	; A = E2.PosX
 	ld b, a 
 
-	inc h
-	inc h 
-	inc h
-	inc h 		; h = $C5
+    ld a, 4 
+    add h 
+    ld h, a     ; H = $C5
     ld a, [hl]  ; HL = Offset_X
     add b       ; A = PosX + OffsetX
     ld [I2 + I_POS], a 
@@ -302,10 +297,9 @@ sys_collision_check_player_vs_boss::
 
     	jr nc, .collision_detected
 
-        inc l 
-        inc l 
-        inc l 
-        inc l   ; Pasamos a la siguiente entidad
+        ld a, 4 
+        add l 
+        ld l, a   ; Pasamos a la siguiente entidad
         jr .loop_boss
 
     .no_collision_detected:
@@ -826,110 +820,90 @@ sys_collision_check_entity_vs_tiles::
     cp 0 	
     ret z
 
-    ; --- Tile 1: pared izquierda ---
+    ; --- Tile 3: pared izquierda ---
     cp 3
     jr z, touching_left_collision
 
-    ; --- Tile 2: pared derecha ---
+    ; --- Tile 4: pared derecha ---
     cp 4
     jr z, touching_right_collision
 
+    ; --- Tile 5: techo  ---
     cp 5 
     jr z, touching_up_collision
 
+    ; --- Tile 2: suelo ---
     cp 2
     jr z, touching_up_collision
 
+    ; --- Tile 6: suelo abajo ---
     cp 6
     jr z, touching_up_collision
 
     ret
 
 
-touching_left_collision:
+; B = 0 → izquierda (inc), B = 1 → derecha (dec)
+touching_horizontal_collision:
+    ld c, b             ; C = dirección (0=izq, 1=der)
+    
     inc l
-    ld a, [hl]  ; A = TYPE 
-    cp 3        ; 3 = Bullet
+    ld a, [hl]
+    cp TYPE_BULLET
     jr z, delete_bullet
-
-	;; Ajustar posición
-	inc h       ; HL = C001 (X)
-    ld a, [hl]
-
-    inc a
-    ld [hl], a          ; reposicionar
-
-    ; Bloquear movimiento horizontal
-    inc h 
-    inc h 	; HL = $C300
-    xor a 
-    ld [hl], a
-
-    dec l 
-    dec l 
-    dec l 
-    dec l
-    dec l 
-    ld h, CMP_INFO_H
-
-    ;; Ajustar posición
+    
+    ; Ajustar sprite X
     inc h
-    inc l               ; HL = C001 (X)
     ld a, [hl]
-
+    bit 0, c
+    jr z, .inc_sprite
+    dec a
+    jr .apply_sprite
+.inc_sprite:
     inc a
-    ld [hl], a          ; reposicionar
-
-    ; Bloquear movimiento horizontal
-    inc h 
-    inc h   ; HL = $C300
-    xor a 
+.apply_sprite:
     ld [hl], a
-
+    
+    ; Bloquear velocidad sprite
+    inc h
+    inc h
+    xor a
+    ld [hl], a
+    
+    ; Ajustar Info X
+    dec l
+    dec l
+    dec l
+    dec l
+    dec l
+    ld h, CMP_INFO_H
+    inc h
+    inc l
+    ld a, [hl]
+    bit 0, c            ; Usar C en lugar de B
+    jr z, .inc_info
+    dec a
+    jr .apply_info
+.inc_info:
+    inc a
+.apply_info:
+    ld [hl], a
+    
+    ; Bloquear velocidad info
+    inc h
+    inc h
+    xor a
+    ld [hl], a
+    
     ret
 
+touching_left_collision:
+    ld b, 0
+    jr touching_horizontal_collision
 
 touching_right_collision:
-    inc l
-    ld a, [hl]  ; A = TYPE 
-    cp 3        ; 3 = Bullet
-    jr z, delete_bullet
-
-    ;; Ajustar posición
-    inc h       ; HL = C001 (X)
-    ld a, [hl]
-
-    dec a
-    ld [hl], a          ; reposicionar
-
-    ; Bloquear movimiento horizontal
-    inc h 
-    inc h   ; HL = $C300
-    xor a 
-    ld [hl], a
-
-    dec l 
-    dec l 
-    dec l 
-    dec l
-    dec l 
-    ld h, CMP_INFO_H
-
-    ;; Ajustar posición
-    inc h
-    inc l               ; HL = C001 (X)
-    ld a, [hl]
-
-    dec a
-    ld [hl], a          ; reposicionar
-
-    ; Bloquear movimiento horizontal
-    inc h 
-    inc h   ; HL = $C300
-    xor a 
-    ld [hl], a
-
-    ret
+    ld b, 1
+    jr touching_horizontal_collision
 
 touching_up_collision:
     ; De momento solo puede tocar el techo las balas
@@ -992,32 +966,25 @@ get_address_of_tile_being_touched::
     ret
 
 ;;-------------------------------------------------------
-convert_x_to_tx::
-    ; TX = (X - 8) / 8
-    cp 8
-    jr c, .clamp_zero
-    sub a, 8
+convert_coord_to_tile:
+    cp b
+    jr c, .clamp
+    sub b
     srl a
     srl a
     srl a
     ret
-.clamp_zero:
-    xor a          ; A = 0
+.clamp:
+    xor a
     ret
 
-;;-------------------------------------------------------
+convert_x_to_tx::
+    ld b, 8
+    jr convert_coord_to_tile
+    
 convert_y_to_ty::
-    ; TY = (Y - 16) / 8
-    cp 16
-    jr c, .clamp_zero
-    sub a, 16
-    srl a
-    srl a
-    srl a
-    ret
-.clamp_zero:
-    xor a          ; A = 0
-    ret
+    ld b, 16
+    jr convert_coord_to_tile
 
 ;;-------------------------------------------------------
 calculate_address_from_tx_and_ty::

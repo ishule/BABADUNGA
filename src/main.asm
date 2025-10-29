@@ -34,7 +34,7 @@ main::
    init_player_stats::
       xor a
       ld [player_bullet],a
-      ld a,30
+      ld a,6
       ld [player_health],a
       ret
 

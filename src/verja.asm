@@ -80,83 +80,60 @@ init_verja_entity::
 	ret
 
 
+
 ;;=================================================
-;; verja_init_physics
-;; Inicializa el componente de las físicas de a verja
-;; INPUT: HL = dirección sprite
-;;
-;; Establece:l
-;; 		- Posición inicial
-;; 		- Velocidad inicial: 0, 0 
-;; 		- Estado de animación: parado 
-;;
-;; MODIFICA: A, BC, DE
-init_verja_physics:: 
-	
+;; init_verja_physics
+;; Inicializa las físicas de las dos verjas
+;; MODIFICA: A, BC, DE, HL
+init_verja_physics::
+    ; ----- Primera verja -----
+    ld b, $78                  ; Y inicial
+    ld c, $08                  ; X inicial
 
-	;; Info Player
-	ld a, BYTE_ACTIVE
-	ld [hl+], a 		; Active = 1
+    ld d, h 
+    ld e, l
+    call .init_one_verja
 
-	ld a, TYPE_VERJA
-	ld [hl+], a 	 	; Type = 5
+    ; ----- Segunda verja -----
+    ld h, d 
+    ld l, e
+    ld de, $04               ; Cada entidad ocupa 4 bytes
+    add hl, de
+    ld b, $78
+    ld c, $A0
+    call .init_one_verja
 
+    ret
 
-	ld h, CMP_SPRITES_H
-	dec l 
-	dec l 	; HL = $C100
+;;-------------------------------------------------
+;; .init_one_verja
+;; INPUT: 
+;;   HL = dirección del componente INFO
+;;   B = Y inicial
+;;   C = X inicial
+;;-------------------------------------------------
+.init_one_verja:
+    ; === INFO ===
+    ld a, BYTE_ACTIVE
+    ld [hl+], a            ; Active = 1
+    ld a, TYPE_VERJA
+    ld [hl+], a            ; Type = 5
 
-	ld b, $78				; Y inicial
-	ld c, $08 	; X inicial
+    ; === SPRITE ===
+    ld h, CMP_SPRITES_H
+    dec l
+    dec l                  ; HL = $C100 (posición)
+    ld a, b
+    ld [hl+], a            ; Y inicial
+    ld a, c
+    ld [hl+], a            ; X inicial
 
-	ld a, b 
-	ld [hl+], a 
-
-	ld a, c 
-	ld [hl+], a
-
-	ld a, h 
-	add 4 
-	ld h, a 
-	ld a, VERJA_HEIGHT 
-	ld [hl+], a 
-
-	ld a, VERJA_WIDTH 
-	ld [hl+], a
-
-
-	ld h, CMP_INFO_H
-	;HL = $C004
-
-	;; Info Player
-	ld a, BYTE_ACTIVE
-	ld [hl+], a 		; Active = 1
-
-	ld a, TYPE_VERJA
-	ld [hl+], a 	 	; Type = 5
-
-
-	ld h, CMP_SPRITES_H
-	dec l 
-	dec l 	; HL = $C100
-
-	ld b, $78				; Y inicial
-	ld c, $A0 	; X inicial
-
-	ld a, b 
-	ld [hl+], a 
-
-	ld a, c 
-	ld [hl+], a
-
-	ld a, h 
-	add 4 
-	ld h, a 
-	ld a, VERJA_HEIGHT 
-	ld [hl+], a 
-
-	ld a, VERJA_WIDTH 
-	ld [hl], a
-
-	ret 
- 
+    ; === SIZE ===
+    ld a, h
+    add 4
+    ld h, a
+    ld a, VERJA_HEIGHT
+    ld [hl+], a
+    ld a, VERJA_WIDTH
+    ld [hl], a
+    ret
