@@ -7,7 +7,80 @@ damaged_times::        ds 1
 
 SECTION "Spider Code", ROM0
 
+set_dead_skin:
+	ld de, CMP_SIZE
+	ld c, SPIDER_NUM_ENTITIES
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld a, SPIDER_JUMP_STATE_TILE_ID
+	inc h
+	inc l
+	inc l
+	.loop:
+		ld [hl], a
+		add hl, de
+
+		add 2
+		dec c
+		jr nz, .loop
+
+	ld a, [boss_state]
+	cp SPIDER_ROOF_STATE
+	ret nz
+
+	; Clean web hook
+	ld a, SPIDER_WEB_HOOK_ENTITY_ID
+	ld b, SWAP_MASK_SPRITE_WEB_HOOK
+	ld c, 2
+	call swap_sprite_by_mask
+
+	ld c, SPIDER_NUM_ENTITIES/2
+    ld a, ENEMY_START_ENTITY_ID + SPIDER_NUM_ENTITIES/2
+    call flip_boss_x
+    call swap_x_right_half_boss_entity
+
+	ret
+
+check_spider_dead:
+	ld e, DEAD_ANIM_TIME
+	ld d, SPIDER_ROOF_NUM_ENTITIES
+	call check_dead_state
+	ret nc
+	.has_died:
+		ld a, ENEMY_START_ENTITY_ID
+		call man_entity_locate_v2
+		ld bc, SPIDER_FALLING_IMPULSE
+		ld d, SPIDER_NUM_ENTITIES
+		call change_entity_group_vel_y
+
+		ld a, ENEMY_START_ENTITY_ID
+		call man_entity_locate_v2
+		ld bc, SPIDER_FALLING_GRAVITY
+		ld d, SPIDER_NUM_ENTITIES
+		call change_entity_group_acc_y
+
+		ld a, [boss_state]
+		cp SPIDER_STUN_STATE
+		jr z, .skip_rotation
+
+		ld c, SPIDER_NUM_ENTITIES
+		call rotate_boss_y
+
+		.skip_rotation:
+		call set_dead_skin
+
+		ld hl, boss_state
+    	ld [hl], SPIDER_DEAD_STATE
+
+    ret
+
 spider_logic::
+	ld a, [boss_dead]
+	or a
+	ret nz
+
+	call check_spider_dead	
+
 	; === Check state ==
 	ld a, [boss_state]
 	
@@ -88,7 +161,7 @@ spider_logic::
 		ret
 
 	.dead_state:
-		call manage_dead_state
+		call manage_spider_dead_state
 		ret
 
 	.stage_transition_state:
@@ -619,6 +692,19 @@ manage_go_up_state:
 	ret
 
 manage_spider_dead_state:
+	call check_ground_for_boss
+	ret c
+
+	ld d, SPIDER_ROOF_NUM_ENTITIES
+	call reset_group_acc_y
+
+	ld d, SPIDER_ROOF_NUM_ENTITIES
+	call reset_group_vel
+
+	call open_door
+	ld hl, boss_dead
+	ld [hl], 1
+
 	ret
 
 manage_stage_stransition_state:
