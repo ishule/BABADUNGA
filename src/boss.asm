@@ -17,6 +17,8 @@ SECTION "General boss code", ROM0
 ; INPUT 
 ;  e -> dead animation timer
 ;  d -> num_entities
+; RETURN
+;  flags c: boss died
 check_dead_state:
     ld a, [boss_state]
     cp DEAD_STATE
@@ -26,9 +28,6 @@ check_dead_state:
     or a
     ret nz
     
-    ld hl, boss_state
-    ld [hl], DEAD_STATE
-
     ld hl, boss_state_counter
     ld [hl], e
     
@@ -37,6 +36,7 @@ check_dead_state:
     pop de
     call reset_group_acc
 
+    scf
     ret
 
 ; RETURN

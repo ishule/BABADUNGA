@@ -109,6 +109,9 @@ init_spider::
     ld d, SPIDER_ROOF_NUM_ENTITIES
     call change_entity_group_vel_y
 
+    ld hl, boss_dead
+    ld [hl], 0
+
 	ret
 
 init_spider_variables:
