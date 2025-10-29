@@ -304,7 +304,7 @@ DEF SPIDER_BIG_BULLET_1_DAMAGE equ 1
 DEF PLAYER_SPRITES_SIZE   equ 2
 DEF PLAYER_BODY_ENTITY_ID equ 0
 DEF PLAYER_GUN_ENTITY_ID  equ 1
-def COOLDOWN_SHOT_DELAY equ 40
+def COOLDOWN_SHOT_DELAY equ 60
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Enemies consts
