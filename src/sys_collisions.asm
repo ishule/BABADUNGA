@@ -80,58 +80,6 @@ sys_collision_check_all::
 
 
 
-;;=================================================
-;; collision_apply_flip
-;; Invierte la posición de un intervalo si está flipeado verticalmente
-;; Usa la fórmula: P' = SPRITE_HEIGHT - (P + H)
-;;=================================================
-;; collision_apply_flip
-;; Invierte la posición de un intervalo si está flipeado
-;; Usa la fórmula: P' = SPRITE_SIZE - (P + H)
-;; INPUT:
-;;    - A: byte de atributos del sprite
-;;    - B: bit a comprobar (5 para flip X, 6 para flip Y)
-;;    - C: tamaño del sprite (SPRITE_WIDTH o SPRITE_HEIGHT)
-;;    - I1: intervalo a procesar
-;;-------------------------------------------------
-collision_apply_flip::
-    push de
-    
-    ld d, a         ; Guardar atributos en D
-    ld a, 6
-    sub b           ; A = 6 - bit (para calcular cuántas veces rotar)
-    ld e, a         ; E = contador de rotaciones
-    
-    ld a, d         ; Recuperar atributos
-    
-.rotate_loop:
-    or a            ; Limpiar carry
-    rra             ; Rotar derecha
-    dec e
-    jr nz, .rotate_loop
-    
-    bit 0, a        ; Comprobar bit 0 (ahora tiene el bit que queremos)
-    jr z, .no_flip
-    
-    ; Aplicar flip: P' = SPRITE_SIZE - (P + H)
-    ld a, [I1]      ; A = P (posición)
-    ld d, a         ; Guardar P en D
-    
-    ld a, [I1 + 1]  ; A = H (tamaño)
-    add d           ; A = P + H
-    ld d, a         ; D = P + H
-    
-    ld a, c         ; A = SPRITE_SIZE
-    sub d           ; A = SPRITE_SIZE - (P + H)
-    
-    ld [I1], a      ; Guardar nueva posición
-    
-.no_flip:
-    pop de
-    ret
-
-
-
 ;; Verifica si se solapan dos intervalos 1D
 ;; INPUT:
 ;;    - HL: puntero a (Y, H, X, W)
@@ -226,15 +174,6 @@ sys_collision_check_AABB::
 	ld a, [hl] 	; A = E1.Height 
 	ld[I1 + I_SIZE], a 
 
-    ;; Leer atributos de E1 y aplicar flip Y
-    ld h, CMP_SPRITES_H 
-    inc l 
-    inc l 
-    inc l
-    ld a, [hl]  ; A = E1.Attributes
-    ld b, 6     ; Bit 6 = flip Y
-    ld c, SPRITE_HEIGHT
-    call collision_apply_flip
 
 	;; E2.Y y E2.Height -> I2 
 	ld h, d 
@@ -286,16 +225,6 @@ sys_collision_check_AABB::
 	inc l 		; hl = $C503
 	ld a, [hl] 	; A = E1.Width
 	ld[I1 + I_SIZE], a 
-
-    ;; Leer atributos de E1 y aplicar flip X
-    ld h, CMP_SPRITES_H 
-    inc l 
-    inc l 
-    inc l
-    ld a, [hl]  ; A = E1.Attributes
-    ld b, 5     ; Bit 6 = flip Y
-    ld c, SPRITE_WIDTH
-    call collision_apply_flip
 
 	;; E2.X y E2.Width -> I2 
 	ld h, d 
@@ -852,9 +781,11 @@ check_collision_player:
 
 check_collision_bullet:
     dec l               ; HL = inicio entidad
+    push hl
     call sys_collision_check_entity_vs_verja
     call sys_collision_check_bullet_vs_boss
     call sys_collision_check_bullet_vs_player
+    pop hl
 
     ;; Solo compruebo bala con bala si es bala del jugador
     inc l 
