@@ -170,8 +170,8 @@ manage_dead_state:
 	ld [boss_state_counter], a
 	ret nz
 
-	ld hl, boss_dead
-	ld [hl], 1
+	;ld hl, boss_dead
+	;ld [hl], 1
 	ret
 
 

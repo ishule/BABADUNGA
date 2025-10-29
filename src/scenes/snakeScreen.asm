@@ -1,8 +1,7 @@
 SECTION "Snake Screen",ROM0
 include "consts.inc"
 load_snake_screen::
-	xor a
-   ld [boss_player_death],a
+
    
    call turn_screen_off
    call clean_all_tiles
