@@ -33,6 +33,7 @@ load_gorilla_screen::
       call sys_collision_check_all
 
       call sys_gorilla_movement
+
       
       call compute_physics
       call check_player_shot

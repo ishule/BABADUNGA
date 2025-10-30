@@ -70,7 +70,6 @@ sys_gorilla_movement::
     .strike_state:
         ld b, 0
         call set_flag_can_take_damage_to_b
-        call shake_screen
         call manage_strike_state
 
     ret
@@ -397,6 +396,7 @@ manage_strike_state:
         ld hl, gorilla_stand_collisions
         ld c, GORILLA_NUM_ENTITIES
         call change_boss_collisions
+
 
         ret
 

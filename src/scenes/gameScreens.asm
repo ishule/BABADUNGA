@@ -91,7 +91,7 @@ draw_defeat_screen::
 	call clear_map
 	ld hl,LoseScreen
 	ld a,6
-	ld c,4
+	ld c,5
 	call draw_bg_line
 	ret
 init_defeat_screen::
@@ -128,6 +128,10 @@ init_defeat_screen::
 	ld b,0
 	call memcpy_256
 
+
+	ld hl,startTiles + 256 * 6
+	ld b,128
+	call memcpy_256
 
 
 	call draw_defeat_screen

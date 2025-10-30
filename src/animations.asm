@@ -246,15 +246,13 @@ open_door::
 ; =============================================
 shake_screen::
 
+    ret z
+    call wait_vblank
     ; --- 2. Screen Shake Loop ---
-    ld c, 2 ; C = Loop counter . DURACIÓN DEL TERREMOTO
+    ld c, 10 ; C = Loop counter . DURACIÓN DEL TERREMOTO
 
 .shake_loop:
     push bc              ; Save loop counter
-
-    ; Wait for next frame
-    call wait_time_vblank_24
-
     ; --- Calculate Shake Offset ---
     ; Simple alternating offset: +Amount, -Amount, +Amount, -Amount...
     ; We can use the frame counter (C) parity (odd/even)
