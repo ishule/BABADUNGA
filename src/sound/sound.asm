@@ -54,6 +54,32 @@ sys_sound_init::
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sound Effects
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+sys_sound_boss_scream_effect::
+; --- Canal 1: Gruñido descendente (más grave y largo) ---
+ld a, %01111011  ; NR10: Sweep Time=7 (lento), Dir=Decrease(1), Shift=3 (bajada suave)
+ld [NR10], a
+ld a, %10000000  ; NR11: Duty 50% (sonido más hueco), sin datos de longitud
+ld [NR11], a
+ld a, %11110011  ; NR12: Volumen 15, Decay lento (step=3) -> MÁS LARGO
+ld [NR12], a
+ld a, $00        ; NR13: Frecuencia LSB (inicio grave)
+ld [NR13], a
+ld a, %10000010  ; NR14: Trigger=1, Length Enable=0 (IMPORTANTE!), Freq MSB=$02 (empieza grave, en C4)
+ld [NR14], a
+
+; --- Canal 4: Ruido "Scream" (más largo) ---
+ld a, $00        ; NR41: No usamos longitud, irrelevante
+ld [NR41], a
+ld a, %11110011  ; NR42: Volumen 15, Decay lento (step=3) -> MÁS LARGO
+ld [NR42], a
+ld a, %01000101  ; NR43: Clock Shift=4, 7-bit, Divisor=5 (ruido áspero, metálico)
+ld [NR43], a
+ld a, %10000000  ; NR44: Trigger=1, Length Enable=0 (¡IMPORTANTE! para que dure más)
+ld [NR44], a
+
+ret
+
+
 sys_sound_pickup_effect::
     ; Pickup: Short, bright ascending tone
     ld a, %00100011  ; NR10: Sweep Time=2, Direction=Increase(0), Shift=3 (Nice quick rise)
@@ -96,29 +122,42 @@ sys_sound_shoot_effect::
     ret
     
 sys_sound_boss_death_effect::
-    ; Muerte del boss: Explosión grande con múltiples componentes
-    ; Canal 1: Tono bajo que baja
-    ld a, %01110101   ; Sweep descendente pronunciado
+    ; --- 1. DETENER LA MÚSICA ---
+    ; Silenciamos los canales de música.
+    ld a, %00000000     ; Volumen 0
+    ld [NR12], a        ; Silenciar Canal 1
+    ld [NR22], a        ; Silenciar Canal 2
+    ld a, %00000000     ; NR32: Nivel de salida 0 (Mute)
+    ld [NR32], a        ; Silenciar Canal 3
+
+    ; --- 2. EL "BOOM" (Canal 1: Tono grave descendente) ---
+    ld a, %01011011     ; NR10: Sweep Time=5, Dir=Decrease(1), Shift=3 (bajada grave)
     ld [NR10], a
-    ld a, %10111111   ; Duty 50%, longitud larga
+    ld a, %10000000     ; NR11: Duty 50%
     ld [NR11], a
-    ld a, %11110010   ; Volumen 15, decay
+    ld a, %11110011     ; NR12: Volumen 15, Decay LENTO (Step=3)
     ld [NR12], a
-    ld a, $00
+    ld a, $00           ; NR13: Frecuencia LSB
     ld [NR13], a
-    ld a, %10000010   ; Trigger + tono bajo
+    ld a, %10000010     ; NR14: Trigger, Length=0, Freq MSB=$02 (Tono grave)
     ld [NR14], a
     
-    ; Canal 4: Explosión ruidosa intensa
-    ld a, %00111111   ; Longitud larga
+
+    ; --- 4. EL "CRUNCH" (Canal 4: Ruido caótico y grave) ---
+    ld a, $00           ; NR41: No usamos longitud
     ld [NR41], a
-    ld a, %11110011   ; Volumen MÁXIMO (15), decay lento
+    ld a, %11110101     ; NR42: Volumen 15, Decay MEDIO (Step=5) -> El "crunch" es más corto
     ld [NR42], a
-    ld a, %00110111   ; Ruido explosivo (7-bit, muy caótico)
+    ; *** ESTA ES LA CLAVE DE LA EXPLOSIÓN ***
+    ld a, %01011010     ; NR43: Clock Shift=5, 7-bit (¡CAÓTICO!), Divisor=2
     ld [NR43], a
-    ld a, %10000000   ; Trigger
+    ld a, %10000000     ; NR44: Trigger, Length=0
     ld [NR44], a
+
+    ; --- 5. PAUSAR EL JUEGO (Sin cambios) ---
+    call wait_time_vblank_12
     ret
+
 
 sys_sound_hit_effect::
     ; Golpe/Hit: Impacto seco y corto
@@ -131,6 +170,8 @@ sys_sound_hit_effect::
     ld a, %11000000   ; NR44: Trigger + length enable
     ld [NR44], a
     ret
+
+
 
 sys_sound_player_gets_hit_effect::
     ; "Oof" sound - Short, downward pitch sweep with decay

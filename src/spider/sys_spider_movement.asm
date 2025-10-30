@@ -190,6 +190,7 @@ manage_enter_state:
 	call animate_spider_mouth
 
 	;TODO: Llamar a sonido de grito
+	call sys_sound_boss_scream_effect
 
 	ret
 
@@ -242,6 +243,7 @@ manage_roof_state:
 		ld [hl], SPIDER_YELL_ANIM_TIME
 
 		; TODO: SONIDO GRITO
+		call sys_sound_boss_scream_effect
 
 		ret
 
@@ -701,6 +703,7 @@ manage_spider_dead_state:
 	ld d, SPIDER_ROOF_NUM_ENTITIES
 	call reset_group_vel
 
+	call sys_sound_boss_death_effect
 	call open_door
 	ld hl, boss_dead
 	ld [hl], 1

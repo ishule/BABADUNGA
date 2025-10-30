@@ -92,7 +92,7 @@ main::
       scf
       ret                         ; Continue game loop
 
-   .end_screen:  ;; AÑADIR SCREEN FADE
+   .end_screen:  
     call wipe_out_right
     ; Esperar unos frames extra para asegurar
     ld b, 10

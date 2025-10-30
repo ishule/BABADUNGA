@@ -35,7 +35,6 @@ check_dead_state:
     call reset_group_vel
     pop de
     call reset_group_acc
-
     scf
     ret
 

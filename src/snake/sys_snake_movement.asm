@@ -68,6 +68,8 @@ manage_snake_stand_state:
 
 		; TODO: SONIDO GRITO
 
+		call sys_sound_boss_scream_effect
+
 		ret
 
 
@@ -310,6 +312,9 @@ manage_snake_shot:
 
 	.shot_bullet:
 	ld de, snake_bullet_preset
+	push af
+	call sys_sound_spit_effect
+	pop af
 	call shot_bullet_for_preset
 
 	ld a, [num_entities_alive]
