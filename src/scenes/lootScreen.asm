@@ -1,12 +1,27 @@
 SECTION "Loot Screen",ROM0
 include "consts.inc"
 
+draw_map_loot::
+   ld [loot_room],a
+   bit 0,a
+   jr z,.mapGorilla
+   call draw_map_spider
+   jr .fin
+   .mapGorilla
+   call draw_map_gorilla
+   .fin
+   ld a,[loot_room]
+   inc a
+   ld [loot_room],a
+ret
 load_loot_screen::
    xor a
    ld [lootFlag],a
    call turn_screen_off
    call clean_all_tiles
-   call draw_map_gorilla
+   ld a,[loot_room]
+
+   call draw_map_loot
    call InitDmaCopy
    call sys_sound_init
    call sys_sound_init_rest_music
@@ -306,6 +321,7 @@ player_pickup::
    set 0,a
    ld [lootFlag],a
 
+
     ret                     ; Exit callback for this (now deleted) powerup
 
 .no_collision:
@@ -325,6 +341,8 @@ animation_flag: ds 1
 
 pickup_anim_timer::
     ds 1
+
+loot_room:: ds 1
 
 ; Si tienes muchos pickups, esto se haría mejor con un array en tu sistema de entidades,
 ; pero para 2 tipos específicos, unas variables directas funcionan bien.

@@ -82,7 +82,7 @@ init_win_screen::
 draw_victory_screen::
 	call clear_map
 	ld hl,WinScreen
-	ld a,9
+	ld a,7
 	ld c,2
 	call draw_bg_line
 	ret

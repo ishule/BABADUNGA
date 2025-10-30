@@ -14,10 +14,10 @@ main::
       ; =======================
       call load_title_screen
       call load_tutorial_screen
-      call load_gorilla_screen
+      call load_snake_screen
       jr c,.defeat
       call load_loot_screen
-      call load_snake_screen
+      call load_gorilla_screen
       jr c,.defeat
       call load_loot_screen
       call load_spider_screen
@@ -34,6 +34,7 @@ main::
    init_player_stats::
       xor a
       ld [player_bullet],a
+      ld [loot_room],a
       ld a,6
       ld [player_health],a
       ret
