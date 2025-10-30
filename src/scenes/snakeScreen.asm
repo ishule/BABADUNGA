@@ -42,7 +42,6 @@ load_snake_screen::
       ;call sys_blink_update
       call draw_hearts
       
-      call boss_is_dead
       call sys_collision_check_all
       call check_screen_transition
       jp c,.game_loop

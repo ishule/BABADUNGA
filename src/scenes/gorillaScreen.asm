@@ -39,8 +39,7 @@ load_gorilla_screen::
       call check_player_shot
       ;call sys_blink_update
       call draw_hearts
-      ld b,8
-      call boss_is_dead
+      
       call check_screen_transition
       jp c,.game_loop 
       

@@ -40,22 +40,6 @@ main::
       ret
 
 
-   boss_is_dead::   
-      ld a,[boss_health]
-      cp 0
-      ret nz
-      ld a ,[boss_dead]
-      bit 0,a
-      ret nz
-      set 0,a ; Para que solo entre aquí una vez
-      ld [boss_dead],a
-
-
-      ; TODO LO QUE TENGA QUE PASAR AL ACABAR LA ANIMACION DE MUERTE
-      call open_door
-      
-      ret
-
    player_is_dead::
       ld a,[player_health]
       cp 0
