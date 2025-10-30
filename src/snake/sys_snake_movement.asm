@@ -7,13 +7,38 @@ shots_counter::           DS 1
 
 SECTION "Snake Code", ROM0
 
-sys_snake_movement::
+check_snake_dead:
 	ld e, DEAD_ANIM_TIME
 	ld d, SNAKE_NUM_ENTITIES
 	call check_dead_state
+	ret nc 
+
+	call animate_snake_mouth
+	call sys_sound_boss_scream_effect
+	
+
+	; TODO: deactivate collisions
+
+	ld hl, boss_state
+	ld [hl], SNAKE_DEAD_STATE
+
+	ret
+
+sys_snake_movement::
+	ld a, [boss_dead]
+	or a
+	ret nz
+
+	call check_snake_dead
 
 	; === Check state ==
 	ld a, [boss_state]
+
+	cp SNAKE_ENTER_STATE
+	jr z, .enter_state
+
+	cp SNAKE_YELL_STATE
+	jr z, .yell_state
 
 	cp SNAKE_STAND_STATE
 	jr z, .stand_state
@@ -26,6 +51,14 @@ sys_snake_movement::
 
 	cp SNAKE_DEAD_STATE
 	jr z, .snake_dead_state
+
+	.enter_state:
+		call manage_snake_enter_state
+		ret
+
+	.yell_state:
+		call manage_yell_state
+		ret
 
 	.stand_state:
 		call manage_snake_stand_state
@@ -42,6 +75,62 @@ sys_snake_movement::
 	.snake_dead_state:
 		call manage_dead_state
 		
+	ret
+
+manage_snake_enter_state:
+	call manage_walk_animation
+
+	.skip_animation:
+	ld a, MOUTH_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	inc l
+	ld a,  SNAKE_SPAWN_POINT_X
+	cp [hl]
+	ret c
+
+	ld d, SNAKE_NUM_ENTITIES
+	call reset_group_vel_x
+
+	ld hl, boss_state_counter
+	ld [hl], ENTER_YELL_TIME
+
+	ld hl, boss_animation_counter
+	ld [hl], SNAKE_YELL_ANIM_TIME
+
+	call animate_snake_mouth
+
+	call sys_sound_boss_scream_effect
+
+	ld hl, boss_state
+	ld [hl], SNAKE_YELL_STATE
+
+	ret
+
+manage_yell_state:
+	ld a, [boss_animation_counter]
+	dec a
+	ld [boss_animation_counter], a
+	jr nz, .skip_animation
+
+	call animate_snake_mouth
+
+	.skip_animation:
+	ld a, [boss_state_counter]
+	dec a
+	ld [boss_state_counter], a
+	ret nz
+
+	ld d, SNAKE_NUM_ENTITIES
+    ld e, SNAKE_DAMAGE
+    call init_boss_info
+
+    ld hl, boss_state
+    ld [hl], SNAKE_STAND_STATE
+
+    ld hl, boss_state_counter
+    ld [hl], 10
+
 	ret
 
 manage_snake_stand_state:
@@ -65,8 +154,6 @@ manage_snake_stand_state:
 
 		ld hl, boss_animation_counter
 		ld [hl], SNAKE_YELL_ANIM_TIME
-
-		; TODO: SONIDO GRITO
 
 		call sys_sound_boss_scream_effect
 
@@ -167,13 +254,40 @@ manage_stage_transition:
 	ret
 
 manage_dead_state:
+
 	ld a, [boss_state_counter]
+	or a
+	jr z, .run
 	dec a
 	ld [boss_state_counter], a
 	ret nz
+	call animate_snake_mouth
 
-	;ld hl, boss_dead
-	;ld [hl], 1
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld bc, SNAKE_SCAPE_SPEED
+	ld d, SNAKE_NUM_ENTITIES
+	call change_entity_group_vel_x
+
+	.run:
+	call manage_walk_animation
+
+	ld a, MOUTH_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	inc l
+	ld a,  SNAKE_ENTER_POINT_X
+	cp [hl]
+	ret nc
+
+	ld d, SNAKE_NUM_ENTITIES
+	call reset_group_vel_x
+
+	ld hl, boss_dead
+	ld [hl], 1
+	
+	call open_door
+
 	ret
 
 
@@ -216,6 +330,9 @@ animate_snake_mouth:
 	ld c, 1
 	ld b, SWAP_MASK_BODY_NECK
 	call swap_sprite_by_mask
+	ld a, BODY_ENTITY_ID + 1
+	ld c, 1
+	call flip_boss_x
 
 	ret
 
@@ -285,6 +402,11 @@ manage_snake_shot:
 
 	cp SHOT_ANIM_TIME
 	ret nz
+
+	ld a, [shots_counter]
+	cp 3
+	ret z
+
 	call animate_snake_mouth
 	ret
 

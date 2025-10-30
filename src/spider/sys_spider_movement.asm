@@ -42,6 +42,10 @@ set_dead_skin:
 	ret
 
 check_spider_dead:
+	ld a, [boss_dead]
+	or a
+	ret nz
+
 	ld e, DEAD_ANIM_TIME
 	ld d, SPIDER_ROOF_NUM_ENTITIES
 	call check_dead_state
@@ -75,9 +79,7 @@ check_spider_dead:
     ret
 
 spider_logic::
-	ld a, [boss_dead]
-	or a
-	ret nz
+	
 
 	call check_spider_dead	
 

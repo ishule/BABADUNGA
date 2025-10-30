@@ -9,8 +9,7 @@ main::
 
       call init_player_stats
       ; ======== DEBUG =========
-      ;call load_snake_screen
-      call load_spider_screen
+      call load_snake_screen
       ; =======================
       call load_title_screen
       call load_tutorial_screen

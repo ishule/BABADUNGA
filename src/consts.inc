@@ -160,7 +160,7 @@ DEF CMP_COLLISIONS_WIDTH	equ 3
 ; Física del jugador (Q5.3, C2)
 DEF PLAYER_SPEED			equ $0100	; +1
 DEF PLAYER_SPEED_NEGATIVE 	equ $FF00 	; -1
-DEF PLAYER_JUMP_SPEED		equ $FB80	; -4
+DEF PLAYER_JUMP_SPEED		equ $FB00	; -4
 DEF PLAYER_GRAVITY			equ $0048
 
 DEF PLAYER_INITIAL_POS_X  	equ $13 ; Posición inicial del jugador en X
@@ -175,15 +175,6 @@ DEF VERJA_WIDTH    equ 8
 
 
 DEF GROUND_Y equ 124	; Altura del suelo
-
-
-; Física de la serpiente
-DEF SNAKE_SPEED equ $0010
-DEF SNAKE_SPEED_NEGATIVE equ $FFF0
-
-DEF SNAKE_HEIGHT equ 16
-DEF SNAKE_WIDTH equ 32
-DEF SNAKE_NUM_SPRITES equ $04
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

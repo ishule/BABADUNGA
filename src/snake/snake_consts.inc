@@ -2,6 +2,7 @@ INCLUDE "consts.inc"
 
 def SNAKE_SPAWN_POINT_Y equ GROUND_Y - SPRITE_HEIGHT
 def SNAKE_SPAWN_POINT_X equ WALL_RIGHT_X - SPRITE_WIDTH * 5 - 3
+def SNAKE_ENTER_POINT_X equ WALL_RIGHT_X + SPRITE_WIDTH * 5 + 3
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TILES
@@ -33,20 +34,23 @@ def SNAKE_DAMAGE equ 1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; STATES
-def SNAKE_STAND_STATE equ 0
-def SNAKE_WALK_STATE equ 1
-def SNAKE_STAGE_TRANSITION_STATE equ 2
+def SNAKE_ENTER_STATE equ 0
+def SNAKE_YELL_STATE equ 1
+def SNAKE_STAND_STATE equ 2
+def SNAKE_WALK_STATE equ 3
+def SNAKE_STAGE_TRANSITION_STATE equ 4
 def SNAKE_DEAD_STATE equ $FF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TIMERS
-def STAND_TIME equ $E0
-def SNAKE_SHOT_COOLDOWN equ $40
-def SNAKE_WALK_ANIM_TIME equ $10
-def STAGE_TRANSITION_TIME equ $30
-def SNAKE_YELL_ANIM_TIME equ $20
-def SHOT_ANIM_TIME       equ $10
-def DEAD_ANIM_TIME       equ $FF
+def ENTER_YELL_TIME       equ $80
+def STAND_TIME            equ $F8
+def SNAKE_SHOT_COOLDOWN   equ $40
+def SNAKE_WALK_ANIM_TIME  equ $10
+def STAGE_TRANSITION_TIME equ $70
+def SNAKE_YELL_ANIM_TIME  equ $50
+def SHOT_ANIM_TIME        equ $10
+def DEAD_ANIM_TIME        equ $C0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SWAP MASKS
@@ -61,7 +65,9 @@ def SWAP_MASK_BODY_NECK equ %00011110
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MOVEMENT
+def SPIDER_ENTER_VEL         equ $FF80
 def SPIDER_MOVE_ACCELERATION equ $0008
+def SNAKE_SCAPE_SPEED        equ $0300
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; BULLETS

@@ -27,17 +27,6 @@ process_input::
     ld a, [joypad_input]
     ld b, a
     
-    ; ======= DEBUG ========
-    bit JOYPAD_DOWN, a
-    jr z, .skip_debug
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    inc l
-    inc l
-    ld [hl], $08
-    ret
-    
-.skip_debug:
     ; ==== VERIFICAR ARRIBA PRIMERO (prioridad) ====
     bit JOYPAD_UP, a 
     jr nz, .lookup
