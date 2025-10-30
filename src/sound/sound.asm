@@ -297,22 +297,6 @@ sys_sound_door_opened_clink::
     ld [NR14], a
     ret
 
-; =============================================
-; sys_sound_earthquake_rumble
-; Plays a low-frequency rumbling noise.
-; Uses Channel 4.
-; MODIFIES: A
-; =============================================
-sys_sound_earthquake_rumble::
-    ld a, %00111111      ; NR41: Long Length (Max duration with length enabled)
-    ld [NR41], a
-    ld a, %11110011      ; NR42: Volume MAX (15), Slow Decay (step=3) - makes it rumble longer
-    ld [NR42], a
-    ld a, %10000111      ; NR43: Clock Shift=8, 7-bit Noise, Divisor=7 (Very low frequency rumble)
-    ld [NR43], a
-    ld a, %11000000      ; NR44: Trigger + Length Enable=1 (sound stops after NR41 duration)
-    ld [NR44], a
-    ret
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inicializa el sistema de música (Tu versión)
 ;; ENTRADA: 
