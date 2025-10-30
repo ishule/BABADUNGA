@@ -56,6 +56,9 @@ SECTION "Pickup Code", ROM0
 ; MODIFICA: AF, BC, DE, HL
 ; =============================================
 init_pickups::
+   xor a
+   ld [pickup_anim_timer], a
+   ld [animation_flag],a
 
     ; --- Heart Pickup (Two Sprites, treat collision as one 16x8 block) ---
     ; Sprite 1: Left Half (Tile $12)
@@ -94,7 +97,10 @@ init_pickups::
 
     ld h, CMP_SPRITES_H       ; HL = C1xx + L
     ld b, 105                 ; Y Position
+
     ld a, b
+    ld [pickup_heart_orig_y],a
+    ld [pickup_bullet_orig_y],a
     ld [hl], a
     inc hl
     ld b, 50 + 8              ; X Position
@@ -171,7 +177,62 @@ player_pickup::
    ld a,[lootFlag]
    cp 0
    ret nz
-; --- Internal Callback for foreach loop ---
+; =============================================
+; pickup_animate
+; Mueve los pickups arriba y abajo usando VELOCIDAD
+; =============================================
+.pickup_animate:
+    ; --- 1. Gestionar el Contador de Duración Local ---
+    ld hl, pickup_anim_timer
+    ld a, [hl]
+    inc a
+    ld [hl], a                ; Incrementa el contador local CADA frame
+
+    cp 40                      ; Compara: ¿Han pasado 8 frames?
+    jp c,.pickup_collision                     ; Si A < 8, salta. La física mantiene la velocidad actual.
+
+    ; Si A = 8 (o más), es hora de alternar la dirección.
+    xor a
+    ld [hl], a                ; Reinicia el temporizador local a 0
+
+    ; --- 2. Alternar la Bandera de Dirección (Subir/Bajar) ---
+    ld hl, animation_flag
+    ld a, [hl]
+    xor 1                     ; Alterna 0 <-> 1
+    ld [hl], a                ; Guardar el nuevo estado (0 o 1)
+
+    ; --- 3. Aplicar la VELOCIDAD basada en el estado actual ---
+    ; ld a, [hl] ; A ya tiene el valor del animation_flag
+    or a                      ; Comprobar si A es 0
+    jr z, .offset_down
+
+.offset_up:
+    ; [animation_flag] = 1 (subir)
+    ld bc, PICKUP_VEL_Y_NEG   ; BC = Velocidad de subida (ej. -$0040)
+    jr .apply_offset_to_pickups
+
+.offset_down:
+    ; [animation_flag] = 0 (bajar)
+    ld bc, PICKUP_VEL_Y       ; BC = Velocidad de bajada (ej. +$0040)
+
+.apply_offset_to_pickups:
+    ; BC contiene la velocidad Y.
+
+    ; --- Animar el Corazón (IDs 4 y 5) ---
+    ld a, 4                   ; *** ASUMIENDO QUE EL ID DEL CORAZÓN ES 4 ***
+    call man_entity_locate_v2 ; HL = offset L para entidad 4
+    ld d, 2                   ; *** D = Tamaño Grupo (2 sprites) ***
+    ; BC ya tiene la velocidad
+    call change_entity_group_vel_y ; <<< USAR VELOCIDAD
+
+    ; --- Animar la Bala (IDs 6 y 7) ---
+    ld a, 6                   ; *** ASUMIENDO QUE EL ID DE LA BALA ES 6 ***
+    call man_entity_locate_v2 ; HL = offset L para entidad 6
+    ld d, 2                   ; *** D = Tamaño Grupo (2 sprites) ***
+    ; BC ya tiene la velocidad
+    call change_entity_group_vel_y ; <<< USAR VELOCIDAD
+
+    
 .pickup_collision:
 .pickup_heart:
    ld a,PLAYER_BODY_ENTITY_ID
@@ -253,3 +314,20 @@ player_pickup::
 
 SECTION "Loot Flag",WRAM0
 lootFlag: ds 1
+
+pickup_heart_orig_y::
+    ds 1            ; Posición Y original del corazón (sprite principal)
+
+pickup_bullet_orig_y::
+    ds 1            ; Posición Y original de la bala (sprite principal)
+
+animation_flag: ds 1
+
+pickup_anim_timer::
+    ds 1
+
+; Si tienes muchos pickups, esto se haría mejor con un array en tu sistema de entidades,
+; pero para 2 tipos específicos, unas variables directas funcionan bien.
+
+DEF PICKUP_VEL_Y equ $0020       ; Velocidad de bajada (+0.25)
+DEF PICKUP_VEL_Y_NEG equ $FFE0   ; Velocidad de subida (-0.25)
