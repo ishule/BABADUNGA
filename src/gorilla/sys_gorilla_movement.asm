@@ -1,18 +1,34 @@
 INCLUDE "gorilla/gorilla_consts.inc"
 
 SECTION "Gorilla Variables", WRAM0 
-gorilla_state::          DS 1
-gorilla_state_counter::  DS 1
-gorilla_stage::          DS 1
 gorilla_strikes_to_do::  DS 1
 
 SECTION "Gorilla Movement Code", ROM0
-; -----------------------
-; sys_gorilla_movement
-; Máquina de estados principal del gorila.
-; -----------------------
+
+check_gorilla_dead:
+    ld e, DEAD_ANIM_TIME
+    ld d, GORILLA_NUM_ENTITIES
+    call check_dead_state
+    ret nc 
+
+    ; TODO: sonido de muerte
+
+    ; TODO: desactivar colisiones
+
+    ld hl, boss_state
+    ld [hl], GORILLA_DEAD_STATE
+
+    ret
+
 sys_gorilla_movement::
-    ld a, [gorilla_state]
+    ld a, [boss_dead]
+    or a
+    ret nz
+
+    ld a, [boss_state]
+
+    cp GORILLA_ENTER_STATE
+    jr z, .enter_state
 
     cp GORILLA_STAND_STATE
     jr z, .stand_state
@@ -29,8 +45,15 @@ sys_gorilla_movement::
     cp GORILLA_STRIKE_STATE
     jr z, .strike_state
 
+    cp GORILLA_DEAD_STATE
+    jr z, .dead_state
+
+    .enter_state:
+        call manage_gorilla_enter_state
+        ret
+
     .stand_state:
-        ld a, [gorilla_stage]
+        ld a, [boss_stage]
         or a
         jr nz, .stage_1_stand
         .stage_0_stand:
@@ -44,15 +67,13 @@ sys_gorilla_movement::
             ret
 
     .jump_state:
-        ld a, [gorilla_stage]
+        ld a, [boss_stage]
         or a
         jr nz, .stage_1_jump
         .stage_0_jump:
             call manage_jump_0_state
             ret
         .stage_1_jump:
-            ld b, 1 
-            call set_flag_can_take_damage_to_b 
             
             call manage_jump_1_state
             ret
@@ -62,37 +83,36 @@ sys_gorilla_movement::
         ret
 
     .wait_strike_state:
-        ld b, 0
-        call set_flag_can_take_damage_to_b
         call manage_wait_strike_state
         ret
 
     .strike_state:
-        ld b, 0
-        call set_flag_can_take_damage_to_b
         call manage_strike_state
+        ret
+
+    .dead_state:
+        call manage_gorilla_dead_state
+        ret
 
     ret
 
-set_flag_can_take_damage_to_b::
-    push hl
-    push af
-    ld a, ENEMY_START_ENTITY_ID 
+
+toggle_can_take_damage:
+    ld de, CMP_SIZE
+    ld c, GORILLA_NUM_ENTITIES
+    ld a, ENEMY_START_ENTITY_ID
     call man_entity_locate_v2
-    inc l 
     inc l
-    ld a, b 
-    cp 0 
-    jr z, .set_zero 
-    set 0, [hl]     ; Set to 1 
-    jr .continue
+    inc l
 
-.set_zero:
-    res 0, [hl] ; Set flag CAN TAKE DAMAGE to 0
+    .loop:
+        ld a, [hl]
+        xor FLAG_CAN_TAKE_DAMAGE
+        ld [hl], a
+        add hl, de
+        dec c
+        jr nz, .loop
 
-.continue:
-    pop hl 
-    pop af
     ret
 
 check_stage_change:
@@ -103,10 +123,10 @@ check_stage_change:
     .change_stage:
         call make_gorilla_eyes_white
 
-        ld hl, gorilla_stage
+        ld hl, boss_stage
         ld [hl], SECOND_STAGE
 
-        ld hl, gorilla_state
+        ld hl, boss_state
         ld [hl], GORILLA_JUMP_TO_STRIKE_STATE
 
         ld bc, JUMP_STAGE_CHANGE_IMPULSE_Y
@@ -161,14 +181,40 @@ check_stage_change:
 
     ret
 
+manage_gorilla_enter_state:
+    call check_ground_for_boss
+    ret c
+
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_vel
+
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_acc_y
+
+    ld hl, boss_state
+    ld [hl], GORILLA_STAND_STATE
+
+    ; TODO: Sonido de pegar al suelo
+
+    ld b, SWAP_MASK_SPRITE_STAND_JUMP
+    ld c, GORILLA_NUM_ENTITIES
+    ld a, ENEMY_START_ENTITY_ID
+    call swap_sprite_by_mask
+
+    ld d, GORILLA_NUM_ENTITIES
+    ld e, GORILLA_DAMAGE
+    call init_boss_info
+
+    ret
+
 manage_stand_0_state:
-    ld a, [gorilla_state_counter]
+    ld a, [boss_state_counter]
     dec a
-    ld [gorilla_state_counter], a
+    ld [boss_state_counter], a
     ret nz
 
     ; Do jump
-    ld hl, gorilla_state
+    ld hl, boss_state
     ld [hl], GORILLA_JUMP_STATE
 
     ld a, ENEMY_START_ENTITY_ID
@@ -220,10 +266,10 @@ manage_jump_0_state:
     ld d, GORILLA_NUM_ENTITIES
     call reset_group_acc_y
 
-    ld hl, gorilla_state
+    ld hl, boss_state
     ld [hl], GORILLA_STAND_STATE
 
-    ld hl, gorilla_state_counter
+    ld hl, boss_state_counter
     ld [hl], STAND_TIME
 
     ld b, SWAP_MASK_SPRITE_STAND_JUMP
@@ -283,10 +329,10 @@ manage_jump_to_strike_state:
     ld d, GORILLA_NUM_ENTITIES
     call reset_group_acc_y
 
-    ld hl, gorilla_state
+    ld hl, boss_state
     ld [hl], GORILLA_WAIT_STRIKE_STATE
 
-    ld hl, gorilla_state_counter
+    ld hl, boss_state_counter
     ld [hl], WAIT_STRIKE_TIME
 
     ld hl, gorilla_strikes_to_do
@@ -318,18 +364,20 @@ manage_jump_to_strike_state:
     ld c, GORILLA_NUM_ENTITIES
     call change_boss_collisions
 
+    call toggle_can_take_damage
+
     ret
 
 manage_wait_strike_state:
-    ld a, [gorilla_state_counter]
+    ld a, [boss_state_counter]
     dec a
-    ld [gorilla_state_counter], a
+    ld [boss_state_counter], a
     ret nz
 
-    ld hl, gorilla_state
+    ld hl, boss_state
     ld [hl], GORILLA_STRIKE_STATE
 
-    ld hl, gorilla_state_counter
+    ld hl, boss_state_counter
     ld [hl], TIME_BETWEEN_STRIKES
 
     ld b, SWAP_MASK_SPRITE_STRIKE
@@ -344,9 +392,9 @@ manage_wait_strike_state:
     ret
 
 manage_strike_state:
-    ld a, [gorilla_state_counter]
+    ld a, [boss_state_counter]
     dec a
-    ld [gorilla_state_counter], a
+    ld [boss_state_counter], a
     ret nz
 
     ld a, [gorilla_strikes_to_do]
@@ -355,14 +403,14 @@ manage_strike_state:
     bit 0, a
     jr nz, .first_strike
     .second_strike:
-        ld hl, gorilla_state_counter
+        ld hl, boss_state_counter
         ld [hl], WAIT_STRIKE_TIME
         call drop_stalactites
         jr .end_of_strike
         
 
     .first_strike:
-        ld hl, gorilla_state_counter
+        ld hl, boss_state_counter
         ld [hl], TIME_BETWEEN_STRIKES
 
     .end_of_strike:
@@ -371,10 +419,10 @@ manage_strike_state:
     jr nz, .continue_striking
 
     .finished_striking:
-        ld hl, gorilla_state
+        ld hl, boss_state
         ld [hl], GORILLA_STAND_STATE
 
-        ld hl, gorilla_state_counter
+        ld hl, boss_state_counter
         ld [hl], STAND_TIME_STAGE_1
 
         ; Change Skin
@@ -397,11 +445,12 @@ manage_strike_state:
         ld c, GORILLA_NUM_ENTITIES
         call change_boss_collisions
 
+        call toggle_can_take_damage
 
         ret
 
     .continue_striking:
-        ld hl, gorilla_state
+        ld hl, boss_state
         ld [hl], GORILLA_WAIT_STRIKE_STATE
 
         ld b, SWAP_MASK_SPRITE_STRIKE
@@ -416,13 +465,16 @@ manage_strike_state:
         ret
 
 manage_stand_1_state:
-    ld a, [gorilla_state_counter]
+    call check_gorilla_dead
+    ret c
+
+    ld a, [boss_state_counter]
     dec a
-    ld [gorilla_state_counter], a
+    ld [boss_state_counter], a
     ret nz
 
     ; Do jump
-    ld hl, gorilla_state
+    ld hl, boss_state
     ld [hl], GORILLA_JUMP_STATE
 
     ld a, ENEMY_START_ENTITY_ID
@@ -474,10 +526,10 @@ manage_jump_1_state:
     ld d, GORILLA_NUM_ENTITIES
     call reset_group_acc_y
 
-    ld hl, gorilla_state
+    ld hl, boss_state
     ld [hl], GORILLA_STAND_STATE
 
-    ld hl, gorilla_state_counter
+    ld hl, boss_state_counter
     ld [hl], STAND_TIME_STAGE_1
 
     ld b, SWAP_MASK_SPRITE_STAND_JUMP
@@ -488,6 +540,48 @@ manage_jump_1_state:
     ld hl, gorilla_stand_collisions
     ld c, GORILLA_NUM_ENTITIES
     call change_boss_collisions
+    ret
+
+manage_gorilla_dead_state:
+    call check_ground_for_boss
+    ret c
+
+    ; Check end
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc h
+    inc l
+    ld a,  GORILLA_SPAWN_POINT_X
+    cp [hl]
+    jr c, .end_animation
+
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld bc, DEAD_JUMP_IMPULSE_Y
+    ld de, DEAD_JUMP_IMPULSE_X
+    ld a, GORILLA_NUM_ENTITIES
+    call change_entity_group_vel
+
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld bc, DEAD_JUMP_GRAVITY
+    ld d, GORILLA_NUM_ENTITIES
+    call change_entity_group_acc_y
+
+    ret
+
+    .end_animation:
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_vel
+
+    ld d, GORILLA_NUM_ENTITIES
+    call reset_group_acc_y
+
+    ld hl, boss_dead
+    ld [hl], 1
+    
+    call open_door
+
     ret
 
 ; ====== UTILS ========

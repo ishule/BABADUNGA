@@ -4,52 +4,52 @@ SECTION "Gorilla Initialization", ROM0
 
 scenario_stalactites_spawn_definition:
 	; ===== GROUP 1 =====
-	DB ROOF_Y_POS + 20, WALL_LEFT_X + 3 , STALACTITE_0_START_TILE_ID, 0 ; Stalactite 1
+	DB 5 + ROOF_Y_POS + 18, WALL_LEFT_X + 3 , STALACTITE_0_START_TILE_ID, 0 ; Stalactite 1
 	DL STALACTITE_0_COLLISIONS
 
-	DB ROOF_Y_POS + 5, WALL_LEFT_X + 30, STALACTITE_2_START_TILE_ID, 0; Stalactite 4
+	DB 5 + ROOF_Y_POS + 5, WALL_LEFT_X + 30, STALACTITE_2_START_TILE_ID, 0; Stalactite 4
 	DL STALACTITE_2_COLLISIONS
 
-	DB ROOF_Y_POS - 3, WALL_LEFT_X + 56, STALACTITE_0_START_TILE_ID, 0; Stalactite 7
+	DB 5 + ROOF_Y_POS - 3, WALL_LEFT_X + 56, STALACTITE_0_START_TILE_ID, 0; Stalactite 7
 	DL STALACTITE_0_COLLISIONS
 
-	DB ROOF_Y_POS    , WALL_LEFT_X + 95, STALACTITE_3_START_TILE_ID, 0; Stalactite 10
+	DB 5 + ROOF_Y_POS    , WALL_LEFT_X + 95, STALACTITE_3_START_TILE_ID, 0; Stalactite 10
 	DL STALACTITE_3_COLLISIONS
 
-	DB ROOF_Y_POS + 14, WALL_LEFT_X + 120, STALACTITE_3_START_TILE_ID, 0; Stalactite 13
+	DB 5 + ROOF_Y_POS + 14, WALL_LEFT_X + 120, STALACTITE_3_START_TILE_ID, 0; Stalactite 13
 	DL STALACTITE_3_COLLISIONS
 
 	; ===== GROUP 2 =====
-	DB ROOF_Y_POS + 15, WALL_LEFT_X + 9 , STALACTITE_2_START_TILE_ID, 0; Stalactite 2
+	DB 5 + ROOF_Y_POS + 15, WALL_LEFT_X + 9 , STALACTITE_2_START_TILE_ID, 0; Stalactite 2
 	DL STALACTITE_2_COLLISIONS
 
-	DB ROOF_Y_POS + 2 , WALL_LEFT_X + 43, STALACTITE_3_START_TILE_ID, 0; Stalactite 5
+	DB 5 + ROOF_Y_POS + 2 , WALL_LEFT_X + 43, STALACTITE_3_START_TILE_ID, 0; Stalactite 5
 	DL STALACTITE_3_COLLISIONS
 
-	DB ROOF_Y_POS - 5, WALL_LEFT_X + 70, STALACTITE_1_START_TILE_ID, 0; Stalactite 8
+	DB 5 + ROOF_Y_POS - 5, WALL_LEFT_X + 70, STALACTITE_1_START_TILE_ID, 0; Stalactite 8
 	DL STALACTITE_1_COLLISIONS
 
-	DB ROOF_Y_POS + 5, WALL_LEFT_X + 102, STALACTITE_2_START_TILE_ID, 0; Stalactite 11
+	DB 5 + ROOF_Y_POS + 5, WALL_LEFT_X + 102, STALACTITE_2_START_TILE_ID, 0; Stalactite 11
 	DL STALACTITE_2_COLLISIONS
 
-	DB ROOF_Y_POS + 18, WALL_LEFT_X + 128 , STALACTITE_0_START_TILE_ID, 0; Stalactite 14
+	DB 5 + ROOF_Y_POS + 16, WALL_LEFT_X + 128 , STALACTITE_0_START_TILE_ID, 0; Stalactite 14
 	DL STALACTITE_0_COLLISIONS
 
 
 	; ===== GROUP 3 =====
-	DB ROOF_Y_POS     , WALL_LEFT_X + 49, STALACTITE_1_START_TILE_ID, 0; Stalactite 6
+	DB 5 + ROOF_Y_POS     , WALL_LEFT_X + 49, STALACTITE_1_START_TILE_ID, 0; Stalactite 6
 	DL STALACTITE_1_COLLISIONS
 
-	DB ROOF_Y_POS + 12, WALL_LEFT_X + 16, STALACTITE_1_START_TILE_ID, 0; Stalactite 3
+	DB 5 + ROOF_Y_POS + 12, WALL_LEFT_X + 16, STALACTITE_1_START_TILE_ID, 0; Stalactite 3
 	DL STALACTITE_1_COLLISIONS
 
-	DB ROOF_Y_POS - 3, WALL_LEFT_X + 82, STALACTITE_2_START_TILE_ID, 0; Stalactite 9
+	DB 5 + ROOF_Y_POS - 3, WALL_LEFT_X + 82, STALACTITE_2_START_TILE_ID, 0; Stalactite 9
 	DL STALACTITE_2_COLLISIONS
 
-	DB ROOF_Y_POS + 7, WALL_LEFT_X + 110, STALACTITE_0_START_TILE_ID, 0; Stalactite 12
+	DB 5 + ROOF_Y_POS + 7, WALL_LEFT_X + 110, STALACTITE_0_START_TILE_ID, 0; Stalactite 12
 	DL STALACTITE_0_COLLISIONS
 
-	DB ROOF_Y_POS + 22, WALL_LEFT_X + 136, STALACTITE_1_START_TILE_ID, 0; Stalactite 15
+	DB 5 + ROOF_Y_POS + 19, WALL_LEFT_X + 136, STALACTITE_1_START_TILE_ID, 0; Stalactite 15
 	DL STALACTITE_1_COLLISIONS
 
 gorilla_spawn_definition::
@@ -189,20 +189,19 @@ init_gorilla::
 	ld c, GORILLA_NUM_ENTITIES
 	call spawn_group_entity
 	
-	ld d, GORILLA_NUM_ENTITIES
-	ld e, GORILLA_DAMAGE
-	call init_boss_info
-
-	ld hl, gorilla_state
+	ld hl, boss_dead
 	ld [hl], 0
 
-	ld hl, gorilla_stage
+	ld hl, boss_state
+	ld [hl], 0
+
+	ld hl, boss_stage
 	ld [hl], 0
 
 	ld hl, boss_looking_dir
 	ld [hl], 0
 
-	ld hl, gorilla_state_counter
+	ld hl, boss_state_counter
 	ld [hl], STAND_TIME
 
 	ld c, GORILLA_NUM_ENTITIES
@@ -216,6 +215,25 @@ init_gorilla::
 	ld c, NUMBER_OF_SCENARIO_STALACTITES
 	call spawn_group_entity
 	call init_stalactite_flags
+
+	; Enter jump
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld a, GORILLA_NUM_ENTITIES
+	ld bc, ENTER_JUMP_SPEED_Y
+	ld de, ENTER_JUMP_SPEED_X
+	call change_entity_group_vel
+
+	ld a, ENEMY_START_ENTITY_ID
+	call man_entity_locate_v2
+	ld d, GORILLA_NUM_ENTITIES
+	ld bc, ENTER_GRAVITY
+	call change_entity_group_acc_y
+
+	ld b, SWAP_MASK_SPRITE_STAND_JUMP
+    ld c, GORILLA_NUM_ENTITIES
+    ld a, ENEMY_START_ENTITY_ID
+    call swap_sprite_by_mask
 
 	ret
 

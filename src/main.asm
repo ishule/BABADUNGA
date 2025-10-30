@@ -9,7 +9,7 @@ main::
 
       call init_player_stats
       ; ======== DEBUG =========
-      ;call load_gorilla_screen
+      call load_gorilla_screen
       ; =======================
       call load_title_screen
       call load_tutorial_screen
