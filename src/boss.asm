@@ -34,7 +34,19 @@ check_dead_state:
     push de
     call reset_group_vel
     pop de
+    push de
     call reset_group_acc
+    pop de
+
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    ld h, CMP_COLLISIONS_H
+    ld a, d
+    add a ; x2
+    add a ; x4
+    ld b, a
+    call memreset_256
+
     scf
     ret
 
@@ -364,4 +376,23 @@ init_boss_info::
     ld hl, boss_stage
     ld [hl], 0
 
+    ret
+
+
+; INPUT 
+;  c-> num_entities
+boss_to_not_deal_damage:
+    ld de, CMP_SIZE
+    ld a, ENEMY_START_ENTITY_ID
+    call man_entity_locate_v2
+    inc l
+    inc l
+
+    .loop:
+        ld a, [hl]
+        res 1, a
+        ld [hl], a
+        add hl, de
+        dec c
+        jr nz, .loop
     ret

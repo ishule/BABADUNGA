@@ -96,25 +96,6 @@ sys_gorilla_movement::
 
     ret
 
-
-toggle_can_take_damage:
-    ld de, CMP_SIZE
-    ld c, GORILLA_NUM_ENTITIES
-    ld a, ENEMY_START_ENTITY_ID
-    call man_entity_locate_v2
-    inc l
-    inc l
-
-    .loop:
-        ld a, [hl]
-        xor FLAG_CAN_TAKE_DAMAGE
-        ld [hl], a
-        add hl, de
-        dec c
-        jr nz, .loop
-
-    ret
-
 check_stage_change:
     ld a, [boss_health]
     cp STAGE_CHANGE_LIFE
@@ -305,13 +286,13 @@ manage_jump_to_strike_state:
     jr nz, .looking_left
     .looking_right:
         ld a, c
-        ld c, SCREEN_PIXEL_WIDTH/2
+        ld c, SCREEN_PIXEL_WIDTH/2 + 8
         cp c
         ret c
         jr .reached_mid
 
     .looking_left:
-        ld a, SCREEN_PIXEL_WIDTH/2
+        ld a, SCREEN_PIXEL_WIDTH/2 + 8
         cp c
         ret c
 
@@ -363,8 +344,6 @@ manage_jump_to_strike_state:
     ld hl, gorilla_up_strike_collisions
     ld c, GORILLA_NUM_ENTITIES
     call change_boss_collisions
-
-    call toggle_can_take_damage
 
     ret
 
@@ -444,8 +423,6 @@ manage_strike_state:
         ld hl, gorilla_stand_collisions
         ld c, GORILLA_NUM_ENTITIES
         call change_boss_collisions
-
-        call toggle_can_take_damage
 
         ret
 

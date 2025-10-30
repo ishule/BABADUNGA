@@ -8,9 +8,6 @@ main::
    game_loop:
 
       call init_player_stats
-      ; ======== DEBUG =========
-      call load_gorilla_screen
-      ; =======================
       call load_title_screen
       call load_tutorial_screen
       call load_snake_screen
@@ -63,7 +60,7 @@ main::
     ld a, [hl]                  ; A = Player's current X position
 
     ; 2. Compare with the gorilla's right turning point
-    cp 150
+    cp $A8
     jr c, .no_transition        ; If PlayerX < Limit, continue loop
 
     ; 3. Player has reached or passed the limit, end this screen's loop

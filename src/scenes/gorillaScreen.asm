@@ -10,6 +10,7 @@ load_gorilla_screen::
    call init_gorilla
    
    call init_verja
+   call init_stalactites
    call turn_screen_on
    
    call draw_hearts

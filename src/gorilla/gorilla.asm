@@ -211,10 +211,7 @@ init_gorilla::
 	ld hl, boss_health
 	ld [hl], GORILLA_LIFE
 
-	ld hl, scenario_stalactites_spawn_definition
-	ld c, NUMBER_OF_SCENARIO_STALACTITES
-	call spawn_group_entity
-	call init_stalactite_flags
+	
 
 	; Enter jump
 	ld a, ENEMY_START_ENTITY_ID
@@ -238,6 +235,13 @@ init_gorilla::
 	ret
 
 
+init_stalactites::
+	ld hl, scenario_stalactites_spawn_definition
+	ld c, NUMBER_OF_SCENARIO_STALACTITES
+	call spawn_group_entity
+	call init_stalactite_flags
+	ret
+
 init_stalactite_flags:
 	ld a, STALACTITES_START_ENTITY_ID
 	call man_entity_locate_v2
@@ -251,7 +255,9 @@ init_stalactite_flags:
 	ld [hl], FLAG_CAN_DEAL_DAMAGE | FLAG_DESTROY_ON_HIT | FLAG_STILL_BULLET
 	inc l
 	inc h
+	inc h
 	ld [hl], STALACTITE_DAMAGE
+	dec h
 	dec h
 	inc l
 

@@ -42,9 +42,7 @@ set_dead_skin:
 	ret
 
 check_spider_dead:
-	ld a, [boss_dead]
-	or a
-	ret nz
+	
 
 	ld e, DEAD_ANIM_TIME
 	ld d, SPIDER_ROOF_NUM_ENTITIES
@@ -79,7 +77,9 @@ check_spider_dead:
     ret
 
 spider_logic::
-	
+	ld a, [boss_dead]
+	or a
+	ret nz
 
 	call check_spider_dead	
 
@@ -266,14 +266,6 @@ manage_roof_state:
 	ld a, FLAG_ENTITY_GOT_DAMAGE
 	and [hl]
 	ret z
-
-	; === DEBUG ===
-	;Reset flag
-	ld a, ENEMY_START_ENTITY_ID
-	call man_entity_locate_v2
-	inc l
-	inc l
-	res 3, [hl]
 
 	; Check times damaged
 	ld a, [damaged_times]

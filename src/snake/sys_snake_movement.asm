@@ -13,11 +13,18 @@ check_snake_dead:
 	call check_dead_state
 	ret nc 
 
+	ld a, MOUTH_ENTITY_ID
+	call man_entity_locate_v2
+	inc h
+	inc l
+	inc l
+	ld a, [hl]
+	cp 90
+	jr z, .skip_animation 
 	call animate_snake_mouth
+	.skip_animation:
 	call sys_sound_boss_scream_effect
 	
-
-	; TODO: deactivate collisions
 
 	ld hl, boss_state
 	ld [hl], SNAKE_DEAD_STATE
@@ -268,6 +275,12 @@ manage_dead_state:
 	ld bc, SNAKE_SCAPE_SPEED
 	ld d, SNAKE_NUM_ENTITIES
 	call change_entity_group_vel_x
+
+	ld a, [boss_looking_dir]
+	or a
+	jr z, .run
+	ld c, SNAKE_NUM_ENTITIES
+	call rotate_boss_x 
 
 	.run:
 	call manage_walk_animation
