@@ -3,29 +3,20 @@ include "consts.inc"
 
 load_tutorial_screen::
    call init_player_stats
+
    call turn_screen_off
-   call clean_all_tiles
-   
+   call init_common_data_screen
+
    call draw_map_snake
-
-   call InitDmaCopy
-   call sys_sound_init
    call sys_sound_init_rest_music
-   call turn_screen_on
-   call init_all_sprites
 
-   call man_entity_init ; Inicializar gestor de entidades
-
-   call init_player
    call init_verja
-   call init_invincibility
-   call joypad_init
+   call turn_screen_on
 
-   call init_bullets
-   call draw_hearts
-   ;call shake_screen
+   
    call open_door
 
+   call draw_hearts
    .game_loop:
       call wait_vblank
       call man_entity_draw

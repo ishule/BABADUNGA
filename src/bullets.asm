@@ -367,39 +367,33 @@ check_player_shot::
 
 ; Init bullets sprites and variables
 init_bullets::
-	call wait_vblank
 	ld hl, bullet_0_h
 	ld de, $8200 ; MAGIC
 	ld b, 16     ; MAGIC
 	call memcpy_256
 
-	call wait_vblank
 	ld hl, bullet_0_v
 	ld de, $8220 ; MAGIC
 	ld b, 16     ; MAGIC
 	call memcpy_256
 
 
-	call wait_vblank
 	ld hl, bullet_1_h
 	ld de, $8240 ; MAGIC
 	ld b, 16     ; MAGIC
 	call memcpy_256
 
-	call wait_vblank
 	ld hl, bullet_1_v
 	ld de, $8260 ; MAGIC
 	ld b, 16     ; MAGIC
 	call memcpy_256
 
 
-	call wait_vblank
 	ld hl, bullet_2_h
 	ld de, $8280 ; MAGIC
 	ld b, 16     ; MAGIC
 	call memcpy_256
 
-	call wait_vblank
 	ld hl, bullet_2_v
 	ld de, $82A0 ; MAGIC
 	ld b, 16     ; MAGIC

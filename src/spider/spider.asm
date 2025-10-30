@@ -134,7 +134,6 @@ init_spider_variables:
     ret
 
 init_spider_tiles:
-	call turn_screen_off
 
 	; Load roof stage tiles
 	ld hl, spider_roof
@@ -157,6 +156,5 @@ init_spider_tiles:
 	ld b, 0
 	call memcpy_256
 
-	call turn_screen_on
 
 	ret

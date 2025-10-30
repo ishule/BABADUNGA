@@ -76,7 +76,6 @@ init_snake::
 	ret
 
 init_snake_tiles:
-    call turn_screen_off
 
     ld hl, snake_tiles
     ld de, VRAM_TILE_DATA_START + (ENEMY_START_TILE_ID * VRAM_TILE_SIZE)
@@ -86,5 +85,4 @@ init_snake_tiles:
     ld b, 218
     call memcpy_256
 
-    call turn_screen_on
     ret

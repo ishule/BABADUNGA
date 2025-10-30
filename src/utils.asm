@@ -91,7 +91,6 @@ turn_screen_on::
 init_all_sprites::
 	call set_palette_sprites_0
 	call set_palette_sprites_1
-	call wait_vblank
 	call init_OAM
 	call init_LCDC_sprites
 	ret

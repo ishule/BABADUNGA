@@ -9,7 +9,7 @@ main::
 
       call init_player_stats
       ; ======== DEBUG =========
-      call load_snake_screen
+      ;call load_gorilla_screen
       ; =======================
       call load_title_screen
       call load_tutorial_screen
@@ -90,4 +90,17 @@ main::
     ret
 .die_player
    or a
+   ret
+
+
+init_common_data_screen:
+   call clean_all_tiles
+   call init_all_sprites
+   call InitDmaCopy
+   call sys_sound_init
+   call man_entity_init ; Inicializar gestor de entidades
+   call init_player
+   call init_invincibility
+   call joypad_init
+   call init_bullets
    ret

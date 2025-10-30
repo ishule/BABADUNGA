@@ -18,29 +18,17 @@ load_loot_screen::
    xor a
    ld [lootFlag],a
    call turn_screen_off
-   call clean_all_tiles
+
+   call init_common_data_screen
+   
    ld a,[loot_room]
-
    call draw_map_loot
-   call InitDmaCopy
-   call sys_sound_init
+
    call sys_sound_init_rest_music
-
-   call turn_screen_on
-   call init_all_sprites
-
-   call man_entity_init ; Inicializar gestor de entidades
-
-   call init_player
 
    call init_verja
    call init_pickups
-
-   call joypad_init
-
-   call init_bullets
-   ld a,[player_total_health]
-   ld [player_health],a
+   call turn_screen_on
    call draw_hearts
    .game_loop:
       call wait_vblank

@@ -251,7 +251,6 @@ init_stalactite_flags:
 ;;
 ;; MODIFICA: A, BC, DE, HL
 init_gorilla_tiles::
-	call turn_screen_off
 	
 	ld hl, gorilla
 	ld de, VRAM_TILE_DATA_START + (ENEMY_START_TILE_ID * VRAM_TILE_SIZE)
@@ -270,7 +269,6 @@ init_gorilla_tiles::
 	ld b, 144
 	call memcpy_256
 
-	call turn_screen_on
 	ret
 
 

@@ -20,6 +20,8 @@ player_sprites:
 ;;
 ;; MODIFICA: A, BC, DE, HL
 init_player::
+	ld a,[player_total_health]
+   	ld [player_health],a
 	call init_player_tiles
 	call init_player_entity
 	call player_init_physics
@@ -39,8 +41,6 @@ init_player::
 ;; 		$18: Player_lookup
 ;; MODIFICA: A, BC, DE, HL
 init_player_tiles::
-	call wait_vblank
-
 	;; Cargar Player_stand en tiles $0A-$0B
 	ld hl, Player_stand
 	ld de, VRAM_TILE_DATA_START + ($0A * VRAM_TILE_SIZE)
@@ -58,28 +58,24 @@ init_player_tiles::
 	ld de, VRAM_TILE_DATA_START + ($0E * VRAM_TILE_SIZE)
 	ld b, 2 * VRAM_TILE_SIZE
 	call memcpy_256
+	
 	;; Cargar Player_bullet en tile $10
 	ld hl,bullet_0_h
 	ld de,VRAM_TILE_DATA_START + ($10*VRAM_TILE_SIZE)
 	ld b,VRAM_TILE_SIZE
 	call memcpy_256
-	;; Cargar Player_life en tile $12
-	call wait_vblank
+
+
 	ld hl,Player_life
 	ld de,VRAM_TILE_DATA_START + ($12*VRAM_TILE_SIZE)
 	ld b,4*VRAM_TILE_SIZE
 	call memcpy_256
 
-	;; Cargar Player_lookup en tile $18
-	call wait_vblank
 	ld hl,player_look_up
 	ld de,VRAM_TILE_DATA_START + ($18*VRAM_TILE_SIZE)
 	ld b,4*VRAM_TILE_SIZE
 	call memcpy_256
 
-
-	;; Cargar Player_lookup en tile $18
-	call wait_vblank
 	ld hl,Player_life2
 	ld de,VRAM_TILE_DATA_START + ($1C*VRAM_TILE_SIZE)
 	ld b,4*VRAM_TILE_SIZE
@@ -117,9 +113,6 @@ init_player_entity::
 	ld hl, player_sprites + 4
 	ld b, SPRITE_SIZE
 	call memcpy_256
-
-	call wait_vblank
-	call man_entity_draw	; Copiar sprites a OAM
 
 	ret
 

@@ -29,14 +29,11 @@ init_verja::
 
 ;; MODIFICA: A, BC, DE, HL
 init_verja_tiles::
-	call wait_vblank
-
 	;; Cargar Verja en tiles $0A-$0B
 	ld hl, Verja
 	ld de, VRAM_TILE_DATA_START + ($16 * VRAM_TILE_SIZE)
 	ld b, 2 * VRAM_TILE_SIZE	; 2 tiles de 16 bytes cada uno
 	call memcpy_256
-
 	
 	ret
 
@@ -71,9 +68,6 @@ init_verja_entity::
 	ld hl, verja_sprites + 4
 	ld b, SPRITE_SIZE
 	call memcpy_256
-
-	call wait_vblank
-	call man_entity_draw	; Copiar sprites a OAM
 
 	pop hl
 
