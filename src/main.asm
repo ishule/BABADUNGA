@@ -35,8 +35,9 @@ main::
       xor a
       ld [player_bullet],a
       ld [loot_room],a
-      ld a,6
+      ld a,4
       ld [player_health],a
+      ld [player_total_health],a
       ret
 
 

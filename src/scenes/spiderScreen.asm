@@ -19,7 +19,9 @@ load_spider_screen::
    call init_verja
    call init_invincibility
    call joypad_init
-
+   
+   ld a,[player_total_health]
+   ld [player_health],a
    call init_bullets
    call draw_hearts
    

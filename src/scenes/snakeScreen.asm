@@ -22,7 +22,9 @@ load_snake_screen::
    call init_invincibility
    call joypad_init
    call init_bullets
-
+   
+   ld a,[player_total_health]
+   ld [player_health],a
    call draw_hearts
    .game_loop:
       call wait_vblank
