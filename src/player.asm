@@ -22,10 +22,6 @@ player_sprites:
 init_player::
 	ld a,[player_total_health]
    	ld [player_health],a
-	call init_player_tiles
-	call init_player_entity
-	call player_init_physics
-	ret
 
 
 ;;============================================================
@@ -81,7 +77,6 @@ init_player_tiles::
 	ld b,4*VRAM_TILE_SIZE
 	call memcpy_256
 
-	ret
 
 ;;============================================================
 ;; init_player_entity
@@ -114,7 +109,7 @@ init_player_entity::
 	ld b, SPRITE_SIZE
 	call memcpy_256
 
-	ret
+	
 
 
 ;;=================================================
@@ -189,7 +184,4 @@ player_init_physics::
 	dec b
 	jr nz, .loop
 
-   	
-
-	ret 
  

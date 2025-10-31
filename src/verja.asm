@@ -17,10 +17,6 @@ verja_sprites:
 ;;
 ;; MODIFICA: A, BC, DE, HL
 init_verja::
-	call init_verja_tiles
-	call init_verja_entity
-	call init_verja_physics
-	ret
 
 
 ;;============================================================
@@ -35,7 +31,6 @@ init_verja_tiles::
 	ld b, 2 * VRAM_TILE_SIZE	; 2 tiles de 16 bytes cada uno
 	call memcpy_256
 	
-	ret
 
 ;;============================================================
 ;; init_verja_entity
@@ -71,7 +66,6 @@ init_verja_entity::
 
 	pop hl
 
-	ret
 
 
 

@@ -89,23 +89,17 @@ turn_screen_on::
    ret
 
 init_all_sprites::
-	call set_palette_sprites_0
-	call set_palette_sprites_1
-	call init_OAM
-	call init_LCDC_sprites
-	ret
+
 
 ;; Configura la paleta de sprites 0
 ;; rOBP0: registro de paleta de sprites
 set_palette_sprites_0::
    ld hl, rOBP0
    ld [hl], %11100001
-   ret
 
 set_palette_sprites_1::
 	ld hl, rOBP1
 	ld[hl], %01010101
-	ret
 
 ;; Inicializa la memoria de sprites (OAM)
 init_OAM:
@@ -113,15 +107,16 @@ init_OAM:
 	ld b, OAM_TOTAL_SPRITES
 	xor a 
 	call memset_256
-	ret
 
 ;; Configura LCDC para sprites
 init_LCDC_sprites::
 	ld hl, LCD_CONTROL
 	set 1, [hl]	;; Enable Objects
 	set 2, [hl]	;; Enable 8 x 16 sprites
+
 	ret
 
+	
 ;; INPUT
 ;;		HL: Destination
 ;;		B: bytes

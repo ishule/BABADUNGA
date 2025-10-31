@@ -560,9 +560,36 @@ sys_collision_check_bullet_vs_player::
     
     ; 4. Eliminar bala
     pop hl
+
     inc l
+    inc l 
+    bit 6, [hl]
+    jr nz, .big_bullet
+
+.normal_bullet:
+    dec l
     call delete_bullet
-    
+    ret 
+
+.big_bullet:
+    push hl
+    dec l
+    call delete_bullet
+
+    pop hl 
+
+    bit 6, [hl]
+    jr nz, .call_delete_big_bullet_right 
+
+    ld a, l 
+    ld b, 4 
+    sub b 
+    ld l, a
+
+
+.call_delete_big_bullet_right:
+    dec l 
+    call delete_bullet   
     ret
     
 .player_invincible:
