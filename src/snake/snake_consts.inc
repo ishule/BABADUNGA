@@ -28,8 +28,8 @@ def HEAD_ENTITY_ID  equ 6
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERAL
 def SNAKE_NUM_ENTITIES equ 9
-def SNAKE_HEALTH equ 10
-def SNAKE_STAGE_CHANGE_HEALTH equ 5
+def SNAKE_HEALTH equ 20
+def SNAKE_STAGE_CHANGE_HEALTH equ 10
 def SNAKE_DAMAGE equ 1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
