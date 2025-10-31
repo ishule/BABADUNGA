@@ -390,6 +390,7 @@ boss_to_not_deal_damage:
 
     .loop:
         ld a, [hl]
+        res 0, a
         res 1, a
         ld [hl], a
         add hl, de
