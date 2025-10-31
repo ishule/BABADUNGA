@@ -586,6 +586,13 @@ sys_collision_check_bullet_vs_player::
     sub b 
     ld l, a
 
+    bit 6, [hl] 
+    jr nz, .call_delete_big_bullet_right 
+
+    ld a, l 
+    add 8 
+    ld l, a 
+
 
 .call_delete_big_bullet_right:
     dec l 

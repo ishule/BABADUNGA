@@ -6,7 +6,6 @@ main::
    ld [hl],%11100001
    jp game_loop
    game_loop:
-
       call init_player_stats
       call load_title_screen
       call load_tutorial_screen
