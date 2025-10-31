@@ -35,31 +35,33 @@ DB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
 DB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
 
 jungleTiles::
-;Tile 3 muro
+;Tile 3 y 4 muro ( duplicar )
 DB $A1,$FF,$A5,$FF,$93,$FF,$85,$FF
 DB $A1,$FF,$91,$FF,$85,$FF,$A9,$FF
-;Tile 4 techo
+;Tile 5 techo
 
 DB $FF,$FF,$20,$FF,$52,$FF,$01,$FF
 DB $24,$FF,$C9,$FF,$00,$FF,$FF,$FF
-;Tile 5 suelo
+;Tile 6 suelo
 DB $20,$00,$B6,$00,$FF,$00,$FF,$00
 DB $B4,$FF,$01,$FF,$46,$FF,$B2,$FF
-;Tile 6 Esquina techo izq
+;Tile 7 Esquina techo izq
 
 DB $07,$07,$18,$1F,$22,$3F,$48,$7F
 DB $50,$7F,$90,$FF,$82,$FF,$8C,$FF
-;Tile 7 
+;Tile 8 
 DB $E0,$E0,$18,$F8,$44,$FC,$42,$FE
 DB $2A,$FE,$05,$FF,$45,$FF,$21,$FF
 ;Tile 8-9: lianas
+
+;;Tile 2C-2F
+jungle_lianas_h::
 
 DB $48,$78,$48,$78,$2C,$34,$12,$1E
 DB $12,$1E,$16,$1A,$34,$2C,$48,$78
 DB $48,$78,$68,$58,$24,$3C,$12,$1E
 DB $16,$1A,$24,$3C,$28,$38,$10,$10
-;;Tile 2C-2E
-jungle_lianas_h::
+
 DB $A0,$E0,$90,$F0,$48,$78,$26,$3E
 DB $11,$1F,$0C,$0F,$03,$03,$00,$00
 
