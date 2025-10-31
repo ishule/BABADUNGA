@@ -18,6 +18,13 @@ check_gorilla_dead:
     ld hl, boss_state
     ld [hl], GORILLA_DEAD_STATE
 
+    ld a, [boss_looking_dir]
+    or a
+    ret z
+
+    ld c, GORILLA_NUM_ENTITIES
+    call rotate_boss_x
+
     ret
 
 sys_gorilla_movement::
